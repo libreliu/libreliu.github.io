@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+  
+
+  
+  <title>Nameless Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Yet another blog of myself">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nameless Blog">
+<meta property="og:url" content="http://libreliu.info/index.html">
+<meta property="og:site_name" content="Nameless Blog">
+<meta property="og:description" content="Yet another blog of myself">
+<meta property="og:locale" content="default">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nameless Blog">
+<meta name="twitter:description" content="Yet another blog of myself">
+  
+    <link rel="alternate" href="/atom.xml" title="Nameless Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+</html>
+<body>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Nameless Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/flag">Flag</a>
+        
+          <a class="main-nav-link" href="/me">Me</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://libreliu.info"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-Compiler-Principle" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/18/Compiler-Principle/" class="article-date">
+  <time datetime="2019-10-18T11:51:00.000Z" itemprop="datePublished">2019-10-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>为了<del>暑假好好学习</del>选昱姐的课不会挂的太惨，提前过一遍昱姐的 ppt，和《编译器设计》（第二版）的书籍。内容会交叉进行。</p>
+<blockquote>
+<p>UPDATE: 把期中复习的东西也扔了上来。</p>
+<p>UPDATE II: 把期末复习的东西也扔了上来。</p>
+</blockquote>
+<h2 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h2><h3 id="FA"><a href="#FA" class="headerlink" title="FA"></a>FA</h3><p>为了形式化识别器，引入<em>有限自动机（FA）</em>。有限自动机是一个五元组 $ (S, \Sigma, \delta, s_0, S_A) $：</p>
+<ul>
+<li>$ S $ 是识别器<em>有限</em>状态集，以及一个错误状态 $s_e$。</li>
+<li>$ \Sigma $ 是识别器用的有限字母表。</li>
+<li>$ \delta(s,c) $ 是识别器的转移函数，对每个 $ s \in S , c \in \Sigma $ 对应一个状态。一般也这么表示：$ s_i \xrightarrow{c}{\delta (s_i, c)} $。</li>
+<li>$ s_0 $ 是指定的起始状态。</li>
+<li>$ S_A \in S $ 是接受状态的集合，表示为双层圆圈。</li>
+</ul>
+<p>复杂性：</p>
+<ul>
+<li>注意到 FA 的运行开销只与输入长度成正比（因为就是简单的状态机嘛），而与生成 FA 的 RE 长度或者复杂性没有关系。</li>
+</ul>
+<h3 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h3><p>RE 描述了一个定义在某个字母表 $ \Sigma $ 上的字符串集合。一个 RE 由三个基本操作构成：</p>
+<ul>
+<li>选择：$ R | S $</li>
+<li>连接：$ RS $</li>
+<li>闭包（Kleene closure）： $ R^* $ ，R 出现零或无穷次<ul>
+<li>相当于 $ \epsilon | R | RR | RRR | RRRR $ ….（当然，这种写法显然不是 RE）</li>
+<li>($ \epsilon $ 表示<em>仅包含空串的集合</em>)</li>
+<li>为了方便：<ul>
+<li><em>有限闭包</em> $ R_i $ 为 R 出现<em>一次</em>到 i 次形成的闭包：<ul>
+<li>例如 $ R^4 $ 也可以表示为 $ R | RR | RRR | RRRR $</li>
+</ul>
+</li>
+<li><em>正闭包</em>：$ R_+ $ 为 R 出现<em>一次</em>到无穷次形成的闭包</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>优先级：括号&gt;闭包&gt;连接&gt;选择</li>
+</ul>
+<p>用上面定义和数理逻辑的东西，可以定义全体 RE 在给定字母表 $ \Sigma $ 上构成的集合。</p>
+<p>任何可以利用 RE 定义的语言（即，对于给定语言，可以找出一个 RE 使得语言的所有可能字串都恰好是 RE 可表示的字串）组成的语言集合称为<em>正则语言</em>。</p>
+<p>RE 的闭包性质：$ RE op RE $ 的结果仍然是 RE（这里 op 指的是前面那些操作）</p>
+<ul>
+<li>这样就可以很方便的证明（&amp;寻找算法使得）对于任意 RE 都有 FA 与之对应了</li>
+</ul>
+<hr>
+<p>JauntyLiu 想出的简单算法：</p>
+<p>（这里需要 RE 的分层性质，仿照数理逻辑即可给出）</p>
+<ul>
+<li>对于任意 $ p \in RE $，它必为下面几种情况之一：<ol>
+<li>存在 $ q,r \in RE $，使得 $ p = qr $</li>
+<li>存在 $ q,r \in RE $，使得 $ p = q | r $</li>
+<li>存在 $ q \in RE $，使得 $ p = q* $<ul>
+<li>正闭包可以写成 $ qq* $，所以不需要单独讨论</li>
+<li>有限闭包更显然</li>
+</ul>
+</li>
+<li>p 为一个字母的字母串</li>
+</ol>
+</li>
+</ul>
+<p>4 的构造显然。</p>
+<p>下面讨论 1,2,3 的构造。假设 q,r 均有了对应的 FA。</p>
+<p>对于 1，FA 构造如下（比较显然）：</p>
+<ul>
+<li>取 q 的所有 accept state （$ S_A $），分别「接上」r 的 i nitial state （$ S_0 $）就好了<ul>
+<li>严谨证明的话，可以写成 FA 的语言</li>
+</ul>
+</li>
+</ul>
+<p>对于 2，FA 构造有些难度。我们需要知道「匹配到什么程度才能把 q 和 r 分开」。比如 $ abc $ 和 $ abd $，就要匹配到第三个才知道到底选 q 还是选 r。</p>
+<ul>
+<li>如果没有闭包，那这个取交集的操作肯定是有限的；那就非常好办。</li>
+<li>如果有闭包，则不能保证？看书吧</li>
+</ul>
+<hr>
+<p>书上的做法：<code>RE ==(Thompson)==&gt; NFA ==(子集构造法)==&gt; DFA ==(Hopcraft)==&gt; 最小 DFA</code></p>
+<p>子集构造法：用 $ \epsilon -closure $ 找状态的等价集合（「配置」），然后遍历。因为总配置数是有限的，所以一定可以停止。</p>
+<p>Hopcraft 算法：先分类，然后迭代，找出类中不等价的元素，切分。重复，知道遍历所有类均找不出不等价的元素，这样就构造了一组等价类（状态）。</p>
+<h3 id="正规式的不足"><a href="#正规式的不足" class="headerlink" title="正规式的不足"></a>正规式的不足</h3><ul>
+<li>无法表述配对或者嵌套的结构，比如 <code>S = {wcw | w 是 a 和 b 的串}</code>，或者 <code>L = {a^n b^n | n &gt;= 1}</code><ul>
+<li>如果存在相应的 RE，则存在相应的 DFA，其对于每个吃进去的 w 状态应该不一样；DFA 总状态有限，而 w 可以是无限的（更严谨的写法可以设 DFA 的状态数为 n，考察读入长度为 n 的 w 的情形）</li>
+</ul>
+</li>
+</ul>
+<h2 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h2><h3 id="基本记号"><a href="#基本记号" class="headerlink" title="基本记号"></a>基本记号</h3><ul>
+<li><p>CFG：四元组 $ (V_T, V_N, S, P) $ ，即 Terminal, Non-terminal, Start Symbol, Production</p>
+</li>
+<li><p>推导：一步 $ S \Rightarrow \alpha $， 0 步或多步 $ S  \Rightarrow { }^{*}\alpha $ ，1 步或多步 $ S \Rightarrow { }^{+}\alpha $</p>
+</li>
+<li><p>语言：从开始符号 $ S $ 出发,经 $ \Rightarrow { }^{<em>}\alpha $ 推导所能到达的*所有仅由终结符组成的串</em></p>
+</li>
+<li><p>句型：$S  \Rightarrow { }^{*}\alpha$ ,S是开始符号，$ \alpha $ 是由终结符和/或非终结符组成的串,则 $ \alpha $ 是文法G的句型</p>
+</li>
+<li><p>句子：仅由终结符组成的句型</p>
+</li>
+<li><p>最左推导/最右推导：每部代换最左/最右的终结符</p>
+</li>
+<li><p>二义文法：一个句子有 n 个最左/最右推导</p>
+</li>
+</ul>
+<h3 id="二义文法的消除"><a href="#二义文法的消除" class="headerlink" title="二义文法的消除"></a>二义文法的消除</h3><h4 id="if-then-else-的例子"><a href="#if-then-else-的例子" class="headerlink" title="if-then-else 的例子"></a>if-then-else 的例子</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stmt: &apos;if&apos; expr &apos;then&apos; stmt else stmt | &apos;if&apos; expr &apos;then&apos; stmt;</span><br></pre></td></tr></table></figure>
+
+<p>这个文法是二义的，例子如下（「悬空 ELSE」问题）：</p>
+<p><code>if x &gt;= 1 then if a == 1 then do_sth() else foo()</code> </p>
+<p>这个时候一般要求 ELSE 跟那个比较近的 IF。</p>
+<p>如何考虑这个问题？可以把 <code>statement</code> 分成 <code>open_statement</code> 和 <code>closed_statement</code> （或者 <code>matched</code> 和 <code>unmatched</code> ）：</p>
+<ul>
+<li><code>open_statement</code> 意味着可能后边再接 <code>else</code> </li>
+<li><code>closed_statement</code> 意味着后边不可能再接 <code>else</code></li>
+</ul>
+<p>所以现在整个事情就像这样：（如果只有 if）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">statement: open_statement</span><br><span class="line">         | closed_statement</span><br><span class="line">         ;</span><br><span class="line">         </span><br><span class="line">open_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; open_statement</span><br><span class="line">              | &apos;if&apos; expression &apos;then&apos; statement             // 这里 open 和 closed 都会使得整个是 open</span><br><span class="line">              ;</span><br><span class="line"></span><br><span class="line">closed_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; closed_statement</span><br><span class="line">                ;</span><br></pre></td></tr></table></figure>
+
+<p>然而语言里面不可能只有 if （摔），所以考虑把其它结构加进去（比如 <code>&#39;while&#39; expression statement</code>  和 <code>expression_statement</code> 之类的），只要依次考虑它们对 open 和 close 的影响就可以了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">statement: open_statement</span><br><span class="line">         | closed_statement</span><br><span class="line">         ;</span><br><span class="line">         </span><br><span class="line">open_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; open_statement</span><br><span class="line">              | &apos;if&apos; expression &apos;then&apos; statement             // 这里 open 和 closed 都会使得整个是 open</span><br><span class="line">              | &apos;while&apos; expression statement                 // 理由同上</span><br><span class="line">              ;</span><br><span class="line"></span><br><span class="line">// 千万不要让新加进去的既可以推导到 open 又可以推导到 closed，只有不能是 closed 的才要加到 open</span><br><span class="line">closed_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; closed_statement</span><br><span class="line">                | &apos;while&apos; expression closed_statement</span><br><span class="line">                | expression_statement // and others</span><br><span class="line">                ;</span><br></pre></td></tr></table></figure>
+
+<h3 id="左递归的消除"><a href="#左递归的消除" class="headerlink" title="左递归的消除"></a>左递归的消除</h3><h4 id="直接左递归"><a href="#直接左递归" class="headerlink" title="直接左递归"></a>直接左递归</h4><p>$ A \rightarrow A a | b $ 这种，拿出来一个，剩下的组成另一个符号：</p>
+<p>$ A \rightarrow b A^\prime $</p>
+<p>$ A^\prime \rightarrow a A^\prime | \epsilon $</p>
+<h4 id="间接左递归"><a href="#间接左递归" class="headerlink" title="间接左递归"></a>间接左递归</h4><p>$ A \rightarrow B, B \rightarrow A a$ 这种，带入变成直接左递归，再消除之</p>
+<p>机械性的反复迭代，直到到达不动点，即可消除所有左递归：</p>
+<ol>
+<li>给所有产生式标号（1…n）</li>
+<li>反复展开，<em>直到</em> $ A_i \rightarrow A_j \alpha $ 中的 $j$ 都比 $ i $ 大或相等（相等就用消除左递归的算法搞掉）<ul>
+<li>如果有左递归，一定是 $A_i \rightarrow A_j \alpha \rightarrow A_i \alpha $ 什么的，如果 $j &gt; i$，$ A_j \rightarrow A_i $ 的肯定被消灭了</li>
+</ul>
+</li>
+</ol>
+<h4 id="隐藏左递归"><a href="#隐藏左递归" class="headerlink" title="隐藏左递归"></a>隐藏左递归</h4><p>$ A \rightarrow B A, B \rightarrow \epsilon $</p>
+<h3 id="提左因子"><a href="#提左因子" class="headerlink" title="提左因子"></a>提左因子</h3><p>$ A \rightarrow \alpha \beta_1 | \alpha \beta_2 $，提取 $ \alpha $ 变成 $ A \rightarrow \alpha A^\prime , A^\prime \rightarrow \beta_1 | \beta_2 $，也是机械的操作；本质是延迟决定使用哪个产生式。</p>
+<h3 id="非上下文无关文法"><a href="#非上下文无关文法" class="headerlink" title="非上下文无关文法"></a>非上下文无关文法</h3><p>$L_1 ={wcw | w 属于 (a | b)^ * } $ （上下文无关：${wcw^R}$，$ S \rightarrow a S a | b S b | c $）</p>
+<p>（更多的略，都是一个套路.png）</p>
+<h3 id="LL-1-amp-自顶向下分析"><a href="#LL-1-amp-自顶向下分析" class="headerlink" title="LL(1) &amp; 自顶向下分析"></a>LL(1) &amp; 自顶向下分析</h3><h4 id="求-FIRST-和-FOLLOW-集合"><a href="#求-FIRST-和-FOLLOW-集合" class="headerlink" title="求 FIRST 和 FOLLOW 集合"></a>求 FIRST 和 FOLLOW 集合</h4><ul>
+<li><p>$ FIRST(A) = {所有可能出现在 A 的第一个的终结符 } $</p>
+<ul>
+<li>$ A $ 是终结符：显然</li>
+<li>A 是 $ \epsilon $ ：$ FIRST(A) = { \epsilon  }$</li>
+<li>$ A \rightarrow B C D $：<ul>
+<li>如果 $ FIRST(B) $ 集合没有 $ \epsilon $ ，则 $ FIRST(A) \leftarrow FIRST(A) + FIRST(B) $</li>
+<li>否则看$ FIRST(C)$ 有没有 $\epsilon$，有继续，没有就是 $ FIRST(A) \leftarrow FIRST(A) + (FIRST(B)-\epsilon) \cup FIRST(C) $</li>
+<li>…如此类推，如果全都有，那 $A$ 也要有 $\epsilon$。<ul>
+<li>（这意味着，$A$ 可能是空串）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>$ FOLLOW(A) = {所有可能接在A后边出现的终结符} $    <code>// 显然，要找产生式右部有 A 的那些式子</code></p>
+<ul>
+<li><p>$ M \rightarrow P A B C $，那么：</p>
+<ol>
+<li><p>把 $FOLLOW(M)$ 加入 $ FOLLOW(C) $</p>
+</li>
+<li><p>如果 $ \epsilon $ 不在 $ FIRST(C) $ 中，则把 $ FIRST(C) $ 加入 $ FOLLOW(B) $</p>
+<p>如果 $\epsilon $ 在 $FIRST(C) $ 中，则把 $ ( FIRST(C) - \epsilon ) \cup FOLLOW(M) $ 加入 $ FOLLOW(B) $</p>
+<blockquote>
+<p> 注意！是 FOLLOW(M) 不是 FOLLOW(C)</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li><p>特别的，$ FOLLOW(S) = {eof} $</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><del>显然，$FIRST(A)$ 只要递归向下求就可以</del> $\Rightarrow$ 可能有 $A \rightarrow Aa $ 的情况！请先消除左递归，达到每个产生式前面都有别的符号/终结符。</p>
+<p>$FIRST$ 可能会有自己并自己的情况，所以要反复迭代，直到最后不再增加（达到不动点）。</p>
+<p><img src="/images/1571490282184.png" alt="1571490282184"></p>
+<p><img src="/images/1571490264194.png" alt="1571490264194"></p>
+<p>（我们只关心非终结符的 FOLLOW 集合，并且 FOLLOW 集合显然不会有空串，从定义上也是如此）</p>
+<h4 id="无回溯的条件"><a href="#无回溯的条件" class="headerlink" title="无回溯的条件"></a>无回溯的条件</h4><p>对于任意的产生式 $ A \rightarrow \beta_i $ 和 $ A \rightarrow \beta_j $，必须吃一个 lookahead 就能看出来区别：</p>
+<p>(1) $ FIRST(\beta_i) \cap FIRST(\beta_j) = \varnothing $</p>
+<p>(2) 如果 $ \epsilon \in FIRST(\beta_i) $，则 $ FIRST(\beta_j) \cup FOLLOW(A) = \varnothing $</p>
+<p>（也可以定义 $ FIRST^+(A \rightarrow \beta_i) = (\epsilon \in FIRST(\beta_i)) ? (FIRST(\beta_i) \cup FOLLOW(A) ) : FIRST(\beta_i) $，则 lookahead set 就是这个 $FIRST^+$ 啦；两个集合不交说明 OK）</p>
+<h4 id="预测分析表"><a href="#预测分析表" class="headerlink" title="预测分析表"></a>预测分析表</h4><table>
+<thead>
+<tr>
+<th></th>
+<th>a</th>
+<th>b</th>
+<th>$</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S</td>
+<td>S -&gt; aBS</td>
+<td>S -&gt; bAS</td>
+<td>S -&gt; $\epsilon$</td>
+</tr>
+<tr>
+<td>A</td>
+<td>A -&gt; a</td>
+<td>A -&gt; bAA</td>
+<td>error</td>
+</tr>
+<tr>
+<td>B</td>
+<td>B -&gt; aBB</td>
+<td>B -&gt; b</td>
+<td>error</td>
+</tr>
+</tbody></table>
+<p>就是一个这种表，左边是非终结符，上面是输入符号而已。</p>
+<h4 id="错误恢复"><a href="#错误恢复" class="headerlink" title="错误恢复"></a>错误恢复</h4><p>TODO，见书和 PPT</p>
+<h3 id="SLR-amp-自下而上分析"><a href="#SLR-amp-自下而上分析" class="headerlink" title="SLR &amp; 自下而上分析"></a>SLR &amp; 自下而上分析</h3><h4 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h4><ul>
+<li><p>句型的句柄（可归约串）：该句型中和某产生式右部匹配的<em>子串</em>，并且把它归约成该产生式左部的非终结符代表了最右推导过程的逆过程的一步</p>
+<ul>
+<li>句柄的右边仅含终结符</li>
+<li>如果文法二义，那么句柄可能不唯一</li>
+</ul>
+</li>
+<li><p>冲突： shift-reduce 和 reduce-reduce 两种</p>
+</li>
+<li><p>活前缀：右句型的前缀，不超过最右句柄的末端</p>
+<ul>
+<li>详见 PPT</li>
+</ul>
+</li>
+<li><p>有效项目：可能会在那个场景（给定的活前缀）下用到的项目</p>
+<ul>
+<li>详见 PPT</li>
+<li>一个活前缀可能有多个有效项目 =&gt; 对应多个可能的产生式</li>
+<li>一个项目可能对好几个活前缀都是有效的 =&gt; 对应多种可能的输入</li>
+</ul>
+</li>
+</ul>
+<h4 id="LR-分析器需要的结构"><a href="#LR-分析器需要的结构" class="headerlink" title="LR 分析器需要的结构"></a>LR 分析器需要的结构</h4><ul>
+<li>一些状态 (1,2,3,…)</li>
+<li>一个 $ (Symbol, State) $ 二元组组成的栈</li>
+<li>一个 $action$ 表 &amp; 一个 $goto$ 表，指示栈顶在状态 $s_i$ 且在下一个终结符为 $ \alpha $ 时：<ul>
+<li>移进 $\alpha$ 和新的状态 $s_j$              // $action[s_i, \alpha] = s_j$</li>
+<li>按某个产生式（编号 $ m $） 归约（弹出一些符号，找到归约成的符号 $A$），并且（按弹出后栈顶的状态，比如$ s_{i-k} $ 查表）移进$A$ 和新的状态 $ s_k $        // $ goto[s_{i-k}, A] = s_k $</li>
+</ul>
+</li>
+<li>特殊的状态 $ acc $ 表示接受</li>
+</ul>
+<h4 id="构造一个-SLR-分析表"><a href="#构造一个-SLR-分析表" class="headerlink" title="构造一个 SLR 分析表"></a>构造一个 SLR 分析表</h4><ol>
+<li>从文法构造识别活前缀的 DFA<ol>
+<li>拓广文法（方便弄 $acc$）</li>
+<li>构造 LR(0) 项目集规范族<ul>
+<li>反复找 $ closure (move[closure(I_i), syms]) $，直到不动点（其实就是子集构造法）</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>从上述 DFA 构造分析表<ul>
+<li>$ action $ 表<ul>
+<li>移进：$I_i $ 中 $ [A \rightarrow \alpha \cdot a \beta] $ 且 $ goto(I_i, a) = I_j $，置 $action[i, a]$ 为 $s_j$</li>
+<li>归约：如果 $ [A \rightarrow \alpha \cdot] $ 在 $I_i$ 中，那么对 $FOLLOW(A)$ 中的所有 $a$，置 $action[i, a]$ 为 $r_j$，$j $ 是产生式 $ [A \rightarrow \alpha \cdot a \beta] $ 的编号</li>
+<li>接受：如果 $ [S^\prime \rightarrow S \cdot] $ 在 $ I_i $ 中，那么 $action[i, $] = acc $</li>
+</ul>
+</li>
+<li>$ goto $ 表<ul>
+<li>对所有的非终结符 $A$，如果 $goto(I_i , A) = I_j$，则 $ goto[i, A] = j $</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="类型系统"><a href="#类型系统" class="headerlink" title="类型系统"></a>类型系统</h2><h3 id="类型系统的作用"><a href="#类型系统的作用" class="headerlink" title="类型系统的作用"></a>类型系统的作用</h3><p>略</p>
+<h3 id="类型系统的形式化"><a href="#类型系统的形式化" class="headerlink" title="类型系统的形式化"></a>类型系统的形式化</h3><ol>
+<li>类型表达式：$int$, $int \rightarrow int$（即有个函数收一个 $ int $ 类型参数，返回值类型为 $ int $）</li>
+<li>定型断言：$ x:int \vdash x+3: int $<ul>
+<li>断言的形式：$ \Gamma \vdash S $，即 $ S$  的所有自由变量都声明在 $ \Gamma $ 中（？这个只适用于「定型断言」吧）<ul>
+<li>$ \Gamma $ 为静态定型环境，如 $ x_1: T_1, …, x_n:T_n$ <ul>
+<li>（带一点关于类型表达式有效性和环境的良形性的信息）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>断言的种类：<ul>
+<li>环境断言：$ \Gamma \vdash \Diamond $，表示 $ \Gamma $ 为良形环境</li>
+<li>语法断言：$ \Gamma \vdash nat $，$ nat $ 为类型表达式；即在环境 $\Gamma $ 下 $nat $ 是（可以用的）类型表达式<ul>
+<li>但没说 $nat $ 的真假</li>
+</ul>
+</li>
+<li>定型断言：$ \Gamma \vdash M: T $， M 为某种值，T 为某种类型</li>
+</ul>
+</li>
+<li>断言的有效性：<ul>
+<li>有效断言：$ \Gamma \vdash true:boolean $</li>
+<li>无效断言：$ \Gamma \vdash true: nat $</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>定型规则：$ \dfrac{\Gamma \vdash M : int, \Gamma \vdash N: int}{ \Gamma \vdash M+N:int}$：上面是前提，下面是结论；XX 规则表示推出的是哪种断言<ul>
+<li>环境规则（Env $ \varnothing $）： $ \dfrac{}{\varnothing \vdash \Diamond} $<ul>
+<li>空环境是良形的</li>
+</ul>
+</li>
+<li>语法规则（Type Bool）：$ \dfrac{\Gamma \vdash \Diamond}{\Gamma \vdash boolean} $<ul>
+<li>boolean 是类型表达式</li>
+</ul>
+</li>
+<li>定型规则（Val +）：$ \dfrac{\Gamma \vdash M:int, \Gamma \vdash N:int}{\Gamma \vdash M+N : int} $ <ul>
+<li>在环境 $ \Gamma $ 下，M + N 是 int 类型，如果 M 和 N 都是 int 类型</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="简单类型检查器"><a href="#简单类型检查器" class="headerlink" title="简单类型检查器"></a>简单类型检查器</h3><p>语法规则，定型规则见 PPT</p>
+<h4 id="设计语法制导的类型检查器"><a href="#设计语法制导的类型检查器" class="headerlink" title="设计语法制导的类型检查器"></a>设计语法制导的类型检查器</h4><p>报错用类型：$ type_error $</p>
+<p>对类型表达式采用了抽象语法：</p>
+<ul>
+<li><p>$ array\ [N]\ of\ T$（一个有 N 的元素的 T 类型数组）： $ array(N, T) $</p>
+</li>
+<li><p>$ \uparrow T $：$ pointer(T) $</p>
+</li>
+</ul>
+<p>类型检查细节略。应该注意的几个问题：</p>
+<ol>
+<li>语句的返回值类型：<ul>
+<li>if 语句的返回值是 then 子句的返回值， 或者 $ type_error $</li>
+<li>while 语句的返回值是 do 子句的返回值，或者 $ type_error $</li>
+<li>赋值语句的返回值是 $ void $ 或者 $ type_error $</li>
+<li>$ S \rightarrow S1; S2 $ 的返回值：<ul>
+<li>$ S1, S2 $ 均为 $ void $，则返回 $ void $</li>
+<li>否则返回 $ type_error $  </li>
+</ul>
+</li>
+</ul>
+</li>
+<li>程序的类型： $ void $（如果 <strong>S</strong>(<em>tatements</em>) 是 $ void $） 或者 $ type_error $（如果不是）</li>
+</ol>
+<h3 id="类型表达式的等价"><a href="#类型表达式的等价" class="headerlink" title="类型表达式的等价"></a>类型表达式的等价</h3><h2 id="中间语言"><a href="#中间语言" class="headerlink" title="中间语言"></a>中间语言</h2><h3 id="中间语言的表示"><a href="#中间语言的表示" class="headerlink" title="中间语言的表示"></a>中间语言的表示</h3><ul>
+<li>后缀表示（后缀式）：容易描述计算，难以描述控制语句</li>
+<li>图表示（语法树 / 消除公共子表达式的 DAG）</li>
+<li>三地址代码（语法树 / DAG 的一种线性表示）<ul>
+<li>静态单赋值形式（SSA）<ul>
+<li>同一名字的变量只能赋值一次</li>
+<li>一个变量在不同路径上都定值，则要插入 $ \phi $ 变换</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="基本块和控制流图"><a href="#基本块和控制流图" class="headerlink" title="基本块和控制流图"></a>基本块和控制流图</h3><ul>
+<li>基本块划分算法：<ol>
+<li>确定所有入口语句<ul>
+<li>序列的第一个语句</li>
+<li>转移指令后的第一个语句</li>
+<li>转移指令的目标语句</li>
+</ul>
+</li>
+<li>每个入口语句到下一个入口语句之前（或者到程序结束）的语句序列构成一个基本块</li>
+</ol>
+</li>
+</ul>
+<h3 id="LLVM-编译器框架和基础设施"><a href="#LLVM-编译器框架和基础设施" class="headerlink" title="LLVM 编译器框架和基础设施"></a>LLVM 编译器框架和基础设施</h3><p>略</p>
+<h3 id="中间代码生成概述"><a href="#中间代码生成概述" class="headerlink" title="中间代码生成概述"></a>中间代码生成概述</h3><h3 id="声明语句"><a href="#声明语句" class="headerlink" title="声明语句"></a>声明语句</h3>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/10/18/Compiler-Principle/" data-id="ck5wb2wid00077a8q7ud9dego" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Embedded-System-Design" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/12/Embedded-System-Design/" class="article-date">
+  <time datetime="2019-09-12T07:57:00.000Z" itemprop="datePublished">2019-09-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>不能补交.jpg</p>
+<h2 id="第一次课"><a href="#第一次课" class="headerlink" title="第一次课"></a>第一次课</h2><p>看 一个 Zigbee 的板子 / Zynq 7000 的板子 / 一个 NXP 的传统 ARM 板子，比较异同</p>
+<h2 id="第二次课"><a href="#第二次课" class="headerlink" title="第二次课"></a>第二次课</h2><p>成绩评定（暂定）</p>
+<ul>
+<li>课后作业+实验：60%</li>
+<li>大作业：40%</li>
+</ul>
+<h2 id="第三次课"><a href="#第三次课" class="headerlink" title="第三次课"></a>第三次课</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/12/Embedded-System-Design/" data-id="ck5wb2wif00087a8qexch250e" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Natural-Language-Processing" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/10/Natural-Language-Processing/" class="article-date">
+  <time datetime="2019-09-10T07:57:00.000Z" itemprop="datePublished">2019-09-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="第二次课"><a href="#第二次课" class="headerlink" title="第二次课"></a>第二次课</h2><p>形态学/词素/简单的 Stemmer 来判断文章相关性</p>
+<p>Minimum Editing Distance:</p>
+<ul>
+<li>基本操作：<ul>
+<li>插入</li>
+<li>删除</li>
+<li>替换</li>
+</ul>
+</li>
+<li>算法：DP-Based (O(nm) + O(n+m))<ul>
+<li>和暴力 Iterate 比有什么优势？</li>
+</ul>
+</li>
+</ul>
+<p>Weighted Edit Distance</p>
+<ul>
+<li>参考<ul>
+<li>Confusion matrix for spelling errors</li>
+</ul>
+</li>
+</ul>
+<p>Language Modeling: $ P(\omega_n|\omega_1, \omega_2, \omega_3, \omega_4…) $，$ \omega $ 是词素 =&gt; 就是猜语言的组合规律</p>
+<ul>
+<li>方法<ul>
+<li>最菜的： P(too|river is wide) = Count(river is wide too) / Count(river is wide)<ul>
+<li>大数据集 / 用 “” 在 Google 上面搜</li>
+<li>（一种近似）先收集到 Bigram （即 $ P(\omega_i | \omega_j) 的值），再用链式法则合成整个的值<ul>
+<li>比如 $ P(12|3) = P(1|2) * P(2|3) $</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>用途<ul>
+<li>The Shannon Visualization Method:<ul>
+<li>Generate random sentences by chances in bigram</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/10/Natural-Language-Processing/" data-id="ck5wb2wj0000c7a8q3ihkvfjr" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Quantum-Computing-Frontier" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/10/Quantum-Computing-Frontier/" class="article-date">
+  <time datetime="2019-09-10T07:57:00.000Z" itemprop="datePublished">2019-09-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Lesson-1"><a href="#Lesson-1" class="headerlink" title="Lesson 1"></a>Lesson 1</h2><p>第一次开课.jpg</p>
+<p><a href="https://github.com/clarazhang/QuantumCourse" target="_blank" rel="noopener">https://github.com/clarazhang/QuantumCourse</a></p>
+<p>参考书目：<br>TODO</p>
+<p>课程内容：</p>
+<ul>
+<li>简要介绍量子计算和量子算法的基本知识</li>
+<li>重点介绍量子编程语言和相关工具形成的软件栈</li>
+<li>指出现在正在研究和探索的主要问题</li>
+</ul>
+<p>通过课堂研讨和分组课程设计，完成如下目标：</p>
+<ul>
+<li>逐步消化理解量子计算和经典计算的差异</li>
+<li>了解量子软件构建的挑战</li>
+<li>开展前沿探索</li>
+</ul>
+<p>学时分配（2学分）</p>
+<ul>
+<li>教师课堂讲授、学生课堂讨论、课程设计各占 1/3</li>
+</ul>
+<p>课堂讲授内容</p>
+<ul>
+<li>量子计算和量子编程语言简介</li>
+<li>QPanda 编程实践<ul>
+<li>Chen 大佬手搓的，现在已经有一个团队了</li>
+</ul>
+</li>
+<li>量子算法，如 Deutsch-Josza 算法、量子 Fourier 变换、 Grover 算法等</li>
+<li>华为 HiQ 量子计算实践</li>
+<li>量子编译系统</li>
+<li>量子程序的模拟与评测</li>
+</ul>
+<p>kit kat 啥的，布洛赫球面</p>
+<h2 id="Lesson-2"><a href="#Lesson-2" class="headerlink" title="Lesson 2"></a>Lesson 2</h2><p>9/19 提交分组情况，三到四个人一组</p>
+<h3 id="课程安排"><a href="#课程安排" class="headerlink" title="课程安排"></a>课程安排</h3><p>陈昭昀 （本源量子 QPanda）</p>
+<p>课件和作业在 Educoder 上</p>
+<h3 id="量子计算机架构"><a href="#量子计算机架构" class="headerlink" title="量子计算机架构"></a>量子计算机架构</h3><p>Quantum Topology at this moment:</p>
+<p><code>Traditional Computer =&gt; Controller =&gt; Quantum Coprocessor</code></p>
+<p>Quantum Stack:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Quantom Algorithm</span><br><span class="line">Programming Paradigm and languages</span><br><span class="line">Q Arithmetic &amp; Runtime</span><br><span class="line">Q Assembly &amp; Controller</span><br><span class="line">Q chip</span><br></pre></td></tr></table></figure>
+
+<p>QPU:</p>
+<ul>
+<li>Josephson junction 构成 Superconduction circuit，形成量子比特</li>
+<li>芯片上面再封一个微波谐振控制器<br>「量子线路」是抽象上的时序上的东西 =&gt; Controller =&gt; Analog Control signal<br>通过 微波谐振腔 来读出/控制 Qubit</li>
+</ul>
+<p>如何物理实现量子线路？</p>
+<ul>
+<li>通过 Control microwaveform 来改变他们的量子态</li>
+</ul>
+<p>如何实现测量？</p>
+<ul>
+<li>对芯片施加「测量波形」，从另一端读取原始信号<ul>
+<li>信号和 |0&gt; |1&gt; 相关</li>
+<li>量子态坍缩</li>
+</ul>
+</li>
+</ul>
+<p>如何对量子计算机编程？</p>
+<ol>
+<li>根据量子算法的描述，写出和问题相关的线路</li>
+<li>线路被转化为微波脉冲序列，通过仪器将序列施加到芯片上</li>
+<li>通过微波线路读出原始信号，该信号的相位、振幅和 |0&gt;，|1&gt; 相关</li>
+</ol>
+<p>NISQ - Noise intermediate-scale quantum</p>
+<ul>
+<li>不纠错，消耗更少的 Qubit</li>
+</ul>
+<p>Fault Tolerant - 容错量子计算</p>
+<ul>
+<li>纠错，可能 20 年后会真正实用（millions of qubits）</li>
+</ul>
+<p>量子算法+实际问题=量子线路</p>
+<ul>
+<li>量子计算机没有传统意义上的存储装置<ul>
+<li>有点像 FPGA 调 module（</li>
+</ul>
+</li>
+<li>实际问题是编码在线路中的</li>
+</ul>
+<p>量子-经典混合算法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">==&gt; Parameterized Quantum Circuit =&gt; Classical Subprogram ==&gt; return to 1</span><br><span class="line"></span><br><span class="line">       参数化的量子线路                通过测量结果修正参数（梯度下降）</span><br></pre></td></tr></table></figure>
+
+<p>缺点：难以准确预计效果</p>
+<p>量子纠错</p>
+<ul>
+<li>一个 Phys. Qubit 的误差阈值确定，则可以靠某种方法无限级联无限提高精度</li>
+</ul>
+<h3 id="QPanda-介绍"><a href="#QPanda-介绍" class="headerlink" title="QPanda 介绍"></a>QPanda 介绍</h3><p>Quantum Programming Architeture for NISQ Device Application</p>
+<p>理念：</p>
+<ul>
+<li>暂时不考虑纠错，而重视量子-经典混合算法的实现与优化<ul>
+<li>考虑纠错，就需要 Millions of Qubits，暂时没法搞模拟</li>
+</ul>
+</li>
+<li>考虑不同种类的量子设备的适配<ul>
+<li>Eg. 只能在相邻的 Qubit 之间实现 2-bit gate<ul>
+<li>因为其基于「耦合电容」啥的</li>
+<li>可能要加入 1 &lt;-&gt; 2 &lt;-&gt; 3 … 的交换操作</li>
+</ul>
+</li>
+<li>（类似 FPGA 的 Implementation 阶段吧）</li>
+<li>（毕竟他们家也做硬件，所以两边都要搞）</li>
+</ul>
+</li>
+</ul>
+<p>框架：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">应用层         工具层         ？？？</span><br><span class="line">Application</span><br><span class="line"></span><br><span class="line">ChemiQ</span><br><span class="line"></span><br><span class="line">VQNet</span><br></pre></td></tr></table></figure>
+
+<h4 id="量子机器"><a href="#量子机器" class="headerlink" title="量子机器"></a>量子机器</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">virtual</span> class <span class="title">QuantumMachine</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    init()</span><br><span class="line">    finalize()</span><br><span class="line">    allocateQubit()</span><br><span class="line">    runWithConfiguration()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>QProg =&gt; Qcircuit / QGate / QIfProg / QMeasure / QWhileProg / ClassicalProg</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/10/Quantum-Computing-Frontier/" data-id="ck5wb2wj3000e7a8qbn63uury" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Intro-To-Algorithm" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/06/Intro-To-Algorithm/" class="article-date">
+  <time datetime="2019-09-06T06:00:00.000Z" itemprop="datePublished">2019-09-06</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="第一课-9-3-2019"><a href="#第一课-9-3-2019" class="headerlink" title="第一课 9/3/2019"></a>第一课 9/3/2019</h2><p>徐云（<code>xuyun@ustc.edu.cn</code>），<code>/~xuyun/algcs.html</code>，课件密码 <code>alg42</code>。</p>
+<p>将要布置十四次作业。</p>
+<p>单处理器 RAM 模型（Random Access Machine）：</p>
+<ul>
+<li>算数指令/数据移动/控制为常量时间</li>
+<li>$ 2^k $ 的计算是常数时间（k 足够小）</li>
+<li>字长有最大长度限制</li>
+</ul>
+<p>算法分析：</p>
+<ul>
+<li>计算时间</li>
+<li>存储空间</li>
+<li>从 n 个算法中选择最有效合适的算法</li>
+<li>分析时，应该考虑计算模型</li>
+</ul>
+<p>计算模型：</p>
+<ol>
+<li>简化分析成本</li>
+<li>独立于机器和程序设计语言</li>
+<li>公平公正的标准</li>
+</ol>
+<p>时间分析：</p>
+<ul>
+<li>Best Case<ul>
+<li>$ B(n) = {min}_{I \in D_n} {t(I)}  $</li>
+</ul>
+</li>
+<li>Worst Case</li>
+<li>Average Case</li>
+</ul>
+<p>分析插入排序（略）</p>
+<h2 id="第二次课-9-6-2019"><a href="#第二次课-9-6-2019" class="headerlink" title="第二次课 9/6/2019"></a>第二次课 9/6/2019</h2><p>作业要求：写伪代码 + 思想解释，缺一不可。</p>
+<p>程序正确性的形式化证明，循环不变式。</p>
+<p>Chap 2.3</p>
+<ol>
+<li><p>算法设计技术：</p>
+<ul>
+<li>Divide and Conqueror (Ch2, 7, 9, 12, 30)</li>
+<li>Greedy Strategy (Ch16, 23)</li>
+<li>Dynamic Programming (Ch 15,25)</li>
+<li>Linear Programming (Ch 29)</li>
+<li>Backtracking (Additional)</li>
+<li>Branch and Bound (Additional)<ul>
+<li>分支限界法</li>
+</ul>
+</li>
+<li>Others (Ch28 ,31, 32)</li>
+</ul>
+</li>
+<li><p>分治法及归并排序示例</p>
+<ol>
+<li><p>基本思想<br> 原问题 =&gt; 若干个更小的子问题 // 子问题求解方法同原问题</p>
+<ul>
+<li>Q：为什么很多问题用分治法反而可以提高效率？</li>
+<li>A(Zt Guess): 因为一般都是二分，分的层数是 lgn 量级的 =&gt; nlgn</li>
+</ul>
+</li>
+<li><p>求解步骤：</p>
+<ol>
+<li>Divide: Split original question into several sub questions</li>
+<li>Conqueror: Recursively conqueror sub questions - If questions are small, do it immediately; divide if not that small</li>
+<li>Combine: Combine the solutions of the sub questions together into the solution of the original question</li>
+</ol>
+</li>
+<li><p>示例：Merge Sort<br><code>MergeSort(A,p,r)</code>: 对 A 数组的 <code>A[p]</code> 到 <code>A[r]</code> 进行归并排序</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if p &lt; r then</span><br><span class="line">    q &lt;- (p + r) / 2</span><br><span class="line">    MergeSort(A, p, q)</span><br><span class="line">    MergeSort(A, q + 1, r)</span><br><span class="line">    // Do merge now</span><br><span class="line">    Merge(A, p, q, r)</span><br><span class="line">elseif p == r then</span><br><span class="line">    return</span><br><span class="line">else</span><br><span class="line">    throw Exception(&quot;sth wrong&quot;)</span><br></pre></td></tr></table></figure>
+
+<p><code>Merge(A, p, q, r)</code>: 显然不能做 in-place 的 merge，只能消耗一些（~n）额外空间</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">n1 &lt;- q - p + 1 // A[p...q] 的元素数目</span><br><span class="line">n2 &lt;- r - q     // A[(q+1)...r] 的元素数目</span><br><span class="line">for i &lt;- p to q do</span><br><span class="line">    B[i - p + 1] &lt;- A[i] // *数组从 1 开始*</span><br><span class="line">// 书 p17，下略</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>注：<ul>
+<li>Merge 为 Θ(n)</li>
+<li>T(n) = (n == 1 ? Θ(1) : (2T(n/2) + Θ(n)))</li>
+<li>Merge Sort 对 Cache 是否友好？（我感觉不友好）<ul>
+<li>但是并行友好</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+<p>Chap 3.1</p>
+<ol>
+<li>Θ 符号（渐紧界）<ul>
+<li>定义（略）</li>
+<li>例 1：证明 $ \frac{n^2}{2} - 3n = \Theta (n^2) $<br>观察，取 $ c_1 = \frac{1}{6} $ , $ c_2 = 1 $, $ n_0 = 9 $，即可有 $ 0 \le c_1 g(n) \le f(n) \le c_2 g(n) $ 成立<ul>
+<li>不要忘记写「$ 0 \le … $」！</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>O 符号（渐进上界）</li>
+<li>Ω 符号（渐进下界）</li>
+<li>o 符号（非渐进紧确的上界）</li>
+<li>ω 符号（非渐进紧确的下界）</li>
+<li>函数间的比较：自反性、对称性、转置传递性<ul>
+<li>并不是所有的都可以比较，比如 $ f(n) = n, g(n) = n^{1+sin(n)} $ 不可以比较</li>
+</ul>
+</li>
+</ol>
+<p>（H1：作业见课程主页）</p>
+<p>Chap 3.2</p>
+<ol>
+<li><p>常见函数和记号</p>
+<ol>
+<li><p>$ \left \lceil{x}\right \rceil $ 是 $ \ge x $ 的最小整数（ceil）<br>$ \left \lfloor{x}\right \rfloor $ 是 $ \le x $ 的最大整数（floor）</p>
+</li>
+<li><p>模运算<br>取余数：$ a\ mod\ n = a - \left \lfloor{ \frac{a}{n} }\right \rfloor n $<br>同余：$ a \equiv b\ (mod\ n) $</p>
+</li>
+<li><p>$ e^x $ 的性质<br>$ e^x \ge 1 + x $ 对 $ \forall x \in \mathbb{R} $ 成立<br>各种 Taylor 展开略</p>
+</li>
+<li><p>对数<br>一般用 $ log{n} $ 表示 $ log_{2}{n} $，注意一下<br>$ ln(1+x) $ 的上下界，Taylor 展开要记住<br>而且 $ ln $ 的渐进增长比任何多项式函数都慢（可以写成 small o notation）</p>
+</li>
+<li><p>阶乘</p>
+</li>
+<li><p>Stirling 公式<br>$ n! = \sqrt{2 \pi n} (\frac{n}{2})^n ( 1 + o(\frac{1}{n})) $</p>
+<ul>
+<li>故 $ log(n!) = \Theta (nlgn) $</li>
+</ul>
+</li>
+<li><p>函数迭代<br>$ f^{(n)}(n) = \begin{cases} n ,&amp; i = 0 \  f(f^{(i-1)}(n)), &amp; i \ge 0 \end{cases} $</p>
+</li>
+<li><p>对数迭代 - 「几乎是常数时间」<br>$ log^*n = \mathop{max} \limits_{i} { i \ge 0 | log^{(i)}n  \le 1 } $</p>
+</li>
+<li><p>Fib 数</p>
+</li>
+<li><p>标准增长函数 &amp; 多项式时间函数大小关系<br>  Eg. 理解 $ \Theta (\mathop{log} \mathop{log} n) $<br>  $ \Theta (1) \lt \Theta (\mathop{log}n) \lt \Theta (n) \lt \Theta (nlgn) \lt \Theta (n^2) \lt \Theta (2^n) \lt \Theta (n!) \lt \Theta (n^n) $</p>
+</li>
+</ol>
+</li>
+<li><p>求和</p>
+<ol>
+<li><p>$ \Theta $ 记号可以拿出来求和号</p>
+</li>
+<li><p>（略一些级数内容）<br>例题：证明 $ f(n) = \Sigma^{n}_{k=1} 3^k = \Theta (3^n) $</p>
+<ul>
+<li>用数学归纳法就完事了</li>
+</ul>
+</li>
+<li><p>对项限界（就是夹逼定理证级数的收敛性）</p>
+<ol>
+<li>最大/最小项限界 </li>
+<li>几何级数限界（就是 Dirchlet 判敛法）</li>
+</ol>
+<ul>
+<li>例子： $ \Sigma \frac{k}{3^k} $ 上界</li>
+</ul>
+<ol start="3">
+<li>先扔有限项</li>
+</ol>
+<ul>
+<li>例子： $ \Sigma \frac{k^2}{3^k} $ 的上界</li>
+<li>例子 II： 调和级数的上界<br>$ H_n $ 的前 $ n $ 项和，凑一下，然后放大一点，因为 1, 2, 4, 8 的结构而出来 $ O(lgn) $</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/06/Intro-To-Algorithm/" data-id="ck5wb2wiu000a7a8qfmptvqo5" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-Microcomputer-Principle" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/02/Microcomputer-Principle/" class="article-date">
+  <time datetime="2019-09-02T01:43:00.000Z" itemprop="datePublished">2019-09-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/09/02/Microcomputer-Principle/">微机原理与系统 笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="http://staff.ustc.edu.cn/~wjluo/mcps" target="_blank" rel="noopener">http://staff.ustc.edu.cn/~wjluo/mcps</a></p>
+<h2 id="微处理器与计算机导论"><a href="#微处理器与计算机导论" class="headerlink" title="微处理器与计算机导论"></a>微处理器与计算机导论</h2><h3 id="课程内容"><a href="#课程内容" class="headerlink" title="课程内容"></a>课程内容</h3><ul>
+<li>微处理器程序设计模型和系统结构<ul>
+<li>Real &amp; protected mode</li>
+</ul>
+</li>
+<li>x86 assembly programming</li>
+<li>x86 Pentium<ul>
+<li>Structure and Pins</li>
+</ul>
+</li>
+<li>Basic interface chips<ul>
+<li>Intel 8255 Periphical Controller</li>
+</ul>
+</li>
+<li>MMX, SIMD, Math co-processor</li>
+<li>Bus technology<ul>
+<li>ISA PCI LPT COM USB AGP</li>
+</ul>
+</li>
+<li>Interrupt and DMA<ul>
+<li>8259A &amp; 8237</li>
+</ul>
+</li>
+</ul>
+<h4 id="教材"><a href="#教材" class="headerlink" title="教材"></a>教材</h4><p>Barry B. Brey, Intel Microprocessors (8th Edition)</p>
+<h4 id="参考书"><a href="#参考书" class="headerlink" title="参考书"></a>参考书</h4><ul>
+<li>「微型计算机技术（第四版）」</li>
+<li>「微机原理，汇编语言与接口技术」</li>
+<li>「微型计算机原理与接口技术」</li>
+</ul>
+<h4 id="考核"><a href="#考核" class="headerlink" title="考核"></a>考核</h4><ul>
+<li>期末考试（开卷）：65%</li>
+<li>作业（+课堂练习）：15%</li>
+<li>实验：20%</li>
+</ul>
+<p>教师：罗文坚（<a href="mailto:wjluo@ustc.edu.cn" target="_blank" rel="noopener">wjluo@ustc.edu.cn</a>）</p>
+<h3 id="微处理器的发展"><a href="#微处理器的发展" class="headerlink" title="微处理器的发展"></a>微处理器的发展</h3><ul>
+<li>Gen 1<br>4004 -&gt; 8008</li>
+<li>Gen 2<br>8080, MC6800, Z80, 8085</li>
+<li>Gen 3<br>8086 -&gt; 8088 -&gt; 80286, Z8000, MC68000</li>
+<li>Gen 4<br>Z80000, MC68020, 80386 -&gt; 80486<br>Pentium -&gt; Pentium II -&gt; Pentium III -&gt; Pentium IV</li>
+<li>Gen 5<br>Itanium, MC68060</li>
+</ul>
+<h3 id="存储器"><a href="#存储器" class="headerlink" title="存储器"></a>存储器</h3><p>Transient Program Area (640KB) | System Area (284KB) | Extended memory System (XMS)</p>
+<ul>
+<li>286/386SX: 15MB</li>
+<li>386SL/SLC: 31MB</li>
+<li>386EX: 63MB</li>
+<li>386DX ~ Pentium: 4095MB</li>
+<li>Pentium Pro ~ Core 2: 64GB</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/02/Microcomputer-Principle/" data-id="ck5wb2wix000b7a8qmcwojd26" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-CS-Intro" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/08/04/CS-Intro/" class="article-date">
+  <time datetime="2019-08-04T04:00:00.000Z" itemprop="datePublished">2019-08-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/08/04/CS-Intro/">一份很短的计算机科学介绍</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文针对少年班学院 19 级本科生，概括描述了科大计算机的课程设置，培养目标和一些关于计算机科学的认识。</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>（这节本来想自己写，但是跑到知乎上发现源神把我想说的、会的不会的都说了，所以在下面的小节直接引用了…）</p>
+<p>一些个人理解，仅供参考：</p>
+<ul>
+<li>作为计算机系来说，学「数理方程和热力学」等本身，对除了科学计算和「写物理引擎」之外的方向帮助不是很明显<ul>
+<li>举例：<ul>
+<li>用于高性能计算评分的 HPCG Benchmark，数值方法解 3D 热传导方程</li>
+<li>写/优化物理引擎，搞流体模拟啥的（</li>
+</ul>
+</li>
+<li>当然你会发现，数理方程也不讲数值方法，还是要看点数值计算的课程和教材（躺</li>
+</ul>
+</li>
+<li>作为计算机系同学，应该在课程学习中逐渐掌握一套自己的「问题解决方法」<ul>
+<li>对计算机系统有整体的认识<ul>
+<li>计算机是怎么从逻辑门开始，一步一步打造出你看到的东西的？<ul>
+<li>相关课程：「计算机系统概论(H)」，「模拟与数字电路」，「计算机组成原理」，「操作系统」</li>
+</ul>
+</li>
+<li>出现问题可以定位出现在哪一层，自己应该补充何种知识</li>
+<li>可以从整体上分析设计计算机系统</li>
+</ul>
+</li>
+<li>熟练掌握对应领域的几门程序设计语言<ul>
+<li>或者说，能控制对应层次系统的行为</li>
+</ul>
+</li>
+<li>认识到各种解决方案的缺陷<ul>
+<li>Eg.1. C 的优点？缺点？<ul>
+<li>为什么会有这样的优点和缺点？</li>
+<li>什么最适合成为大学通修的程序设计语言？</li>
+</ul>
+</li>
+<li>Eg.2. Unix / Linux vs Windows？</li>
+<li>Eg.3. 计算机应该<strong>自顶向下</strong>学习还是<strong>自底向上</strong>学习？<ul>
+<li>他们的代表课程（链）？</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>熟练寻找并且阅读文档<ul>
+<li>课上很少提出但是十分有用的一点：<br>提出问题时遵循《提问的智慧》，努力提供完整的复现环境和自己的尝试。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>辩证的看待观点和技术</li>
+</ul>
+<h3 id="「计算机和其它学科的不同」"><a href="#「计算机和其它学科的不同」" class="headerlink" title="「计算机和其它学科的不同」"></a>「计算机和其它学科的不同」</h3><p>下面的文字引用自源神在知乎的答案。</p>
+<p>劝退部分请辩证看待：</p>
+<ul>
+<li>一方面，学校的有些课程在积极作出改变（Eg. 运筹学/体系结构/数电实验），变得更加<del>面向UCB</del>面向实践</li>
+<li>另一方面，在 CS 的工科思维方面，（我个人认为）仍然缺乏更有力的引导</li>
+</ul>
+<hr>
+<ul>
+<li>作者：SIY.Z</li>
+<li>链接：<a href="https://www.zhihu.com/question/44851462/answer/101683147" target="_blank" rel="noopener">https://www.zhihu.com/question/44851462/answer/101683147</a></li>
+<li>来源：知乎</li>
+<li>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</li>
+</ul>
+<hr>
+<p>计算机科学和物理这些学科是不同的。</p>
+<p>学习物理化学时大家应该感受到，越新越前沿的理论难度一般越大，比如历史上的一些理论层次是：重力原理（重力和质量成正比），杠杆原理，标准牛顿力学，电磁学，理论力学，电动力学，狭义相对论&amp;量子力学，广义相对论&amp;量子电动力学，电弱统一理论，标准模型，量子色动力学，超弦理论，M理论等等，层次不断提高，难度不断增加，确实不应该让学生从最先进的入手。</p>
+<p>但是计算机领域有所不同。计算机先驱们的能力超乎想象——靠在纸带上打孔写程序，这在当今都是很难的事情。然而后来随着计算能力的增强，有了各种高级语言，以至于C语言编程变成了全校通修的课程。最近出来的Python语言用于这次引力波探测数据分析，但是科大学生基本上几周就能学个大概，可见难度并不大。另外最著名的几个例子是CISC和RISC指令集架构。Intel的指令集体系是CISC的，非常复杂。但是后来发现在统计学上简单的RISC更有利于性能调优，于是有了ARM等架构，并且逼得Intel在内部实现了RISC微码来提升自己的性能。现在计算机教学上也是从RISC入手。</p>
+<p>计算机学科之所以能够这么做，是因为计算机是少有的人造的但是非常成功的东西。由于人造特性，人们可以随时根据计算力和需求变革思想－－计算机领域几乎能够抽象和虚拟任何东西，制定任何规则（除了request和girlfriend），而自然科学由于受到定律和实验条件的限制不能这么灵活，这也是为什么计算机相关领域几乎天天创新，基本上一个产品发布会就有一个创新，并且这些创新很快改变了所有人的生活，不到10年而已。可见计算机学院学生接触前沿是应该的，也是可行的，并且有助于创新。可惜我们大多数课程依然是大纲形式或者教条形式——自出现就很少变过。</p>
+<h3 id="「极端还原论」"><a href="#「极端还原论」" class="headerlink" title="「极端还原论」"></a>「极端还原论」</h3><p>上面的一些部分有不严密之处，这里补充论证一下。针对的问题是交叉学科。目前学校交叉学科的意思大约是和物理交叉。这个我曾经质疑过，也问过某人，得到的回答大意是“物理是自然科学的基础，所以应该从物理着手，这样基础强了后面都不是问题。” 我不否认数学基础强了可以增强能力－－因为数学直接作用于学科；但是物理基础强了就一定使得上层建筑比别人好这点我是反对的。这个是典型的（极端）还原论思想。</p>
+<p>举个例子，比如大家做过PPT对吧？但是PPT是什么原理呢？它是一个程序，程序响应用户的操作，调用操作系统功能完成任务，操作系统在硬件体系之上，硬件体系又受数字电路支持，数字电路又受工艺支持，工艺又有它的物理原理，可能最终要扯到量子力学。按照（相对极端的）还原论思想，你不懂操作系统，不懂硬件体系结构，不懂数字电路，不懂固件工艺，不懂量子力学，PPT技术是不能有大的突破的。所以说要做PPT前要先学CS的整套课程，然后再学化学工艺，然后再学整套物理，这样制作PPT才后劲足。然而我大多都学过，为什么PPT却做不过一个都不知道自己用的是 Windows7 还是 Windows 8 的美工师啊？</p>
+<h3 id="「学习计算机的目标」"><a href="#「学习计算机的目标」" class="headerlink" title="「学习计算机的目标」"></a>「学习计算机的目标」</h3><p>计算机学院学习多少门课程倒不是最重要的，像交大 ACM 班那位没学过数字逻辑的同学，经过两个月的适应，就在我们的 FPGA 研究项目里做出了重要贡献。重要的是养成一种计算机的思维方式，也就是如何用计算机解决一个实际问题。包括如何用搜索引擎，掌握一门称手的编程语言，出了 bug 之后如何有条不紊的找出 root cause。</p>
+<p>现在科大的课程对“计算机思维”的培养还很欠缺，有计算机思维的同学们多数是在大学之前就已经有不错的基础了，也就是大学本身没有教会更多的人。比如说有一些数据要处理，有计算机思维的人会自然想到先去搜一下有没有现成的工具，不行的话就自己写个脚本。没有计算机思维的人，宁可一个个手工处理。他们也知道脚本更快，但是他们对写程序解决这个问题没有信心，写的过程中出了问题也没有信心解决，所以就会逃避写程序。</p>
+<p>计算机专业毕业的一个标志，应该是能用而且愿意用计算机来解决重复性、程序性的问题。计算机的各种专业课，在讲解计算机基础理论的时候应当紧密结合生活实际，让学生真正用上这些知识，比如处理实验数据，识别验证码，破解软件，刷课，建个人主页。具体的技术倒是次要的，主要是要建立起查资料、写程序、调 bug 的习惯，对这个流程不感到恐惧。</p>
+<h3 id="和其它院-系的不同"><a href="#和其它院-系的不同" class="headerlink" title="和其它院/系的不同"></a>和其它院/系的不同</h3><p>首先，计算机学院只有一个系，（011）「计算机科学与技术系」。</p>
+<h4 id="计院-vs-信院"><a href="#计院-vs-信院" class="headerlink" title="计院 vs 信院"></a>计院 vs 信院</h4><blockquote>
+<p><del>下面关于信院的专业解读是我看着课表瞎写的</del>，<strong>仅供参考</strong></p>
+</blockquote>
+<p>信院一共有「电子信息工程」、「自动化」、「信息安全」、「电子科学与技术」几个系。</p>
+<ul>
+<li>电子信息工程：通信，etc</li>
+<li>电子科学与技术：电路设计（比如 VLSI）</li>
+<li>自动化：数字控制/机器人/系统工程</li>
+<li>信息安全：<ul>
+<li>多学一点密码学，软件安全设计和评估测试的内容</li>
+<li>少学一点体系结构、组成原理的内容<ul>
+<li>和计院各种方向课的东西（见下文）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="计院-vs-其它院"><a href="#计院-vs-其它院" class="headerlink" title="计院 vs 其它院"></a>计院 vs 其它院</h4><p><del>不会有人搞不清楚计院和其它院的区别吧</del></p>
+<p><del>如果有，请问 cwk</del></p>
+<h2 id="科大的计算机课程设置"><a href="#科大的计算机课程设置" class="headerlink" title="科大的计算机课程设置"></a>科大的计算机课程设置</h2><p>请参见<a href="/~jauntyliu/public/documents/CS_Course_2017.pdf">从教务系统导出的 2017 级培养方案的 PDF</a>。</p>
+<p>2019 级的培养计划可能与 2017 级略有不同（比如，我们没有上过「<em>计算机导论</em>」）</p>
+<p>所以，以下信息仅供参考，具体情况请以教学秘书和教务处的说法为准。</p>
+<h3 id="计院都学什么-Overview"><a href="#计院都学什么-Overview" class="headerlink" title="计院都学什么 - Overview"></a>计院都学什么 - Overview</h3><p>没上过的基本上是按我个人理解写的，233</p>
+<ul>
+<li>（大一）编程语言：C 的基本语法，用 C 设计控制台程序</li>
+<li>（大二上、下）图论 &amp; 数理逻辑：各种图的性质和定义证明，一阶逻辑和谓词演算</li>
+<li>（大二上）数据结构：在计算机中常用的数据组织方法（链表、队列、栈、树、图）、简单算法（排序、图/树/表遍历、Huffman 树、查找树，etc）</li>
+<li>（大二上）模拟与数字电路：帮你了解计算机系统的数字电路基础（与或非门，组合和时序逻辑电路、状态机、RAM &amp; ROM；模电的 OpAmp 和 BJT 放大电路）</li>
+<li>（大二下）计算机组成原理：与或非门是怎么组成加法器、（时序）乘/除法器的；CPU 是如何从基本的门构建的（状态机=&gt;CPU Cycle、ALU，RegFile，etc.）</li>
+<li>（大二上、下）数字电路 &amp; 组成原理实验：利用 FPGA（在线可编程逻辑门阵列）实现 状态机/乘法器/CPU 等</li>
+<li>（大二下）运筹学：线性规划、排队论、0-1 规划、指派问题，etc</li>
+<li>（大二下）操作系统：操作系统的原理、意义，设计中要考虑的部分；Unix System Call，etc</li>
+<li>（大三上）计算机网络：计算机网络的构成，常见协议的实现，etc</li>
+<li>（大三上）编译原理：如何实现编译器（词法、语法分析、中间代码生成和优化、指令和寄存器分配、一些语言特性的实现）</li>
+<li>（大三上）算法基础：计算机常用算法（复杂度、排序、查找树、二叉堆、贪心算法、DP、字符串匹配，etc）</li>
+<li>（大三上）计算机体系结构：流水线、Cache &amp; Cache 一致性、分支预测，etc</li>
+<li>（大三下）数据库：SQL &amp; 范式 &amp; 架构（？）（我猜还会有数据库的优化吧）</li>
+<li>（大三上）微机原理：听说「科普+汇编语言+简单数字电路」，大概会涉及比如 x86 GDT 啥的</li>
+<li>（大三下）人工智能基础：听说「比较经典传统的人工智能内容（搜索，逻辑，概率论，还有贝叶斯方法，决策树，回归，SVM等一些明显能找到数学上解释的方法）」</li>
+</ul>
+<p>方向课（大三/大四），<em>以下为听说的</em>，详情请参阅评课社区：</p>
+<ul>
+<li>Web 信息处理与应用：聚类/分词/…</li>
+<li>嵌入式系统设计方法：ARM 架构 &amp; 汇编</li>
+<li>并行计算：MPI/OpenMP/… &amp; 常用的并行计算算法</li>
+<li>信息安全导论：<del>听着就像文科课程</del>可能讲一点密码学/网络安全协议啥的？</li>
+<li>网络算法学：DPDK &amp; extra stuff</li>
+<li>程序设计语言基础</li>
+<li>系统建模与仿真</li>
+<li>计算机图形与图像</li>
+<li>网络系统实验</li>
+<li>高性能处理器体系结构</li>
+</ul>
+<p>Extra（H 课）：</p>
+<ul>
+<li>计算机系统概论(H)：自底向上的构建一个小计算机。具体请参见<a href="https://icourse.club/course/6242/#review-12751" target="_blank" rel="noopener">我在评课社区的评论</a></li>
+</ul>
+<h3 id="第一年的不同"><a href="#第一年的不同" class="headerlink" title="第一年的不同"></a>第一年的不同</h3><p>在大一上和大一下，计院培养计划和少院的不同之处如下所示：</p>
+<ul>
+<li><code>单变量 &amp; 多变量</code> vs <code>数分 B1 &amp; B2</code><ul>
+<li>这个不要紧</li>
+</ul>
+</li>
+<li><code>力学与热学 &amp; 电磁学C</code> vs <code>力学 热学 电磁学A</code><ul>
+<li>这个也不要紧（高级替代）</li>
+</ul>
+</li>
+<li><code>程序设计 I</code> vs <code>计算机程序设计</code><ul>
+<li><code>程序设计 I</code> 可以被 <code>计算机程序设计</code> 高级替代</li>
+<li>事实上，<code>程序设计 I</code> 较 <code>计算机程序设计</code> 少讲授了链表相关内容，而是将其放到 <code>程序设计 II</code> 中<ul>
+<li>（2017 级情况）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>程序设计 II</code>（大一下）<ul>
+<li>讲一些递归、DP、表达式求值（NPL）、实数加减法的内容<ul>
+<li>吐槽：实数加减法我们竟然是用字符串做的…浪费了多少硬件资源</li>
+</ul>
+</li>
+<li>在有些暑假（暑期小学期）开，但是有些小学期就不开（比如这个暑期）</li>
+</ul>
+</li>
+<li><code>代数结构</code>（大一下）<ul>
+<li>讲一些基本的群、环、域的知识</li>
+<li>做密码之类的比较有用，其它的时候不是很直接相关</li>
+<li>据说：「（超）简化版近世代数」</li>
+</ul>
+</li>
+</ul>
+<p><em>据同学说，教秘说过「只要第一年完整按少院课程修读，程序设计 II 和代数结构就不用修了」</em>。</p>
+<p>但是，请同学们开学自己验证此事的真伪，以及政策有无变化。<del>（我发邮件教秘没理我）</del></p>
+<h3 id="计院英才班？"><a href="#计院英才班？" class="headerlink" title="计院英才班？"></a>计院英才班？</h3><p>就是都学 H 课而已啦。一共有三门 H 课：</p>
+<ul>
+<li>计算机系统概论(H)（评课社区链接：<a href="https://icourse.club/course/6242/" target="_blank" rel="noopener">点我</a>）</li>
+<li>操作系统原理与设计(H)（评课社区链接：<a href="https://icourse.club/course/2681/" target="_blank" rel="noopener">点我</a>）</li>
+<li>编译原理和技术(H)（评课社区链接：<a href="https://icourse.club/course/5785/" target="_blank" rel="noopener">点我</a>）</li>
+</ul>
+<p>然后诸如拿钱之类的福利应该都差不多吧…（不是英才班的菜鸡路过）</p>
+<h3 id="除了上课，还能搞点啥"><a href="#除了上课，还能搞点啥" class="headerlink" title="除了上课，还能搞点啥"></a>除了上课，还能搞点啥</h3><ul>
+<li>去实验室找课题做</li>
+<li>Be indie developer / join open source community</li>
+<li>比赛（iGEM / ACM / Robogame…）</li>
+<li>实习</li>
+<li>… （想干啥干啥233）</li>
+<li>学物理（？）</li>
+</ul>
+<h2 id="Extra-Q-amp-A"><a href="#Extra-Q-amp-A" class="headerlink" title="Extra / Q&amp;A"></a>Extra / Q&amp;A</h2><h3 id="计院本科之后都干什么"><a href="#计院本科之后都干什么" class="headerlink" title="计院本科之后都干什么"></a>计院本科之后都干什么</h3><ul>
+<li>去工作<ul>
+<li>这个抱歉没有太多经历和经验分享，可能直接去知乎找更合适一些</li>
+</ul>
+</li>
+<li>读研（出国/国内）</li>
+</ul>
+<p>计算机读研的方向（包括但不限于）：</p>
+<ul>
+<li>机器学习</li>
+<li>计算机图形学</li>
+<li>体系结构</li>
+<li>高性能计算</li>
+<li>网络</li>
+<li>算法</li>
+<li>人机交互/机器人</li>
+<li>……</li>
+</ul>
+<p>建议有相应打算的早进实验室（比如大二），自学一点然后去找对应的实验室老师聊聊，去组里体验一下研究生们都在干啥。</p>
+<h3 id="CS-应届生平均工资"><a href="#CS-应届生平均工资" class="headerlink" title="CS 应届生平均工资"></a>CS 应届生平均工资</h3><p>我并不比知乎多知道多少…</p>
+<p>可以直接知乎「计算机 平均工资」就好了。</p>
+<h3 id="科大-CS-国外申请情况"><a href="#科大-CS-国外申请情况" class="headerlink" title="科大 CS 国外申请情况"></a>科大 CS 国外申请情况</h3><p>请参考 <a href="https://adrain.ustclug.org/" target="_blank" rel="noopener">https://adrain.ustclug.org/</a> 中关于 CS 的部分。</p>
+<p>同时，CS 的飞跃手册也可以在上面下载。</p>
+<p>需要注意的是，这个页面可能要求用科大的统一用户认证系统登录。</p>
+<p>如果还没有统一用户认证的帐号的话，各位亲稍安毋躁，到开学就可以登录啦。</p>
+<h3 id="什么编程语言最好？"><a href="#什么编程语言最好？" class="headerlink" title="什么编程语言最好？"></a>什么编程语言最好？</h3><p><del>出门左转知乎不谢～</del></p>
+<p>我知道，大家可能会问在大学阶段熟练掌握什么比较重要——这个因人而异。</p>
+<p>在计院的最低要求：</p>
+<ul>
+<li>C</li>
+<li>Verilog</li>
+</ul>
+<p>（要不然完不成课程实验的）</p>
+<hr>
+<p>在这个基础上，我建议学一门 OOP 语言和 FP 语言。</p>
+<p>（做开发的话，肯定是要针对性的学语言和框架）</p>
+<ul>
+<li>虽然此条还处于 TODO 态（ </li>
+</ul>
+<h3 id="其它建议？"><a href="#其它建议？" class="headerlink" title="其它建议？"></a>其它建议？</h3><ul>
+<li>都应该学一下 Linux 的基本使用，如何配置 toolchain 等<ul>
+<li>至少操作系统课要用</li>
+<li>之后如果做网络和系统也是跑不了用 Linux 的</li>
+<li>Also: 有问题可以去 USTC Linux User Group 求助</li>
+</ul>
+</li>
+<li>没了，想到再添加…</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/08/04/CS-Intro/" data-id="ck5wb2wib00067a8qoye8tw9i" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Jaunty Liu (Libre Liu)<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/flag" class="mobile-nav-link">Flag</a>
+  
+    <a href="/me" class="mobile-nav-link">Me</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"]]}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+</body>
+</html>

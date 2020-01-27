@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+  
+
+  
+  <title>微机原理与系统 笔记 | Nameless Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="http://staff.ustc.edu.cn/~wjluo/mcps 微处理器与计算机导论课程内容 微处理器程序设计模型和系统结构 Real &amp;amp; protected mode   x86 assembly programming x86 Pentium Structure and Pins   Basic interface chips Intel 8255 Periphical Co">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微机原理与系统 笔记">
+<meta property="og:url" content="http://libreliu.info/2019/09/02/Microcomputer-Principle/index.html">
+<meta property="og:site_name" content="Nameless Blog">
+<meta property="og:description" content="http://staff.ustc.edu.cn/~wjluo/mcps 微处理器与计算机导论课程内容 微处理器程序设计模型和系统结构 Real &amp;amp; protected mode   x86 assembly programming x86 Pentium Structure and Pins   Basic interface chips Intel 8255 Periphical Co">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2020-01-26T12:53:36.384Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="微机原理与系统 笔记">
+<meta name="twitter:description" content="http://staff.ustc.edu.cn/~wjluo/mcps 微处理器与计算机导论课程内容 微处理器程序设计模型和系统结构 Real &amp;amp; protected mode   x86 assembly programming x86 Pentium Structure and Pins   Basic interface chips Intel 8255 Periphical Co">
+  
+    <link rel="alternate" href="/atom.xml" title="Nameless Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+</html>
+<body>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Nameless Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/flag">Flag</a>
+        
+          <a class="main-nav-link" href="/me">Me</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://libreliu.info"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Microcomputer-Principle" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/02/Microcomputer-Principle/" class="article-date">
+  <time datetime="2019-09-02T01:43:00.000Z" itemprop="datePublished">2019-09-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      微机原理与系统 笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="http://staff.ustc.edu.cn/~wjluo/mcps" target="_blank" rel="noopener">http://staff.ustc.edu.cn/~wjluo/mcps</a></p>
+<h2 id="微处理器与计算机导论"><a href="#微处理器与计算机导论" class="headerlink" title="微处理器与计算机导论"></a>微处理器与计算机导论</h2><h3 id="课程内容"><a href="#课程内容" class="headerlink" title="课程内容"></a>课程内容</h3><ul>
+<li>微处理器程序设计模型和系统结构<ul>
+<li>Real &amp; protected mode</li>
+</ul>
+</li>
+<li>x86 assembly programming</li>
+<li>x86 Pentium<ul>
+<li>Structure and Pins</li>
+</ul>
+</li>
+<li>Basic interface chips<ul>
+<li>Intel 8255 Periphical Controller</li>
+</ul>
+</li>
+<li>MMX, SIMD, Math co-processor</li>
+<li>Bus technology<ul>
+<li>ISA PCI LPT COM USB AGP</li>
+</ul>
+</li>
+<li>Interrupt and DMA<ul>
+<li>8259A &amp; 8237</li>
+</ul>
+</li>
+</ul>
+<h4 id="教材"><a href="#教材" class="headerlink" title="教材"></a>教材</h4><p>Barry B. Brey, Intel Microprocessors (8th Edition)</p>
+<h4 id="参考书"><a href="#参考书" class="headerlink" title="参考书"></a>参考书</h4><ul>
+<li>「微型计算机技术（第四版）」</li>
+<li>「微机原理，汇编语言与接口技术」</li>
+<li>「微型计算机原理与接口技术」</li>
+</ul>
+<h4 id="考核"><a href="#考核" class="headerlink" title="考核"></a>考核</h4><ul>
+<li>期末考试（开卷）：65%</li>
+<li>作业（+课堂练习）：15%</li>
+<li>实验：20%</li>
+</ul>
+<p>教师：罗文坚（<a href="mailto:wjluo@ustc.edu.cn" target="_blank" rel="noopener">wjluo@ustc.edu.cn</a>）</p>
+<h3 id="微处理器的发展"><a href="#微处理器的发展" class="headerlink" title="微处理器的发展"></a>微处理器的发展</h3><ul>
+<li>Gen 1<br>4004 -&gt; 8008</li>
+<li>Gen 2<br>8080, MC6800, Z80, 8085</li>
+<li>Gen 3<br>8086 -&gt; 8088 -&gt; 80286, Z8000, MC68000</li>
+<li>Gen 4<br>Z80000, MC68020, 80386 -&gt; 80486<br>Pentium -&gt; Pentium II -&gt; Pentium III -&gt; Pentium IV</li>
+<li>Gen 5<br>Itanium, MC68060</li>
+</ul>
+<h3 id="存储器"><a href="#存储器" class="headerlink" title="存储器"></a>存储器</h3><p>Transient Program Area (640KB) | System Area (284KB) | Extended memory System (XMS)</p>
+<ul>
+<li>286/386SX: 15MB</li>
+<li>386SL/SLC: 31MB</li>
+<li>386EX: 63MB</li>
+<li>386DX ~ Pentium: 4095MB</li>
+<li>Pentium Pro ~ Core 2: 64GB</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/02/Microcomputer-Principle/" data-id="ck5wb2wix000b7a8qmcwojd26" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/09/06/Intro-To-Algorithm/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          算法导论 笔记
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/08/04/CS-Intro/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">一份很短的计算机科学介绍</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Jaunty Liu (Libre Liu)<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/flag" class="mobile-nav-link">Flag</a>
+  
+    <a href="/me" class="mobile-nav-link">Me</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>

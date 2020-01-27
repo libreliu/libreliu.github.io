@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+  
+
+  
+  <title>自然语言处理 笔记 | Nameless Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="第二次课形态学/词素/简单的 Stemmer 来判断文章相关性 Minimum Editing Distance:  基本操作： 插入 删除 替换   算法：DP-Based (O(nm) + O(n+m)) 和暴力 Iterate 比有什么优势？    Weighted Edit Distance  参考 Confusion matrix for spelling errors    Langu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自然语言处理 笔记">
+<meta property="og:url" content="http://libreliu.info/2019/09/10/Natural-Language-Processing/index.html">
+<meta property="og:site_name" content="Nameless Blog">
+<meta property="og:description" content="第二次课形态学/词素/简单的 Stemmer 来判断文章相关性 Minimum Editing Distance:  基本操作： 插入 删除 替换   算法：DP-Based (O(nm) + O(n+m)) 和暴力 Iterate 比有什么优势？    Weighted Edit Distance  参考 Confusion matrix for spelling errors    Langu">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2020-01-26T12:54:37.627Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自然语言处理 笔记">
+<meta name="twitter:description" content="第二次课形态学/词素/简单的 Stemmer 来判断文章相关性 Minimum Editing Distance:  基本操作： 插入 删除 替换   算法：DP-Based (O(nm) + O(n+m)) 和暴力 Iterate 比有什么优势？    Weighted Edit Distance  参考 Confusion matrix for spelling errors    Langu">
+  
+    <link rel="alternate" href="/atom.xml" title="Nameless Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+</html>
+<body>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Nameless Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/flag">Flag</a>
+        
+          <a class="main-nav-link" href="/me">Me</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://libreliu.info"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Natural-Language-Processing" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/09/10/Natural-Language-Processing/" class="article-date">
+  <time datetime="2019-09-10T07:57:00.000Z" itemprop="datePublished">2019-09-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      自然语言处理 笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="第二次课"><a href="#第二次课" class="headerlink" title="第二次课"></a>第二次课</h2><p>形态学/词素/简单的 Stemmer 来判断文章相关性</p>
+<p>Minimum Editing Distance:</p>
+<ul>
+<li>基本操作：<ul>
+<li>插入</li>
+<li>删除</li>
+<li>替换</li>
+</ul>
+</li>
+<li>算法：DP-Based (O(nm) + O(n+m))<ul>
+<li>和暴力 Iterate 比有什么优势？</li>
+</ul>
+</li>
+</ul>
+<p>Weighted Edit Distance</p>
+<ul>
+<li>参考<ul>
+<li>Confusion matrix for spelling errors</li>
+</ul>
+</li>
+</ul>
+<p>Language Modeling: $ P(\omega_n|\omega_1, \omega_2, \omega_3, \omega_4…) $，$ \omega $ 是词素 =&gt; 就是猜语言的组合规律</p>
+<ul>
+<li>方法<ul>
+<li>最菜的： P(too|river is wide) = Count(river is wide too) / Count(river is wide)<ul>
+<li>大数据集 / 用 “” 在 Google 上面搜</li>
+<li>（一种近似）先收集到 Bigram （即 $ P(\omega_i | \omega_j) 的值），再用链式法则合成整个的值<ul>
+<li>比如 $ P(12|3) = P(1|2) * P(2|3) $</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>用途<ul>
+<li>The Shannon Visualization Method:<ul>
+<li>Generate random sentences by chances in bigram</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/09/10/Natural-Language-Processing/" data-id="ck5wb2wj0000c7a8q3ihkvfjr" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/09/12/Embedded-System-Design/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          嵌入式系统设计方法 笔记
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/09/10/Quantum-Computing-Frontier/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">量子软件前沿 笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Jaunty Liu (Libre Liu)<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/flag" class="mobile-nav-link">Flag</a>
+  
+    <a href="/me" class="mobile-nav-link">Me</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"]]}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+</body>
+</html>

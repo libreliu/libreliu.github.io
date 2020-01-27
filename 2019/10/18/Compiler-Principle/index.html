@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+  
+
+  
+  <title>编译原理 笔记 | Nameless Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="为了暑假好好学习选昱姐的课不会挂的太惨，提前过一遍昱姐的 ppt，和《编译器设计》（第二版）的书籍。内容会交叉进行。  UPDATE: 把期中复习的东西也扔了上来。 UPDATE II: 把期末复习的东西也扔了上来。  词法分析FA为了形式化识别器，引入有限自动机（FA）。有限自动机是一个五元组 $ (S, \Sigma, \delta, s_0, S_A) $：  $ S $ 是识别器有限状态集">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编译原理 笔记">
+<meta property="og:url" content="http://libreliu.info/2019/10/18/Compiler-Principle/index.html">
+<meta property="og:site_name" content="Nameless Blog">
+<meta property="og:description" content="为了暑假好好学习选昱姐的课不会挂的太惨，提前过一遍昱姐的 ppt，和《编译器设计》（第二版）的书籍。内容会交叉进行。  UPDATE: 把期中复习的东西也扔了上来。 UPDATE II: 把期末复习的东西也扔了上来。  词法分析FA为了形式化识别器，引入有限自动机（FA）。有限自动机是一个五元组 $ (S, \Sigma, \delta, s_0, S_A) $：  $ S $ 是识别器有限状态集">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://libreliu.info/images/1571490282184.png">
+<meta property="og:image" content="http://libreliu.info/images/1571490264194.png">
+<meta property="og:updated_time" content="2020-01-26T12:52:54.194Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="编译原理 笔记">
+<meta name="twitter:description" content="为了暑假好好学习选昱姐的课不会挂的太惨，提前过一遍昱姐的 ppt，和《编译器设计》（第二版）的书籍。内容会交叉进行。  UPDATE: 把期中复习的东西也扔了上来。 UPDATE II: 把期末复习的东西也扔了上来。  词法分析FA为了形式化识别器，引入有限自动机（FA）。有限自动机是一个五元组 $ (S, \Sigma, \delta, s_0, S_A) $：  $ S $ 是识别器有限状态集">
+<meta name="twitter:image" content="http://libreliu.info/images/1571490282184.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Nameless Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+</html>
+<body>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Nameless Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/flag">Flag</a>
+        
+          <a class="main-nav-link" href="/me">Me</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://libreliu.info"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Compiler-Principle" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/18/Compiler-Principle/" class="article-date">
+  <time datetime="2019-10-18T11:51:00.000Z" itemprop="datePublished">2019-10-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/课程笔记/">课程笔记</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      编译原理 笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>为了<del>暑假好好学习</del>选昱姐的课不会挂的太惨，提前过一遍昱姐的 ppt，和《编译器设计》（第二版）的书籍。内容会交叉进行。</p>
+<blockquote>
+<p>UPDATE: 把期中复习的东西也扔了上来。</p>
+<p>UPDATE II: 把期末复习的东西也扔了上来。</p>
+</blockquote>
+<h2 id="词法分析"><a href="#词法分析" class="headerlink" title="词法分析"></a>词法分析</h2><h3 id="FA"><a href="#FA" class="headerlink" title="FA"></a>FA</h3><p>为了形式化识别器，引入<em>有限自动机（FA）</em>。有限自动机是一个五元组 $ (S, \Sigma, \delta, s_0, S_A) $：</p>
+<ul>
+<li>$ S $ 是识别器<em>有限</em>状态集，以及一个错误状态 $s_e$。</li>
+<li>$ \Sigma $ 是识别器用的有限字母表。</li>
+<li>$ \delta(s,c) $ 是识别器的转移函数，对每个 $ s \in S , c \in \Sigma $ 对应一个状态。一般也这么表示：$ s_i \xrightarrow{c}{\delta (s_i, c)} $。</li>
+<li>$ s_0 $ 是指定的起始状态。</li>
+<li>$ S_A \in S $ 是接受状态的集合，表示为双层圆圈。</li>
+</ul>
+<p>复杂性：</p>
+<ul>
+<li>注意到 FA 的运行开销只与输入长度成正比（因为就是简单的状态机嘛），而与生成 FA 的 RE 长度或者复杂性没有关系。</li>
+</ul>
+<h3 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h3><p>RE 描述了一个定义在某个字母表 $ \Sigma $ 上的字符串集合。一个 RE 由三个基本操作构成：</p>
+<ul>
+<li>选择：$ R | S $</li>
+<li>连接：$ RS $</li>
+<li>闭包（Kleene closure）： $ R^* $ ，R 出现零或无穷次<ul>
+<li>相当于 $ \epsilon | R | RR | RRR | RRRR $ ….（当然，这种写法显然不是 RE）</li>
+<li>($ \epsilon $ 表示<em>仅包含空串的集合</em>)</li>
+<li>为了方便：<ul>
+<li><em>有限闭包</em> $ R_i $ 为 R 出现<em>一次</em>到 i 次形成的闭包：<ul>
+<li>例如 $ R^4 $ 也可以表示为 $ R | RR | RRR | RRRR $</li>
+</ul>
+</li>
+<li><em>正闭包</em>：$ R_+ $ 为 R 出现<em>一次</em>到无穷次形成的闭包</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>优先级：括号&gt;闭包&gt;连接&gt;选择</li>
+</ul>
+<p>用上面定义和数理逻辑的东西，可以定义全体 RE 在给定字母表 $ \Sigma $ 上构成的集合。</p>
+<p>任何可以利用 RE 定义的语言（即，对于给定语言，可以找出一个 RE 使得语言的所有可能字串都恰好是 RE 可表示的字串）组成的语言集合称为<em>正则语言</em>。</p>
+<p>RE 的闭包性质：$ RE op RE $ 的结果仍然是 RE（这里 op 指的是前面那些操作）</p>
+<ul>
+<li>这样就可以很方便的证明（&amp;寻找算法使得）对于任意 RE 都有 FA 与之对应了</li>
+</ul>
+<hr>
+<p>JauntyLiu 想出的简单算法：</p>
+<p>（这里需要 RE 的分层性质，仿照数理逻辑即可给出）</p>
+<ul>
+<li>对于任意 $ p \in RE $，它必为下面几种情况之一：<ol>
+<li>存在 $ q,r \in RE $，使得 $ p = qr $</li>
+<li>存在 $ q,r \in RE $，使得 $ p = q | r $</li>
+<li>存在 $ q \in RE $，使得 $ p = q* $<ul>
+<li>正闭包可以写成 $ qq* $，所以不需要单独讨论</li>
+<li>有限闭包更显然</li>
+</ul>
+</li>
+<li>p 为一个字母的字母串</li>
+</ol>
+</li>
+</ul>
+<p>4 的构造显然。</p>
+<p>下面讨论 1,2,3 的构造。假设 q,r 均有了对应的 FA。</p>
+<p>对于 1，FA 构造如下（比较显然）：</p>
+<ul>
+<li>取 q 的所有 accept state （$ S_A $），分别「接上」r 的 i nitial state （$ S_0 $）就好了<ul>
+<li>严谨证明的话，可以写成 FA 的语言</li>
+</ul>
+</li>
+</ul>
+<p>对于 2，FA 构造有些难度。我们需要知道「匹配到什么程度才能把 q 和 r 分开」。比如 $ abc $ 和 $ abd $，就要匹配到第三个才知道到底选 q 还是选 r。</p>
+<ul>
+<li>如果没有闭包，那这个取交集的操作肯定是有限的；那就非常好办。</li>
+<li>如果有闭包，则不能保证？看书吧</li>
+</ul>
+<hr>
+<p>书上的做法：<code>RE ==(Thompson)==&gt; NFA ==(子集构造法)==&gt; DFA ==(Hopcraft)==&gt; 最小 DFA</code></p>
+<p>子集构造法：用 $ \epsilon -closure $ 找状态的等价集合（「配置」），然后遍历。因为总配置数是有限的，所以一定可以停止。</p>
+<p>Hopcraft 算法：先分类，然后迭代，找出类中不等价的元素，切分。重复，知道遍历所有类均找不出不等价的元素，这样就构造了一组等价类（状态）。</p>
+<h3 id="正规式的不足"><a href="#正规式的不足" class="headerlink" title="正规式的不足"></a>正规式的不足</h3><ul>
+<li>无法表述配对或者嵌套的结构，比如 <code>S = {wcw | w 是 a 和 b 的串}</code>，或者 <code>L = {a^n b^n | n &gt;= 1}</code><ul>
+<li>如果存在相应的 RE，则存在相应的 DFA，其对于每个吃进去的 w 状态应该不一样；DFA 总状态有限，而 w 可以是无限的（更严谨的写法可以设 DFA 的状态数为 n，考察读入长度为 n 的 w 的情形）</li>
+</ul>
+</li>
+</ul>
+<h2 id="语法分析"><a href="#语法分析" class="headerlink" title="语法分析"></a>语法分析</h2><h3 id="基本记号"><a href="#基本记号" class="headerlink" title="基本记号"></a>基本记号</h3><ul>
+<li><p>CFG：四元组 $ (V_T, V_N, S, P) $ ，即 Terminal, Non-terminal, Start Symbol, Production</p>
+</li>
+<li><p>推导：一步 $ S \Rightarrow \alpha $， 0 步或多步 $ S  \Rightarrow { }^{*}\alpha $ ，1 步或多步 $ S \Rightarrow { }^{+}\alpha $</p>
+</li>
+<li><p>语言：从开始符号 $ S $ 出发,经 $ \Rightarrow { }^{<em>}\alpha $ 推导所能到达的*所有仅由终结符组成的串</em></p>
+</li>
+<li><p>句型：$S  \Rightarrow { }^{*}\alpha$ ,S是开始符号，$ \alpha $ 是由终结符和/或非终结符组成的串,则 $ \alpha $ 是文法G的句型</p>
+</li>
+<li><p>句子：仅由终结符组成的句型</p>
+</li>
+<li><p>最左推导/最右推导：每部代换最左/最右的终结符</p>
+</li>
+<li><p>二义文法：一个句子有 n 个最左/最右推导</p>
+</li>
+</ul>
+<h3 id="二义文法的消除"><a href="#二义文法的消除" class="headerlink" title="二义文法的消除"></a>二义文法的消除</h3><h4 id="if-then-else-的例子"><a href="#if-then-else-的例子" class="headerlink" title="if-then-else 的例子"></a>if-then-else 的例子</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stmt: &apos;if&apos; expr &apos;then&apos; stmt else stmt | &apos;if&apos; expr &apos;then&apos; stmt;</span><br></pre></td></tr></table></figure>
+
+<p>这个文法是二义的，例子如下（「悬空 ELSE」问题）：</p>
+<p><code>if x &gt;= 1 then if a == 1 then do_sth() else foo()</code> </p>
+<p>这个时候一般要求 ELSE 跟那个比较近的 IF。</p>
+<p>如何考虑这个问题？可以把 <code>statement</code> 分成 <code>open_statement</code> 和 <code>closed_statement</code> （或者 <code>matched</code> 和 <code>unmatched</code> ）：</p>
+<ul>
+<li><code>open_statement</code> 意味着可能后边再接 <code>else</code> </li>
+<li><code>closed_statement</code> 意味着后边不可能再接 <code>else</code></li>
+</ul>
+<p>所以现在整个事情就像这样：（如果只有 if）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">statement: open_statement</span><br><span class="line">         | closed_statement</span><br><span class="line">         ;</span><br><span class="line">         </span><br><span class="line">open_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; open_statement</span><br><span class="line">              | &apos;if&apos; expression &apos;then&apos; statement             // 这里 open 和 closed 都会使得整个是 open</span><br><span class="line">              ;</span><br><span class="line"></span><br><span class="line">closed_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; closed_statement</span><br><span class="line">                ;</span><br></pre></td></tr></table></figure>
+
+<p>然而语言里面不可能只有 if （摔），所以考虑把其它结构加进去（比如 <code>&#39;while&#39; expression statement</code>  和 <code>expression_statement</code> 之类的），只要依次考虑它们对 open 和 close 的影响就可以了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">statement: open_statement</span><br><span class="line">         | closed_statement</span><br><span class="line">         ;</span><br><span class="line">         </span><br><span class="line">open_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; open_statement</span><br><span class="line">              | &apos;if&apos; expression &apos;then&apos; statement             // 这里 open 和 closed 都会使得整个是 open</span><br><span class="line">              | &apos;while&apos; expression statement                 // 理由同上</span><br><span class="line">              ;</span><br><span class="line"></span><br><span class="line">// 千万不要让新加进去的既可以推导到 open 又可以推导到 closed，只有不能是 closed 的才要加到 open</span><br><span class="line">closed_statement: &apos;if&apos; expression &apos;then&apos; closed_statement &apos;else&apos; closed_statement</span><br><span class="line">                | &apos;while&apos; expression closed_statement</span><br><span class="line">                | expression_statement // and others</span><br><span class="line">                ;</span><br></pre></td></tr></table></figure>
+
+<h3 id="左递归的消除"><a href="#左递归的消除" class="headerlink" title="左递归的消除"></a>左递归的消除</h3><h4 id="直接左递归"><a href="#直接左递归" class="headerlink" title="直接左递归"></a>直接左递归</h4><p>$ A \rightarrow A a | b $ 这种，拿出来一个，剩下的组成另一个符号：</p>
+<p>$ A \rightarrow b A^\prime $</p>
+<p>$ A^\prime \rightarrow a A^\prime | \epsilon $</p>
+<h4 id="间接左递归"><a href="#间接左递归" class="headerlink" title="间接左递归"></a>间接左递归</h4><p>$ A \rightarrow B, B \rightarrow A a$ 这种，带入变成直接左递归，再消除之</p>
+<p>机械性的反复迭代，直到到达不动点，即可消除所有左递归：</p>
+<ol>
+<li>给所有产生式标号（1…n）</li>
+<li>反复展开，<em>直到</em> $ A_i \rightarrow A_j \alpha $ 中的 $j$ 都比 $ i $ 大或相等（相等就用消除左递归的算法搞掉）<ul>
+<li>如果有左递归，一定是 $A_i \rightarrow A_j \alpha \rightarrow A_i \alpha $ 什么的，如果 $j &gt; i$，$ A_j \rightarrow A_i $ 的肯定被消灭了</li>
+</ul>
+</li>
+</ol>
+<h4 id="隐藏左递归"><a href="#隐藏左递归" class="headerlink" title="隐藏左递归"></a>隐藏左递归</h4><p>$ A \rightarrow B A, B \rightarrow \epsilon $</p>
+<h3 id="提左因子"><a href="#提左因子" class="headerlink" title="提左因子"></a>提左因子</h3><p>$ A \rightarrow \alpha \beta_1 | \alpha \beta_2 $，提取 $ \alpha $ 变成 $ A \rightarrow \alpha A^\prime , A^\prime \rightarrow \beta_1 | \beta_2 $，也是机械的操作；本质是延迟决定使用哪个产生式。</p>
+<h3 id="非上下文无关文法"><a href="#非上下文无关文法" class="headerlink" title="非上下文无关文法"></a>非上下文无关文法</h3><p>$L_1 ={wcw | w 属于 (a | b)^ * } $ （上下文无关：${wcw^R}$，$ S \rightarrow a S a | b S b | c $）</p>
+<p>（更多的略，都是一个套路.png）</p>
+<h3 id="LL-1-amp-自顶向下分析"><a href="#LL-1-amp-自顶向下分析" class="headerlink" title="LL(1) &amp; 自顶向下分析"></a>LL(1) &amp; 自顶向下分析</h3><h4 id="求-FIRST-和-FOLLOW-集合"><a href="#求-FIRST-和-FOLLOW-集合" class="headerlink" title="求 FIRST 和 FOLLOW 集合"></a>求 FIRST 和 FOLLOW 集合</h4><ul>
+<li><p>$ FIRST(A) = {所有可能出现在 A 的第一个的终结符 } $</p>
+<ul>
+<li>$ A $ 是终结符：显然</li>
+<li>A 是 $ \epsilon $ ：$ FIRST(A) = { \epsilon  }$</li>
+<li>$ A \rightarrow B C D $：<ul>
+<li>如果 $ FIRST(B) $ 集合没有 $ \epsilon $ ，则 $ FIRST(A) \leftarrow FIRST(A) + FIRST(B) $</li>
+<li>否则看$ FIRST(C)$ 有没有 $\epsilon$，有继续，没有就是 $ FIRST(A) \leftarrow FIRST(A) + (FIRST(B)-\epsilon) \cup FIRST(C) $</li>
+<li>…如此类推，如果全都有，那 $A$ 也要有 $\epsilon$。<ul>
+<li>（这意味着，$A$ 可能是空串）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>$ FOLLOW(A) = {所有可能接在A后边出现的终结符} $    <code>// 显然，要找产生式右部有 A 的那些式子</code></p>
+<ul>
+<li><p>$ M \rightarrow P A B C $，那么：</p>
+<ol>
+<li><p>把 $FOLLOW(M)$ 加入 $ FOLLOW(C) $</p>
+</li>
+<li><p>如果 $ \epsilon $ 不在 $ FIRST(C) $ 中，则把 $ FIRST(C) $ 加入 $ FOLLOW(B) $</p>
+<p>如果 $\epsilon $ 在 $FIRST(C) $ 中，则把 $ ( FIRST(C) - \epsilon ) \cup FOLLOW(M) $ 加入 $ FOLLOW(B) $</p>
+<blockquote>
+<p> 注意！是 FOLLOW(M) 不是 FOLLOW(C)</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li><p>特别的，$ FOLLOW(S) = {eof} $</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><del>显然，$FIRST(A)$ 只要递归向下求就可以</del> $\Rightarrow$ 可能有 $A \rightarrow Aa $ 的情况！请先消除左递归，达到每个产生式前面都有别的符号/终结符。</p>
+<p>$FIRST$ 可能会有自己并自己的情况，所以要反复迭代，直到最后不再增加（达到不动点）。</p>
+<p><img src="/images/1571490282184.png" alt="1571490282184"></p>
+<p><img src="/images/1571490264194.png" alt="1571490264194"></p>
+<p>（我们只关心非终结符的 FOLLOW 集合，并且 FOLLOW 集合显然不会有空串，从定义上也是如此）</p>
+<h4 id="无回溯的条件"><a href="#无回溯的条件" class="headerlink" title="无回溯的条件"></a>无回溯的条件</h4><p>对于任意的产生式 $ A \rightarrow \beta_i $ 和 $ A \rightarrow \beta_j $，必须吃一个 lookahead 就能看出来区别：</p>
+<p>(1) $ FIRST(\beta_i) \cap FIRST(\beta_j) = \varnothing $</p>
+<p>(2) 如果 $ \epsilon \in FIRST(\beta_i) $，则 $ FIRST(\beta_j) \cup FOLLOW(A) = \varnothing $</p>
+<p>（也可以定义 $ FIRST^+(A \rightarrow \beta_i) = (\epsilon \in FIRST(\beta_i)) ? (FIRST(\beta_i) \cup FOLLOW(A) ) : FIRST(\beta_i) $，则 lookahead set 就是这个 $FIRST^+$ 啦；两个集合不交说明 OK）</p>
+<h4 id="预测分析表"><a href="#预测分析表" class="headerlink" title="预测分析表"></a>预测分析表</h4><table>
+<thead>
+<tr>
+<th></th>
+<th>a</th>
+<th>b</th>
+<th>$</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S</td>
+<td>S -&gt; aBS</td>
+<td>S -&gt; bAS</td>
+<td>S -&gt; $\epsilon$</td>
+</tr>
+<tr>
+<td>A</td>
+<td>A -&gt; a</td>
+<td>A -&gt; bAA</td>
+<td>error</td>
+</tr>
+<tr>
+<td>B</td>
+<td>B -&gt; aBB</td>
+<td>B -&gt; b</td>
+<td>error</td>
+</tr>
+</tbody></table>
+<p>就是一个这种表，左边是非终结符，上面是输入符号而已。</p>
+<h4 id="错误恢复"><a href="#错误恢复" class="headerlink" title="错误恢复"></a>错误恢复</h4><p>TODO，见书和 PPT</p>
+<h3 id="SLR-amp-自下而上分析"><a href="#SLR-amp-自下而上分析" class="headerlink" title="SLR &amp; 自下而上分析"></a>SLR &amp; 自下而上分析</h3><h4 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h4><ul>
+<li><p>句型的句柄（可归约串）：该句型中和某产生式右部匹配的<em>子串</em>，并且把它归约成该产生式左部的非终结符代表了最右推导过程的逆过程的一步</p>
+<ul>
+<li>句柄的右边仅含终结符</li>
+<li>如果文法二义，那么句柄可能不唯一</li>
+</ul>
+</li>
+<li><p>冲突： shift-reduce 和 reduce-reduce 两种</p>
+</li>
+<li><p>活前缀：右句型的前缀，不超过最右句柄的末端</p>
+<ul>
+<li>详见 PPT</li>
+</ul>
+</li>
+<li><p>有效项目：可能会在那个场景（给定的活前缀）下用到的项目</p>
+<ul>
+<li>详见 PPT</li>
+<li>一个活前缀可能有多个有效项目 =&gt; 对应多个可能的产生式</li>
+<li>一个项目可能对好几个活前缀都是有效的 =&gt; 对应多种可能的输入</li>
+</ul>
+</li>
+</ul>
+<h4 id="LR-分析器需要的结构"><a href="#LR-分析器需要的结构" class="headerlink" title="LR 分析器需要的结构"></a>LR 分析器需要的结构</h4><ul>
+<li>一些状态 (1,2,3,…)</li>
+<li>一个 $ (Symbol, State) $ 二元组组成的栈</li>
+<li>一个 $action$ 表 &amp; 一个 $goto$ 表，指示栈顶在状态 $s_i$ 且在下一个终结符为 $ \alpha $ 时：<ul>
+<li>移进 $\alpha$ 和新的状态 $s_j$              // $action[s_i, \alpha] = s_j$</li>
+<li>按某个产生式（编号 $ m $） 归约（弹出一些符号，找到归约成的符号 $A$），并且（按弹出后栈顶的状态，比如$ s_{i-k} $ 查表）移进$A$ 和新的状态 $ s_k $        // $ goto[s_{i-k}, A] = s_k $</li>
+</ul>
+</li>
+<li>特殊的状态 $ acc $ 表示接受</li>
+</ul>
+<h4 id="构造一个-SLR-分析表"><a href="#构造一个-SLR-分析表" class="headerlink" title="构造一个 SLR 分析表"></a>构造一个 SLR 分析表</h4><ol>
+<li>从文法构造识别活前缀的 DFA<ol>
+<li>拓广文法（方便弄 $acc$）</li>
+<li>构造 LR(0) 项目集规范族<ul>
+<li>反复找 $ closure (move[closure(I_i), syms]) $，直到不动点（其实就是子集构造法）</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>从上述 DFA 构造分析表<ul>
+<li>$ action $ 表<ul>
+<li>移进：$I_i $ 中 $ [A \rightarrow \alpha \cdot a \beta] $ 且 $ goto(I_i, a) = I_j $，置 $action[i, a]$ 为 $s_j$</li>
+<li>归约：如果 $ [A \rightarrow \alpha \cdot] $ 在 $I_i$ 中，那么对 $FOLLOW(A)$ 中的所有 $a$，置 $action[i, a]$ 为 $r_j$，$j $ 是产生式 $ [A \rightarrow \alpha \cdot a \beta] $ 的编号</li>
+<li>接受：如果 $ [S^\prime \rightarrow S \cdot] $ 在 $ I_i $ 中，那么 $action[i, $] = acc $</li>
+</ul>
+</li>
+<li>$ goto $ 表<ul>
+<li>对所有的非终结符 $A$，如果 $goto(I_i , A) = I_j$，则 $ goto[i, A] = j $</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="类型系统"><a href="#类型系统" class="headerlink" title="类型系统"></a>类型系统</h2><h3 id="类型系统的作用"><a href="#类型系统的作用" class="headerlink" title="类型系统的作用"></a>类型系统的作用</h3><p>略</p>
+<h3 id="类型系统的形式化"><a href="#类型系统的形式化" class="headerlink" title="类型系统的形式化"></a>类型系统的形式化</h3><ol>
+<li>类型表达式：$int$, $int \rightarrow int$（即有个函数收一个 $ int $ 类型参数，返回值类型为 $ int $）</li>
+<li>定型断言：$ x:int \vdash x+3: int $<ul>
+<li>断言的形式：$ \Gamma \vdash S $，即 $ S$  的所有自由变量都声明在 $ \Gamma $ 中（？这个只适用于「定型断言」吧）<ul>
+<li>$ \Gamma $ 为静态定型环境，如 $ x_1: T_1, …, x_n:T_n$ <ul>
+<li>（带一点关于类型表达式有效性和环境的良形性的信息）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>断言的种类：<ul>
+<li>环境断言：$ \Gamma \vdash \Diamond $，表示 $ \Gamma $ 为良形环境</li>
+<li>语法断言：$ \Gamma \vdash nat $，$ nat $ 为类型表达式；即在环境 $\Gamma $ 下 $nat $ 是（可以用的）类型表达式<ul>
+<li>但没说 $nat $ 的真假</li>
+</ul>
+</li>
+<li>定型断言：$ \Gamma \vdash M: T $， M 为某种值，T 为某种类型</li>
+</ul>
+</li>
+<li>断言的有效性：<ul>
+<li>有效断言：$ \Gamma \vdash true:boolean $</li>
+<li>无效断言：$ \Gamma \vdash true: nat $</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>定型规则：$ \dfrac{\Gamma \vdash M : int, \Gamma \vdash N: int}{ \Gamma \vdash M+N:int}$：上面是前提，下面是结论；XX 规则表示推出的是哪种断言<ul>
+<li>环境规则（Env $ \varnothing $）： $ \dfrac{}{\varnothing \vdash \Diamond} $<ul>
+<li>空环境是良形的</li>
+</ul>
+</li>
+<li>语法规则（Type Bool）：$ \dfrac{\Gamma \vdash \Diamond}{\Gamma \vdash boolean} $<ul>
+<li>boolean 是类型表达式</li>
+</ul>
+</li>
+<li>定型规则（Val +）：$ \dfrac{\Gamma \vdash M:int, \Gamma \vdash N:int}{\Gamma \vdash M+N : int} $ <ul>
+<li>在环境 $ \Gamma $ 下，M + N 是 int 类型，如果 M 和 N 都是 int 类型</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="简单类型检查器"><a href="#简单类型检查器" class="headerlink" title="简单类型检查器"></a>简单类型检查器</h3><p>语法规则，定型规则见 PPT</p>
+<h4 id="设计语法制导的类型检查器"><a href="#设计语法制导的类型检查器" class="headerlink" title="设计语法制导的类型检查器"></a>设计语法制导的类型检查器</h4><p>报错用类型：$ type_error $</p>
+<p>对类型表达式采用了抽象语法：</p>
+<ul>
+<li><p>$ array\ [N]\ of\ T$（一个有 N 的元素的 T 类型数组）： $ array(N, T) $</p>
+</li>
+<li><p>$ \uparrow T $：$ pointer(T) $</p>
+</li>
+</ul>
+<p>类型检查细节略。应该注意的几个问题：</p>
+<ol>
+<li>语句的返回值类型：<ul>
+<li>if 语句的返回值是 then 子句的返回值， 或者 $ type_error $</li>
+<li>while 语句的返回值是 do 子句的返回值，或者 $ type_error $</li>
+<li>赋值语句的返回值是 $ void $ 或者 $ type_error $</li>
+<li>$ S \rightarrow S1; S2 $ 的返回值：<ul>
+<li>$ S1, S2 $ 均为 $ void $，则返回 $ void $</li>
+<li>否则返回 $ type_error $  </li>
+</ul>
+</li>
+</ul>
+</li>
+<li>程序的类型： $ void $（如果 <strong>S</strong>(<em>tatements</em>) 是 $ void $） 或者 $ type_error $（如果不是）</li>
+</ol>
+<h3 id="类型表达式的等价"><a href="#类型表达式的等价" class="headerlink" title="类型表达式的等价"></a>类型表达式的等价</h3><h2 id="中间语言"><a href="#中间语言" class="headerlink" title="中间语言"></a>中间语言</h2><h3 id="中间语言的表示"><a href="#中间语言的表示" class="headerlink" title="中间语言的表示"></a>中间语言的表示</h3><ul>
+<li>后缀表示（后缀式）：容易描述计算，难以描述控制语句</li>
+<li>图表示（语法树 / 消除公共子表达式的 DAG）</li>
+<li>三地址代码（语法树 / DAG 的一种线性表示）<ul>
+<li>静态单赋值形式（SSA）<ul>
+<li>同一名字的变量只能赋值一次</li>
+<li>一个变量在不同路径上都定值，则要插入 $ \phi $ 变换</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="基本块和控制流图"><a href="#基本块和控制流图" class="headerlink" title="基本块和控制流图"></a>基本块和控制流图</h3><ul>
+<li>基本块划分算法：<ol>
+<li>确定所有入口语句<ul>
+<li>序列的第一个语句</li>
+<li>转移指令后的第一个语句</li>
+<li>转移指令的目标语句</li>
+</ul>
+</li>
+<li>每个入口语句到下一个入口语句之前（或者到程序结束）的语句序列构成一个基本块</li>
+</ol>
+</li>
+</ul>
+<h3 id="LLVM-编译器框架和基础设施"><a href="#LLVM-编译器框架和基础设施" class="headerlink" title="LLVM 编译器框架和基础设施"></a>LLVM 编译器框架和基础设施</h3><p>略</p>
+<h3 id="中间代码生成概述"><a href="#中间代码生成概述" class="headerlink" title="中间代码生成概述"></a>中间代码生成概述</h3><h3 id="声明语句"><a href="#声明语句" class="headerlink" title="声明语句"></a>声明语句</h3>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/10/18/Compiler-Principle/" data-id="ck5wb2wid00077a8q7ud9dego" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/09/12/Embedded-System-Design/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">嵌入式系统设计方法 笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Jaunty Liu (Libre Liu)<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/flag" class="mobile-nav-link">Flag</a>
+  
+    <a href="/me" class="mobile-nav-link">Me</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"]]}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+</body>
+</html>

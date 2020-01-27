@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="utf-8">
+  
+
+  
+  <title>一份很短的计算机科学介绍 | Nameless Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="本文针对少年班学院 19 级本科生，概括描述了科大计算机的课程设置，培养目标和一些关于计算机科学的认识。 前言（这节本来想自己写，但是跑到知乎上发现源神把我想说的、会的不会的都说了，所以在下面的小节直接引用了…） 一些个人理解，仅供参考：  作为计算机系来说，学「数理方程和热力学」等本身，对除了科学计算和「写物理引擎」之外的方向帮助不是很明显 举例： 用于高性能计算评分的 HPCG Benchma">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一份很短的计算机科学介绍">
+<meta property="og:url" content="http://libreliu.info/2019/08/04/CS-Intro/index.html">
+<meta property="og:site_name" content="Nameless Blog">
+<meta property="og:description" content="本文针对少年班学院 19 级本科生，概括描述了科大计算机的课程设置，培养目标和一些关于计算机科学的认识。 前言（这节本来想自己写，但是跑到知乎上发现源神把我想说的、会的不会的都说了，所以在下面的小节直接引用了…） 一些个人理解，仅供参考：  作为计算机系来说，学「数理方程和热力学」等本身，对除了科学计算和「写物理引擎」之外的方向帮助不是很明显 举例： 用于高性能计算评分的 HPCG Benchma">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2020-01-26T12:52:12.997Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一份很短的计算机科学介绍">
+<meta name="twitter:description" content="本文针对少年班学院 19 级本科生，概括描述了科大计算机的课程设置，培养目标和一些关于计算机科学的认识。 前言（这节本来想自己写，但是跑到知乎上发现源神把我想说的、会的不会的都说了，所以在下面的小节直接引用了…） 一些个人理解，仅供参考：  作为计算机系来说，学「数理方程和热力学」等本身，对除了科学计算和「写物理引擎」之外的方向帮助不是很明显 举例： 用于高性能计算评分的 HPCG Benchma">
+  
+    <link rel="alternate" href="/atom.xml" title="Nameless Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css"><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+</html>
+<body>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Nameless Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/flag">Flag</a>
+        
+          <a class="main-nav-link" href="/me">Me</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://libreliu.info"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-CS-Intro" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/08/04/CS-Intro/" class="article-date">
+  <time datetime="2019-08-04T04:00:00.000Z" itemprop="datePublished">2019-08-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      一份很短的计算机科学介绍
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文针对少年班学院 19 级本科生，概括描述了科大计算机的课程设置，培养目标和一些关于计算机科学的认识。</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>（这节本来想自己写，但是跑到知乎上发现源神把我想说的、会的不会的都说了，所以在下面的小节直接引用了…）</p>
+<p>一些个人理解，仅供参考：</p>
+<ul>
+<li>作为计算机系来说，学「数理方程和热力学」等本身，对除了科学计算和「写物理引擎」之外的方向帮助不是很明显<ul>
+<li>举例：<ul>
+<li>用于高性能计算评分的 HPCG Benchmark，数值方法解 3D 热传导方程</li>
+<li>写/优化物理引擎，搞流体模拟啥的（</li>
+</ul>
+</li>
+<li>当然你会发现，数理方程也不讲数值方法，还是要看点数值计算的课程和教材（躺</li>
+</ul>
+</li>
+<li>作为计算机系同学，应该在课程学习中逐渐掌握一套自己的「问题解决方法」<ul>
+<li>对计算机系统有整体的认识<ul>
+<li>计算机是怎么从逻辑门开始，一步一步打造出你看到的东西的？<ul>
+<li>相关课程：「计算机系统概论(H)」，「模拟与数字电路」，「计算机组成原理」，「操作系统」</li>
+</ul>
+</li>
+<li>出现问题可以定位出现在哪一层，自己应该补充何种知识</li>
+<li>可以从整体上分析设计计算机系统</li>
+</ul>
+</li>
+<li>熟练掌握对应领域的几门程序设计语言<ul>
+<li>或者说，能控制对应层次系统的行为</li>
+</ul>
+</li>
+<li>认识到各种解决方案的缺陷<ul>
+<li>Eg.1. C 的优点？缺点？<ul>
+<li>为什么会有这样的优点和缺点？</li>
+<li>什么最适合成为大学通修的程序设计语言？</li>
+</ul>
+</li>
+<li>Eg.2. Unix / Linux vs Windows？</li>
+<li>Eg.3. 计算机应该<strong>自顶向下</strong>学习还是<strong>自底向上</strong>学习？<ul>
+<li>他们的代表课程（链）？</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>熟练寻找并且阅读文档<ul>
+<li>课上很少提出但是十分有用的一点：<br>提出问题时遵循《提问的智慧》，努力提供完整的复现环境和自己的尝试。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>辩证的看待观点和技术</li>
+</ul>
+<h3 id="「计算机和其它学科的不同」"><a href="#「计算机和其它学科的不同」" class="headerlink" title="「计算机和其它学科的不同」"></a>「计算机和其它学科的不同」</h3><p>下面的文字引用自源神在知乎的答案。</p>
+<p>劝退部分请辩证看待：</p>
+<ul>
+<li>一方面，学校的有些课程在积极作出改变（Eg. 运筹学/体系结构/数电实验），变得更加<del>面向UCB</del>面向实践</li>
+<li>另一方面，在 CS 的工科思维方面，（我个人认为）仍然缺乏更有力的引导</li>
+</ul>
+<hr>
+<ul>
+<li>作者：SIY.Z</li>
+<li>链接：<a href="https://www.zhihu.com/question/44851462/answer/101683147" target="_blank" rel="noopener">https://www.zhihu.com/question/44851462/answer/101683147</a></li>
+<li>来源：知乎</li>
+<li>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</li>
+</ul>
+<hr>
+<p>计算机科学和物理这些学科是不同的。</p>
+<p>学习物理化学时大家应该感受到，越新越前沿的理论难度一般越大，比如历史上的一些理论层次是：重力原理（重力和质量成正比），杠杆原理，标准牛顿力学，电磁学，理论力学，电动力学，狭义相对论&amp;量子力学，广义相对论&amp;量子电动力学，电弱统一理论，标准模型，量子色动力学，超弦理论，M理论等等，层次不断提高，难度不断增加，确实不应该让学生从最先进的入手。</p>
+<p>但是计算机领域有所不同。计算机先驱们的能力超乎想象——靠在纸带上打孔写程序，这在当今都是很难的事情。然而后来随着计算能力的增强，有了各种高级语言，以至于C语言编程变成了全校通修的课程。最近出来的Python语言用于这次引力波探测数据分析，但是科大学生基本上几周就能学个大概，可见难度并不大。另外最著名的几个例子是CISC和RISC指令集架构。Intel的指令集体系是CISC的，非常复杂。但是后来发现在统计学上简单的RISC更有利于性能调优，于是有了ARM等架构，并且逼得Intel在内部实现了RISC微码来提升自己的性能。现在计算机教学上也是从RISC入手。</p>
+<p>计算机学科之所以能够这么做，是因为计算机是少有的人造的但是非常成功的东西。由于人造特性，人们可以随时根据计算力和需求变革思想－－计算机领域几乎能够抽象和虚拟任何东西，制定任何规则（除了request和girlfriend），而自然科学由于受到定律和实验条件的限制不能这么灵活，这也是为什么计算机相关领域几乎天天创新，基本上一个产品发布会就有一个创新，并且这些创新很快改变了所有人的生活，不到10年而已。可见计算机学院学生接触前沿是应该的，也是可行的，并且有助于创新。可惜我们大多数课程依然是大纲形式或者教条形式——自出现就很少变过。</p>
+<h3 id="「极端还原论」"><a href="#「极端还原论」" class="headerlink" title="「极端还原论」"></a>「极端还原论」</h3><p>上面的一些部分有不严密之处，这里补充论证一下。针对的问题是交叉学科。目前学校交叉学科的意思大约是和物理交叉。这个我曾经质疑过，也问过某人，得到的回答大意是“物理是自然科学的基础，所以应该从物理着手，这样基础强了后面都不是问题。” 我不否认数学基础强了可以增强能力－－因为数学直接作用于学科；但是物理基础强了就一定使得上层建筑比别人好这点我是反对的。这个是典型的（极端）还原论思想。</p>
+<p>举个例子，比如大家做过PPT对吧？但是PPT是什么原理呢？它是一个程序，程序响应用户的操作，调用操作系统功能完成任务，操作系统在硬件体系之上，硬件体系又受数字电路支持，数字电路又受工艺支持，工艺又有它的物理原理，可能最终要扯到量子力学。按照（相对极端的）还原论思想，你不懂操作系统，不懂硬件体系结构，不懂数字电路，不懂固件工艺，不懂量子力学，PPT技术是不能有大的突破的。所以说要做PPT前要先学CS的整套课程，然后再学化学工艺，然后再学整套物理，这样制作PPT才后劲足。然而我大多都学过，为什么PPT却做不过一个都不知道自己用的是 Windows7 还是 Windows 8 的美工师啊？</p>
+<h3 id="「学习计算机的目标」"><a href="#「学习计算机的目标」" class="headerlink" title="「学习计算机的目标」"></a>「学习计算机的目标」</h3><p>计算机学院学习多少门课程倒不是最重要的，像交大 ACM 班那位没学过数字逻辑的同学，经过两个月的适应，就在我们的 FPGA 研究项目里做出了重要贡献。重要的是养成一种计算机的思维方式，也就是如何用计算机解决一个实际问题。包括如何用搜索引擎，掌握一门称手的编程语言，出了 bug 之后如何有条不紊的找出 root cause。</p>
+<p>现在科大的课程对“计算机思维”的培养还很欠缺，有计算机思维的同学们多数是在大学之前就已经有不错的基础了，也就是大学本身没有教会更多的人。比如说有一些数据要处理，有计算机思维的人会自然想到先去搜一下有没有现成的工具，不行的话就自己写个脚本。没有计算机思维的人，宁可一个个手工处理。他们也知道脚本更快，但是他们对写程序解决这个问题没有信心，写的过程中出了问题也没有信心解决，所以就会逃避写程序。</p>
+<p>计算机专业毕业的一个标志，应该是能用而且愿意用计算机来解决重复性、程序性的问题。计算机的各种专业课，在讲解计算机基础理论的时候应当紧密结合生活实际，让学生真正用上这些知识，比如处理实验数据，识别验证码，破解软件，刷课，建个人主页。具体的技术倒是次要的，主要是要建立起查资料、写程序、调 bug 的习惯，对这个流程不感到恐惧。</p>
+<h3 id="和其它院-系的不同"><a href="#和其它院-系的不同" class="headerlink" title="和其它院/系的不同"></a>和其它院/系的不同</h3><p>首先，计算机学院只有一个系，（011）「计算机科学与技术系」。</p>
+<h4 id="计院-vs-信院"><a href="#计院-vs-信院" class="headerlink" title="计院 vs 信院"></a>计院 vs 信院</h4><blockquote>
+<p><del>下面关于信院的专业解读是我看着课表瞎写的</del>，<strong>仅供参考</strong></p>
+</blockquote>
+<p>信院一共有「电子信息工程」、「自动化」、「信息安全」、「电子科学与技术」几个系。</p>
+<ul>
+<li>电子信息工程：通信，etc</li>
+<li>电子科学与技术：电路设计（比如 VLSI）</li>
+<li>自动化：数字控制/机器人/系统工程</li>
+<li>信息安全：<ul>
+<li>多学一点密码学，软件安全设计和评估测试的内容</li>
+<li>少学一点体系结构、组成原理的内容<ul>
+<li>和计院各种方向课的东西（见下文）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="计院-vs-其它院"><a href="#计院-vs-其它院" class="headerlink" title="计院 vs 其它院"></a>计院 vs 其它院</h4><p><del>不会有人搞不清楚计院和其它院的区别吧</del></p>
+<p><del>如果有，请问 cwk</del></p>
+<h2 id="科大的计算机课程设置"><a href="#科大的计算机课程设置" class="headerlink" title="科大的计算机课程设置"></a>科大的计算机课程设置</h2><p>请参见<a href="/~jauntyliu/public/documents/CS_Course_2017.pdf">从教务系统导出的 2017 级培养方案的 PDF</a>。</p>
+<p>2019 级的培养计划可能与 2017 级略有不同（比如，我们没有上过「<em>计算机导论</em>」）</p>
+<p>所以，以下信息仅供参考，具体情况请以教学秘书和教务处的说法为准。</p>
+<h3 id="计院都学什么-Overview"><a href="#计院都学什么-Overview" class="headerlink" title="计院都学什么 - Overview"></a>计院都学什么 - Overview</h3><p>没上过的基本上是按我个人理解写的，233</p>
+<ul>
+<li>（大一）编程语言：C 的基本语法，用 C 设计控制台程序</li>
+<li>（大二上、下）图论 &amp; 数理逻辑：各种图的性质和定义证明，一阶逻辑和谓词演算</li>
+<li>（大二上）数据结构：在计算机中常用的数据组织方法（链表、队列、栈、树、图）、简单算法（排序、图/树/表遍历、Huffman 树、查找树，etc）</li>
+<li>（大二上）模拟与数字电路：帮你了解计算机系统的数字电路基础（与或非门，组合和时序逻辑电路、状态机、RAM &amp; ROM；模电的 OpAmp 和 BJT 放大电路）</li>
+<li>（大二下）计算机组成原理：与或非门是怎么组成加法器、（时序）乘/除法器的；CPU 是如何从基本的门构建的（状态机=&gt;CPU Cycle、ALU，RegFile，etc.）</li>
+<li>（大二上、下）数字电路 &amp; 组成原理实验：利用 FPGA（在线可编程逻辑门阵列）实现 状态机/乘法器/CPU 等</li>
+<li>（大二下）运筹学：线性规划、排队论、0-1 规划、指派问题，etc</li>
+<li>（大二下）操作系统：操作系统的原理、意义，设计中要考虑的部分；Unix System Call，etc</li>
+<li>（大三上）计算机网络：计算机网络的构成，常见协议的实现，etc</li>
+<li>（大三上）编译原理：如何实现编译器（词法、语法分析、中间代码生成和优化、指令和寄存器分配、一些语言特性的实现）</li>
+<li>（大三上）算法基础：计算机常用算法（复杂度、排序、查找树、二叉堆、贪心算法、DP、字符串匹配，etc）</li>
+<li>（大三上）计算机体系结构：流水线、Cache &amp; Cache 一致性、分支预测，etc</li>
+<li>（大三下）数据库：SQL &amp; 范式 &amp; 架构（？）（我猜还会有数据库的优化吧）</li>
+<li>（大三上）微机原理：听说「科普+汇编语言+简单数字电路」，大概会涉及比如 x86 GDT 啥的</li>
+<li>（大三下）人工智能基础：听说「比较经典传统的人工智能内容（搜索，逻辑，概率论，还有贝叶斯方法，决策树，回归，SVM等一些明显能找到数学上解释的方法）」</li>
+</ul>
+<p>方向课（大三/大四），<em>以下为听说的</em>，详情请参阅评课社区：</p>
+<ul>
+<li>Web 信息处理与应用：聚类/分词/…</li>
+<li>嵌入式系统设计方法：ARM 架构 &amp; 汇编</li>
+<li>并行计算：MPI/OpenMP/… &amp; 常用的并行计算算法</li>
+<li>信息安全导论：<del>听着就像文科课程</del>可能讲一点密码学/网络安全协议啥的？</li>
+<li>网络算法学：DPDK &amp; extra stuff</li>
+<li>程序设计语言基础</li>
+<li>系统建模与仿真</li>
+<li>计算机图形与图像</li>
+<li>网络系统实验</li>
+<li>高性能处理器体系结构</li>
+</ul>
+<p>Extra（H 课）：</p>
+<ul>
+<li>计算机系统概论(H)：自底向上的构建一个小计算机。具体请参见<a href="https://icourse.club/course/6242/#review-12751" target="_blank" rel="noopener">我在评课社区的评论</a></li>
+</ul>
+<h3 id="第一年的不同"><a href="#第一年的不同" class="headerlink" title="第一年的不同"></a>第一年的不同</h3><p>在大一上和大一下，计院培养计划和少院的不同之处如下所示：</p>
+<ul>
+<li><code>单变量 &amp; 多变量</code> vs <code>数分 B1 &amp; B2</code><ul>
+<li>这个不要紧</li>
+</ul>
+</li>
+<li><code>力学与热学 &amp; 电磁学C</code> vs <code>力学 热学 电磁学A</code><ul>
+<li>这个也不要紧（高级替代）</li>
+</ul>
+</li>
+<li><code>程序设计 I</code> vs <code>计算机程序设计</code><ul>
+<li><code>程序设计 I</code> 可以被 <code>计算机程序设计</code> 高级替代</li>
+<li>事实上，<code>程序设计 I</code> 较 <code>计算机程序设计</code> 少讲授了链表相关内容，而是将其放到 <code>程序设计 II</code> 中<ul>
+<li>（2017 级情况）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>程序设计 II</code>（大一下）<ul>
+<li>讲一些递归、DP、表达式求值（NPL）、实数加减法的内容<ul>
+<li>吐槽：实数加减法我们竟然是用字符串做的…浪费了多少硬件资源</li>
+</ul>
+</li>
+<li>在有些暑假（暑期小学期）开，但是有些小学期就不开（比如这个暑期）</li>
+</ul>
+</li>
+<li><code>代数结构</code>（大一下）<ul>
+<li>讲一些基本的群、环、域的知识</li>
+<li>做密码之类的比较有用，其它的时候不是很直接相关</li>
+<li>据说：「（超）简化版近世代数」</li>
+</ul>
+</li>
+</ul>
+<p><em>据同学说，教秘说过「只要第一年完整按少院课程修读，程序设计 II 和代数结构就不用修了」</em>。</p>
+<p>但是，请同学们开学自己验证此事的真伪，以及政策有无变化。<del>（我发邮件教秘没理我）</del></p>
+<h3 id="计院英才班？"><a href="#计院英才班？" class="headerlink" title="计院英才班？"></a>计院英才班？</h3><p>就是都学 H 课而已啦。一共有三门 H 课：</p>
+<ul>
+<li>计算机系统概论(H)（评课社区链接：<a href="https://icourse.club/course/6242/" target="_blank" rel="noopener">点我</a>）</li>
+<li>操作系统原理与设计(H)（评课社区链接：<a href="https://icourse.club/course/2681/" target="_blank" rel="noopener">点我</a>）</li>
+<li>编译原理和技术(H)（评课社区链接：<a href="https://icourse.club/course/5785/" target="_blank" rel="noopener">点我</a>）</li>
+</ul>
+<p>然后诸如拿钱之类的福利应该都差不多吧…（不是英才班的菜鸡路过）</p>
+<h3 id="除了上课，还能搞点啥"><a href="#除了上课，还能搞点啥" class="headerlink" title="除了上课，还能搞点啥"></a>除了上课，还能搞点啥</h3><ul>
+<li>去实验室找课题做</li>
+<li>Be indie developer / join open source community</li>
+<li>比赛（iGEM / ACM / Robogame…）</li>
+<li>实习</li>
+<li>… （想干啥干啥233）</li>
+<li>学物理（？）</li>
+</ul>
+<h2 id="Extra-Q-amp-A"><a href="#Extra-Q-amp-A" class="headerlink" title="Extra / Q&amp;A"></a>Extra / Q&amp;A</h2><h3 id="计院本科之后都干什么"><a href="#计院本科之后都干什么" class="headerlink" title="计院本科之后都干什么"></a>计院本科之后都干什么</h3><ul>
+<li>去工作<ul>
+<li>这个抱歉没有太多经历和经验分享，可能直接去知乎找更合适一些</li>
+</ul>
+</li>
+<li>读研（出国/国内）</li>
+</ul>
+<p>计算机读研的方向（包括但不限于）：</p>
+<ul>
+<li>机器学习</li>
+<li>计算机图形学</li>
+<li>体系结构</li>
+<li>高性能计算</li>
+<li>网络</li>
+<li>算法</li>
+<li>人机交互/机器人</li>
+<li>……</li>
+</ul>
+<p>建议有相应打算的早进实验室（比如大二），自学一点然后去找对应的实验室老师聊聊，去组里体验一下研究生们都在干啥。</p>
+<h3 id="CS-应届生平均工资"><a href="#CS-应届生平均工资" class="headerlink" title="CS 应届生平均工资"></a>CS 应届生平均工资</h3><p>我并不比知乎多知道多少…</p>
+<p>可以直接知乎「计算机 平均工资」就好了。</p>
+<h3 id="科大-CS-国外申请情况"><a href="#科大-CS-国外申请情况" class="headerlink" title="科大 CS 国外申请情况"></a>科大 CS 国外申请情况</h3><p>请参考 <a href="https://adrain.ustclug.org/" target="_blank" rel="noopener">https://adrain.ustclug.org/</a> 中关于 CS 的部分。</p>
+<p>同时，CS 的飞跃手册也可以在上面下载。</p>
+<p>需要注意的是，这个页面可能要求用科大的统一用户认证系统登录。</p>
+<p>如果还没有统一用户认证的帐号的话，各位亲稍安毋躁，到开学就可以登录啦。</p>
+<h3 id="什么编程语言最好？"><a href="#什么编程语言最好？" class="headerlink" title="什么编程语言最好？"></a>什么编程语言最好？</h3><p><del>出门左转知乎不谢～</del></p>
+<p>我知道，大家可能会问在大学阶段熟练掌握什么比较重要——这个因人而异。</p>
+<p>在计院的最低要求：</p>
+<ul>
+<li>C</li>
+<li>Verilog</li>
+</ul>
+<p>（要不然完不成课程实验的）</p>
+<hr>
+<p>在这个基础上，我建议学一门 OOP 语言和 FP 语言。</p>
+<p>（做开发的话，肯定是要针对性的学语言和框架）</p>
+<ul>
+<li>虽然此条还处于 TODO 态（ </li>
+</ul>
+<h3 id="其它建议？"><a href="#其它建议？" class="headerlink" title="其它建议？"></a>其它建议？</h3><ul>
+<li>都应该学一下 Linux 的基本使用，如何配置 toolchain 等<ul>
+<li>至少操作系统课要用</li>
+<li>之后如果做网络和系统也是跑不了用 Linux 的</li>
+<li>Also: 有问题可以去 USTC Linux User Group 求助</li>
+</ul>
+</li>
+<li>没了，想到再添加…</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2019/08/04/CS-Intro/" data-id="ck5wb2wib00067a8qoye8tw9i" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/09/02/Microcomputer-Principle/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          微机原理与系统 笔记
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/12/Embedded-System-Design/">嵌入式系统设计方法 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Natural-Language-Processing/">自然语言处理 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Jaunty Liu (Libre Liu)<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/flag" class="mobile-nav-link">Flag</a>
+  
+    <a href="/me" class="mobile-nav-link">Me</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</body>
+</html>
