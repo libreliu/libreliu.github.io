@@ -69,6 +69,85 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-IncludeOS Introduction" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/02/04/IncludeOS Introduction/" class="article-date">
+  <time datetime="2020-02-04T05:20:32.000Z" itemprop="datePublished">2020-02-04</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/IncludeOS/">IncludeOS</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/02/04/IncludeOS Introduction/">IncludeOS Introduction</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>In this article, I’ll briefly introduce IncludeOS from architectural design to current status. Meanwhile, I’ll give things that I’ve done so far, and the goal I’m working on.</p>
+<h2 id="What-is-IncludeOS"><a href="#What-is-IncludeOS" class="headerlink" title="What is IncludeOS?"></a>What is IncludeOS?</h2><h3 id="IncludeOS-and-Unikernels"><a href="#IncludeOS-and-Unikernels" class="headerlink" title="IncludeOS and Unikernels"></a>IncludeOS and Unikernels</h3><p>IncludeOS is a so-called <em>Unikernel</em>. Unikernels are operating systems that:</p>
+<ol>
+<li>mixes userspace and kernel space</li>
+<li>allow only one process running</li>
+<li>especially efficient for that task</li>
+</ol>
+<p>In my opinion, Unikernels are introduced as replacements to heavy OSes when virtualizations have just gained their popularity (eg. KVM). But, as container technologies grew, Unikernels quickly phased out as a VM running several Unikernels + applications have significanly much overhead (both in development and running) than a machine with several containers + applications.</p>
+<p>Not sure about the generic Unikernels, but other potential uses of IncludeOS exists, which will be discussed later.</p>
+<h3 id="Architecture"><a href="#Architecture" class="headerlink" title="Architecture"></a>Architecture</h3><p>IncludeOS serves as a basic utility library and framework for user application. Basically, IncludeOS provides a complete libcxx (stl &amp; io stuff) library and musl (libc) environment, with the actual syscalls ‘intercepted’ and reinterpreted to IncludeOS drivers. This enables users to efficiently writing modern C++ programs in bare-metal environment. Also, the configurations are modular, enabling flexible tailoring of system components. </p>
+<h3 id="Users"><a href="#Users" class="headerlink" title="Users"></a>Users</h3><p>(2020 Feb):</p>
+<ul>
+<li>During my observations in IncludeOS Slack Channel, no deployment in industrial so far.<ul>
+<li>However, a few people have expressed their interest in fields like High Frequency Trading and Embedded Processing</li>
+</ul>
+</li>
+</ul>
+<p>I think things’ll change if ARM version of IncludeOS will come into play.</p>
+<h2 id="Works-done-and-things-to-do"><a href="#Works-done-and-things-to-do" class="headerlink" title="Works done, and things to-do"></a>Works done, and things to-do</h2><h3 id="Motivation-of-my-work"><a href="#Motivation-of-my-work" class="headerlink" title="Motivation of my work"></a>Motivation of my work</h3><p>Original IncludeOS implementations are only based on x86 and x86_64. As IoT applications arise, their needs for low latency and efficient programming can be met if we port IncludeOS to embedded platforms. AArch64 is a good place to start.</p>
+<p>In my opinion, programming with C++ and STL sounds much attractive than embedded C programming. Conventional AArch64 (and AArch32) processors have the necessary resource for that degree of abstraction (What’s more, decent C++ programs won’t take much performance overhead). Also, this serves as a good practice in system  and engineering level, for various state-of-art toolchain roles like CMake / Conan / Linker Script comes into play.</p>
+<h3 id="Works-previously-done"><a href="#Works-previously-done" class="headerlink" title="Works previously done"></a>Works previously done</h3><p>In 2019 Spring, I (Libre Liu), together with several others, finished the early stage of migration. The works are part of the <em>Operating System: Principle and Design (H)</em> course. The Chinese version of the migration description along with course work report can be found at <a href="https://github.com/OSH-2019/x-ridiculous-includeos" target="_blank" rel="noopener">Here</a>.</p>
+<p>We’ve completed the following in the course project:</p>
+<ul>
+<li>Figured out IncludeOS building and debugging measures</li>
+<li>Migrated UART Support</li>
+<li>Migrated GPIO and Framebuffer Support</li>
+<li>A flat MMU set-up</li>
+<li>Migrated SD Card Support</li>
+</ul>
+<p>The migration work can’t be done without the help of bztsrc/raspi3-tutorial along with other sources from Github. However, considering IncludeOS itself a 120k+ lines project with modern C++ (and some template, linker, libc magic), I think we’ve done pretty well at least for the course itself.</p>
+<h3 id="Works-doing"><a href="#Works-doing" class="headerlink" title="Works doing"></a>Works doing</h3><p>In 2020 Spring, there are few things to do because of the coronavirus outbreak in China. So I’m working to tidying up our code, and getting them merged into mainline if possible. After tidying up, features like USB and Ethernet support may on the schedule. The IncludeOS developers are also working on ARM, therefore I’m not alone.</p>
+<h3 id="Related-Links"><a href="#Related-Links" class="headerlink" title="Related Links"></a>Related Links</h3><ul>
+<li>IncludeOS Website: <a href="https://includeos.org" target="_blank" rel="noopener">https://includeos.org</a><ul>
+<li>Chat on Slack: <a href="https://includeos.slack.org" target="_blank" rel="noopener">https://includeos.slack.org</a></li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://libreliu.info/2020/02/04/IncludeOS Introduction/" data-id="ck69q5eck00082d8qhyxbwc2d" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/IncludeOS/">IncludeOS</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-Compiler-Principle" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2019/10/18/Compiler-Principle/" class="article-date">
@@ -450,7 +529,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/10/18/Compiler-Principle/" data-id="ck5y0w2070007td8q9d594l31" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/10/18/Compiler-Principle/" data-id="ck69q5ecd00052d8qyj9emlj4" class="article-share-link">Share</a>
       
       
     </footer>
@@ -497,7 +576,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/09/12/Embedded-System-Design/" data-id="ck5y0w20c0008td8qkomxhlcb" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/09/12/Embedded-System-Design/" data-id="ck69q5ecf00062d8qkr7wf2d3" class="article-share-link">Share</a>
       
       
     </footer>
@@ -579,7 +658,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/09/10/Natural-Language-Processing/" data-id="ck5y0w20t000ctd8qv3klv8c0" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/09/10/Natural-Language-Processing/" data-id="ck69q5ed0000d2d8qlko8scx9" class="article-share-link">Share</a>
       
       
     </footer>
@@ -730,7 +809,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/09/10/Quantum-Computing-Frontier/" data-id="ck5y0w20w000etd8qf3xl2o3y" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/09/10/Quantum-Computing-Frontier/" data-id="ck69q5ed2000e2d8qri9gr7bh" class="article-share-link">Share</a>
       
       
     </footer>
@@ -932,7 +1011,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/09/06/Intro-To-Algorithm/" data-id="ck5y0w20m000atd8qke74xfm6" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/09/06/Intro-To-Algorithm/" data-id="ck69q5ecl00092d8qcv6xam9s" class="article-share-link">Share</a>
       
       
     </footer>
@@ -1024,7 +1103,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/09/02/Microcomputer-Principle/" data-id="ck5y0w20s000btd8q02l5bxp2" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/09/02/Microcomputer-Principle/" data-id="ck69q5ecv000b2d8qxpvgp96y" class="article-share-link">Share</a>
       
       
     </footer>
@@ -1287,7 +1366,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/2019/08/04/CS-Intro/" data-id="ck5y0w2060006td8q1wpzyubt" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/2019/08/04/CS-Intro/" data-id="ck69q5ecc00042d8qu7h31sqq" class="article-share-link">Share</a>
       
       
     </footer>
@@ -1307,22 +1386,36 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IncludeOS/">IncludeOS</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/课程笔记/">课程笔记</a></li></ul>
     </div>
   </div>
 
 
   
     
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/IncludeOS/">IncludeOS</a></li></ul>
+    </div>
+  </div>
+
 
   
     
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/IncludeOS/" style="font-size: 10px;">IncludeOS</a>
+    </div>
+  </div>
+
   
     
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">February 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">September 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">August 2019</a></li></ul>
     </div>
   </div>
 
@@ -1333,6 +1426,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2020/02/04/IncludeOS Introduction/">IncludeOS Introduction</a>
+          </li>
         
           <li>
             <a href="/2019/10/18/Compiler-Principle/">编译原理 笔记</a>
@@ -1348,10 +1445,6 @@
         
           <li>
             <a href="/2019/09/10/Quantum-Computing-Frontier/">量子软件前沿 笔记</a>
-          </li>
-        
-          <li>
-            <a href="/2019/09/06/Intro-To-Algorithm/">算法导论 笔记</a>
           </li>
         
       </ul>
