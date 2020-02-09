@@ -15,7 +15,7 @@
 <meta property="og:description" content="Who am I?I’m currently an undergraduate student in University of Science and Technology of China, major in Computer Science. I’m interested in several fields in CS:  Heterogeneous computing and FPGA H">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://libreliu.info/images/rdma_award.jpg">
-<meta property="og:updated_time" content="2020-02-09T11:00:25.223Z">
+<meta property="og:updated_time" content="2020-02-09T12:20:21.969Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="About Me">
 <meta name="twitter:description" content="Who am I?I’m currently an undergraduate student in University of Science and Technology of China, major in Computer Science. I’m interested in several fields in CS:  Heterogeneous computing and FPGA H">
@@ -118,6 +118,11 @@
 <p>We’ve been working to RDMAize inter-worker communication in <a href="http://storm.apache.org/" target="_blank" rel="noopener">Apache Storm</a>, a free and open source stream processing system. We’ve figured out how Storm carrys out its communication between workers, and wrote two RDMAized messaging plugins with different libraries. I’ve written one of them using <a href="https://github.com/zrlio/disni" target="_blank" rel="noopener">zrlio/DiSNI</a>.</p>
 <p>Our reports submitted to the competition committee is available under <a href="https://github.com/libreliu/storm-optimization-reports" target="_blank" rel="noopener">libreliu/storm-optimization-reports</a>, including performance evaluations of several applications under typical Infiniband environment. </p>
 <p>The DiSNI version of the RDMAized Storm is available under <a href="https://github.com/libreliu/storm" target="_blank" rel="noopener">libreliu/storm</a>.</p>
+<h4 id="SCGY-PXE-Recovery-Utility"><a href="#SCGY-PXE-Recovery-Utility" class="headerlink" title="SCGY PXE Recovery Utility"></a>SCGY PXE Recovery Utility</h4><p>This is a project for USTC-SCGY (School of the Gifted Young) computer room. SCGY Computer Room lacks decent recovery solution for managers and users, and deleting malicious and ad softwares are tedious and inefficient. With the help of <a href="http://www.ustcpetergu.com/" target="_blank" rel="noopener">Peter Gu</a>, we implemented the PXE recovery utility for our computer room. </p>
+<p>The utility itself contains a preconfigured iPXE bootloader, a tailored TinyCore Linux for image downloading and recovery, and a preconfigured GRUB running on local system, to dump the image to the disk (WIM format).</p>
+<p>Detailed implementation can be seen <a href="http://www.ustcpetergu.com/MyBlog/project/2019/08/06/SCGY-PC.html" target="_blank" rel="noopener">at PeterGu’s blog (Chinese)</a>.</p>
+<p>Code (iPXE script and initrd for TinyCore Linux): <a href="https://gitee.com/libreliu/scgy-pxe-recovery" target="_blank" rel="noopener">libreliu/scgy-pxe-recovery (Gitee)</a>.</p>
+<p>Usage Guide: <a href="http://ourscgy.ustc.edu.cn/comp_index.html" target="_blank" rel="noopener">Ourscgy @ USTC website</a></p>
 <h4 id="Other-Course-Projects"><a href="#Other-Course-Projects" class="headerlink" title="Other Course Projects"></a>Other Course Projects</h4><ul>
 <li>VGA terminal, course project for <em>Computer Organization and Design</em><ul>
 <li>Software running is written in C and cross-compiled with <code>mipsel-linux-gnu-gcc</code></li>
@@ -145,7 +150,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://libreliu.info/me/index.html" data-id="ck6ex24kg0005ed8q5ja0ozcx" class="article-share-link">Share</a>
+      <a data-url="http://libreliu.info/me/index.html" data-id="ck6ezx07y0005kp8qh7kqvwn0" class="article-share-link">Share</a>
       
       
     </footer>
