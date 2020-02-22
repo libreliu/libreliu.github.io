@@ -1,0 +1,102 @@
+/*
+
+15px
+| 30 (h=40) | 10 | box-1 | 10 | 10 | box-2 | ...
+15px
+
+必须父元素有 position 属性，子元素的 absolute 才是他的盒子里的相对位移
+*/
+.lined-boxes {
+  vertical-align: top;
+}
+
+body {
+  background: #f2f4f7;
+}
+
+.placeholder-box {
+  position: relative;
+  padding: 0;
+  border: none;
+  margin: 15px 10px;
+  width: 10px;
+  height: 40px;
+  background-color: #97a5bc;
+  display: inline-block;
+}
+
+.time-input-box {
+  position: relative;
+  padding: 0;
+  border: none;
+  margin: 15px 10px;
+  width: 70px;
+  height: 40px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  background-color: #fff;
+  display: inline-block;
+}
+
+.time-input {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 21px;
+  height: 22px;
+  display: block;
+  border: 0;
+  background: #fff;
+  font-family: 'PingFangSC-Regular', 'PingFang SC', 'STHeiti', 'Microsoft YaHei', '宋体', 'arial', Arial, sans-serif;
+  color: #afafaf;
+}
+
+.time-label {
+  position: absolute;
+  left: 29px;
+  top: 9px;
+  width: 32px;
+  height: 22px;
+  font-family: 'PingFangSC-Regular', 'PingFang SC', 'STHeiti', 'Microsoft YaHei', '宋体', 'arial', Arial, sans-serif;
+  color: #222;
+  margin: 0;
+  font-size: 16px;
+  text-align: right;
+}
+
+.time-button {
+  display: inline-block;
+  width: 98px;
+  height: 40px;
+  background: #2188e9;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 5px;
+  margin: 15px 10px;
+  font-family: 'PingFangSC-Regular', 'PingFang SC', 'STHeiti', 'Microsoft YaHei', '宋体', 'arial', Arial, sans-serif;
+  color: #fff;
+  font-size: 16px;
+}
+
+.nav-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  height: 70px;
+  width: 100%;
+  background-color: #97a5bc;
+}
+
+.timer-display {
+  position: absolute;
+  left: 131px;
+  top: 197px;
+  width: 960px;
+  height: 200px;
+  font-family: 'PTMono-Bold', 'PTMono', 'PT Mono', Arial, sans-serif;
+  font-weight: bold;
+  font-size: 200px;
+  color: #333;
+}
