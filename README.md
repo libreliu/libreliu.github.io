@@ -2,4 +2,4 @@
 
 ## Useful commands
 
-`npm install hexo-cli`
+`npm install . && npm run build && npm run server`
