@@ -1,6 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | Neural Radiance Caching'
+date: 2022-07-03
 papertitle: 'Real-time Neural Radiance Caching for Path Tracing'
 paperauthors: Thomas Müller, Fabrice Rousselle, Jan Novák, Alexander Keller
 papersource: 'SIGGRAPH 2021'

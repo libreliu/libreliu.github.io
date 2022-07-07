@@ -1,6 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | ReSTIR GI'
+date: 2022-07-03
 papertitle: 'ReSTIR GI: Path Resampling for Real-Time Path Tracing'
 paperauthors: Yaobin Ouyang, Shiqiu Liu, Markus Kettunen, Matt Pharr, Jacopo Pantaleoni
 papersource: 'Computer Graphics Forum 2021'

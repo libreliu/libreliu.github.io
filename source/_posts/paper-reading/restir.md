@@ -1,6 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | ReSTIR'
+date: 2022-07-03
 papertitle: 'Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting'
 paperauthors: Benedikt Bitterli, Chris Wyman, Matt Pharr, Peter Shirley, Aaron Lefohn, Wojciech Jarosz
 papersource: 'SIGGRAPH 2020'

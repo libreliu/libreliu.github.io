@@ -1,6 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | Generalized RIS'
+date: 2022-07-03
 papertitle: 'Generalized Resampled Importance Sampling: Foundations of ReSTIR'
 paperauthors: Daqi Lin, Markus Kettunen, Benedikt Bitterli, Jacopo Pantaleoni, Cem Yuksel, Chris Wyman
 papersource: 'SIGGRAPH 2022'

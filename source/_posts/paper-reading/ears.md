@@ -1,6 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | EARS'
+date: 2022-07-03
 papertitle: 'EARS: Efficiency-Aware Russian Roulette and Splitting'
 paperauthors: Alexander Rath, Pascal Grittmann, Sebastian Herholz, Philippe Weier, Philipp Slusallek
 papersource: 'SIGGRAPH 2022'
