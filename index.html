@@ -167,7 +167,8 @@
         <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p>
 <p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p>
 <p>作为例子，考虑如下的场景（图源论文）：</p>
-<p><img src="/ears/pool-scene.png" alt="pool-scene"></p>
+<img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene">
+
 <p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
 <p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p>
 <ul>
