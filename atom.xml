@@ -6,7 +6,7 @@
   <link href="https://blog.libreliu.info/atom.xml" rel="self"/>
   
   <link href="https://blog.libreliu.info/"/>
-  <updated>2022-07-18T17:14:36.235Z</updated>
+  <updated>2022-07-19T17:25:15.760Z</updated>
   <id>https://blog.libreliu.info/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="https://blog.libreliu.info/test-ul-nested/"/>
     <id>https://blog.libreliu.info/test-ul-nested/</id>
     <published>2022-07-06T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<p>这是一些正常的测试文本。</p><ul><li>first class ul<ul><li>second class ul<ul><li>third class ul</li></ul></li></ul></li></ul><ol><li>测试 first class li<br>测试缩进后文字显示<ul><li>测试 inner class ul<ul><li>测试更内部显示</li></ul></li></ul></li><li>测试 first class li<br>测试缩进后文字显示<ul><li>测试 inner class ul<ul><li>测试更内部显示</li></ul></li></ul></li></ol>]]></content>
     
@@ -52,7 +52,7 @@
     <link href="https://blog.libreliu.info/paper-reading/ears/"/>
     <id>https://blog.libreliu.info/paper-reading/ears/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p><p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p><p>作为例子，考虑如下的场景（图源论文）：</p><img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene"><p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p><p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p><ul><li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li><li>(Splitting) 是否需要将这条光线分裂成多份？如果需要的话，分裂成多少份？</li></ul><p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p><h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>]]></content>
     
@@ -72,7 +72,7 @@
     <link href="https://blog.libreliu.info/paper-reading/gris/"/>
     <id>https://blog.libreliu.info/paper-reading/gris/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>]]></content>
     
@@ -92,7 +92,7 @@
     <link href="https://blog.libreliu.info/paper-reading/nrc/"/>
     <id>https://blog.libreliu.info/paper-reading/nrc/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了用于实时渲染的神经辐射度缓存。</p>]]></content>
     
@@ -109,32 +109,11 @@
   </entry>
   
   <entry>
-    <title>论文阅读 | ReSTIR GI</title>
-    <link href="https://blog.libreliu.info/paper-reading/restir-gi/"/>
-    <id>https://blog.libreliu.info/paper-reading/restir-gi/</id>
-    <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。&lt;/p&gt;
-</summary>
-      
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>论文阅读 | ReSTIR</title>
     <link href="https://blog.libreliu.info/paper-reading/restir/"/>
     <id>https://blog.libreliu.info/paper-reading/restir/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法。</p>]]></content>
     
@@ -151,11 +130,32 @@
   </entry>
   
   <entry>
+    <title>论文阅读 | ReSTIR GI</title>
+    <link href="https://blog.libreliu.info/paper-reading/restir-gi/"/>
+    <id>https://blog.libreliu.info/paper-reading/restir-gi/</id>
+    <published>2022-07-02T16:00:00.000Z</published>
+    <updated>2022-07-19T17:25:15.760Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。&lt;/p&gt;
+</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
     <title>博客复活！</title>
     <link href="https://blog.libreliu.info/blog-reborn/"/>
     <id>https://blog.libreliu.info/blog-reborn/</id>
     <published>2022-07-01T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<p>之前的博客已经有一段时间没更新了，以至于竟然连之前的源文件都找不到了。</p><p>这次将博客的源文件放到 GitHub 上，并且把之前的文章收集整理一下，进行一下重构。</p><h2 id="用什么博客框架？"><a href="#用什么博客框架？" class="headerlink" title="用什么博客框架？"></a>用什么博客框架？</h2><p>在 Hexo 和 Pelican 中选择了 Hexo，主要社区和主题的维护者都更活跃一些。</p><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="生成-amp-测试"><a href="#生成-amp-测试" class="headerlink" title="生成 &amp; 测试"></a>生成 &amp; 测试</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./node_modules/.bin/hexo generate</span><br><span class="line">./node_modules/.bin/hexo server</span><br></pre></td></tr></table></figure><p>也可以考虑 <code>npm run build</code> 和 <code>npm run server</code>。</p><h3 id="新文章"><a href="#新文章" class="headerlink" title="新文章"></a>新文章</h3><p><code>hexo new &quot;My new post&quot;</code></p><h2 id="修改主题"><a href="#修改主题" class="headerlink" title="修改主题"></a>修改主题</h2><p>主题基于 <a href="https://github.com/52binge/hexo-theme-blairos">BlairOS</a> 这个 Hexo 主题，我裁减了其中的统计代码，更改了 Logo 和相关的 Stylus 代码。</p><h3 id="已知问题"><a href="#已知问题" class="headerlink" title="已知问题"></a>已知问题</h3><ul><li>计划在将来把对 cdn.mathjax.org 的依赖也去掉，变成完全服务端渲染</li><li>这个模板对 ul 嵌套的情况渲染不正确</li></ul>]]></content>
     
@@ -177,7 +177,7 @@
     <link href="https://blog.libreliu.info/ustc-verilog-oj/"/>
     <id>https://blog.libreliu.info/ustc-verilog-oj/</id>
     <published>2022-02-07T16:00:00.000Z</published>
-    <updated>2022-07-18T17:14:36.235Z</updated>
+    <updated>2022-07-19T17:25:15.760Z</updated>
     
     <content type="html"><![CDATA[<blockquote><p>(Remark 2022-07-07): 本文原发于知乎，现在在博客这边补个档。</p></blockquote><p>夜深人静的时候有些难以入眠（实际上可能是早上起太迟了），于是开一篇文章大略记叙一下部署在 <a href="https://verilogoj.ustc.edu.cn/">https://verilogoj.ustc.edu.cn/</a> 处的 USTC Verilog OJ 的设计实现和留下的坑。</p><p>设计一个 Verilog OJ 的想法源于 2020 春的《软件工程》课程，课程伊始要求同学们以 10 人为一组提交一个大作业。正好，当时 lluckydog 提到了这个点子，我们就去找实验中心的老师协商，老师也感觉不错。</p><p>设计之初，考虑到 Verilog 作为硬件描述（和仿真）语言的地位，我们认为 Verilog OJ 本身应该与其它程序设计语言的 OJ 有所不同。这种不同主要是来源于电路这种设计产出与程序这种产出之间的差异。</p><p>电路可以从功能和性能两方面来进行评价。对于功能，用行为级仿真就可以解决，而对于性能，则要将其放到后端当中去，从占用的资源，完成功能所需要的时钟周期和可以达到的最高时钟频率，以及使用到的资源等来综合的进行评价。这就意味着，OJ 在执行架构上需要兼容各种不同的评价任务，并且可以灵活配置。</p><p>针对这一点，我们认为应该将每个判题任务配置为 shell 脚本，在脚本中读取用户输入的文件，并且进行输出操作，这样就可以比较灵活的进行不同评测任务的配置了。</p><p>我们当时还调研了前端和后端评测任务的一些可能方向，比如<a href="https://github.com/YAVGroup/Verilog-OJ/blob/master/doc/research/OpenTimer%E6%97%B6%E5%BA%8F%E5%88%86%E6%9E%90.md">使用 OpenTimer 进行静态时序分析</a>，<a href="https://github.com/YAVGroup/Verilog-OJ/blob/master/doc/research/%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87%E8%AF%84%E4%BB%B7.md">使用 Yosys 进行综合并且判断电路综合后有没有 latch</a> 等等。</p><h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><p>前端方面我们是从 <a href="https://github.com/Linzecong/LPOJ">LPOJ</a> 的代码基础上开始修改的，所以也沿用了 Element UI + Vue.js 的组合；编辑代码采用 CodeMirror，显示波形采用 Wavedrom。</p><p>后端采用 Django + Django RESTful Framework，Django 赋予的快速原型能力我们整体还是比较满意的。</p><p>后端和判题机通过消息队列 Celery 实现解耦，为增加新的判题机留出空间，同时将两个过程掰开。判题机提交判题结果的方法就是把 SubmissionResult 对象进行 HTTP PATCH。</p><p>判题机本身会在每个新的判题请求到来时，从后端拉下来所有需要的文件，同时新启动一个 Docker 容器用来判题，判题完成时会将容器中分数、日志、波形（app_data）拷出并上传，之后销毁容器。容器本身有时间和内存限制。</p><blockquote><p>大多数判题任务就是在参考答案和用户提交答案上面跑一个 testbench 并且 dump vcd，然后做一个波形比较。vcd 文件解析使用的是 pyDigitalWaveTools。</p></blockquote><p>使用 Nginx 做反代，方便调整一些请求头之类的，上面所有的部分都打包为容器，并且用 docker-compose 进行部署。</p><h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>软工课程答辩前，我们设计了几道简单的题目来验证 Verilog OJ 的功能。<a href="https://github.com/YAVGroup/Verilog-OJ/tree/master/assets">这些题目</a>包括输出 0，输出 1，3-8 译码器和三个数的比较器等。前面几道题目是行为级的仿真，最后一题用到了 Yosys 进行综合，并且对综合后结果进行仿真（大概就是 <code>yosys -p &quot;read_verilog ./submit/code.v; synth -top top_module; write_verilog code_synthed.v&quot; -v 3</code>）</p><p>不过软工结束之后，由于鸽子们鸽来鸽去，想搞的计算机组成原理实验自动评测一直没有动静，助教们最后也还是决定手工检查，所以系统就有派上用场。</p><p>2021 年署假的时候，老师决定先翻译一些 <a href="https://hdlbits.01xz.net/">HDLBits</a> 上面的题目，作为下学期数字电路实验的一小部分，来帮助 Verilog 的学习。</p><p>在这学期出题和同学们做题的过程中，也发现并且修复了一些脚本上的问题，主要是 VCD 的一些 corner case。</p><h2 id="剩下的坑"><a href="#剩下的坑" class="headerlink" title="剩下的坑"></a>剩下的坑</h2><p>使用过程中同学们提了很多意见，这些意见基本都以 Issue 的形式放到了仓库当中去。不过不少问题都被我们一直鸽着，也缺乏感兴趣的新同学加入进来。</p><p>远期来说，我个人希望这个平台可以帮助希望做硬件开发的同学们更贴近 IC 业界考虑的问题，并且对硬件设计本身有更好的理解——当然鉴于我本人是个硬件菜鸡，这还需要很多大佬的支持才能办到。</p><p>就我个人从前辈处了解到的一些信息来说，IC 的验证和后端的流程普通的同学还是很难接触到的，可能在平台中有关于验证和后端设计需要关心的问题进行设计并包装成为题目是值得尝试的一些方向。</p><blockquote><p>比如说，SystemVerilog &#x2F; UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p></blockquote><p>另一个可能值得尝试的坑是对接 USTC FPGAOL 平台，将片上的表现作为评估和设计迭代的依据。</p><p>（不过听着就是大坑.jpg）</p><h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>赶紧来个大佬填坑吧！（x）</p><p>希望有更多感兴趣的同学加入到我们的开发（和提 Issue）的工作当中ww</p>]]></content>
     
