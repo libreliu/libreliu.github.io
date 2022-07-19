@@ -1,8 +1,8 @@
 <% switch (type) {
-    case 'archive':
-    var last;
+  case 'archive':
+    let last;
     page.posts.each(function(post, i){
-    var year = post.date.year();
+    let year = post.date.year();
     if (last != year){
       if (last != null){ %>
         </div></section>
@@ -20,6 +20,25 @@
     </div></section>
   <% }
     if (page.total > 1){ %>
+      <nav id="page-nav">
+        <%- paginator({
+          prev_text: '&laquo; ' + __('nav.prev'),
+          next_text: __('nav.next') + ' &raquo;'
+        }) %>
+      </nav>
+    <% }
+    break;
+  case 'paper-summary': %>
+    <section class="archives-wrap">
+    <div class="archive-category-wrap">
+      <span class="archive-category">论文阅读</span>
+    </div>
+    <div class="archives">
+    <% page.posts.each(function (post, i) { %>
+      <%- partial('paper-post', {post: post, archive: false}) %>
+    <% }); %>
+    </div></section>
+    <% if (page.total > 1){ %>
       <nav id="page-nav">
         <%- paginator({
           prev_text: '&laquo; ' + __('nav.prev'),

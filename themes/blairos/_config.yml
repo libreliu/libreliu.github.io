@@ -4,6 +4,7 @@ logo_text: # Add text logo instead of logo image
 menu:
   Home: /
   Archives: archives
+  Paper Reading: paper-summary
   About: about
 
 # Content
