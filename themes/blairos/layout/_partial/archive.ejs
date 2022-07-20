@@ -2,23 +2,23 @@
   case 'archive':
     let last;
     page.posts.each(function(post, i){
-    let year = post.date.year();
-    if (last != year){
-      if (last != null){ %>
-        </div></section>
-      <% }
-      last = year; %>
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="<%- url_for('archives/' + year) %>" class="archive-year"><%= year %></a>
-        </div>
-        <div class="archives">
-    <% } %>
-    <%- partial('archive-post', {post: post, archive: true}) %>
-  <% });
-    if (page.posts.length){ %>
-    </div></section>
-  <% }
+      let year = post.date.year();
+      if (last != year){
+        if (last != null){ %>
+          </div></section>
+        <% }
+        last = year; %>
+        <section class="archives-wrap">
+          <div class="archive-year-wrap">
+            <a href="<%- url_for('archives/' + year) %>" class="archive-year"><%= year %></a>
+          </div>
+          <div class="archives">
+      <% } %>
+      <%- partial('archive-post', {post: post, archive: true}) %>
+    <% });
+    if (page.posts.length) { %>
+      </div></section>
+    <% }
     if (page.total > 1){ %>
       <nav id="page-nav">
         <%- paginator({
