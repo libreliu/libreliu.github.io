@@ -6,6 +6,7 @@ papertitle: 'Spatiotemporal reservoir resampling for real-time ray tracing with 
 paperauthors: Benedikt Bitterli, Chris Wyman, Matt Pharr, Peter Shirley, Aaron Lefohn, Wojciech Jarosz
 papersource: 'SIGGRAPH 2020'
 paperurl: 'https://cs.dartmouth.edu/wjarosz/publications/bitterli20spatiotemporal.html'
+status: Working
 ---
 
 ## 简介

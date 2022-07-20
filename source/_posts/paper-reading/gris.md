@@ -6,6 +6,7 @@ papertitle: 'Generalized Resampled Importance Sampling: Foundations of ReSTIR'
 paperauthors: Daqi Lin, Markus Kettunen, Benedikt Bitterli, Jacopo Pantaleoni, Cem Yuksel, Chris Wyman
 papersource: 'SIGGRAPH 2022'
 paperurl: 'https://graphics.cs.utah.edu/research/projects/gris/'
+status: Queued
 ---
 
 ## 简介

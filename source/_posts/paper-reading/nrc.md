@@ -6,6 +6,7 @@ papertitle: 'Real-time Neural Radiance Caching for Path Tracing'
 paperauthors: Thomas Müller, Fabrice Rousselle, Jan Novák, Alexander Keller
 papersource: 'SIGGRAPH 2021'
 paperurl: 'https://arxiv.org/abs/2106.12372'
+status: Working
 ---
 
 ## 简介
