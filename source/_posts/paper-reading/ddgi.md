@@ -6,7 +6,7 @@ papertitle: 'Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fiel
 paperauthors: Zander Majercik, Jean-Philippe Guertin, Derek Nowrouzezahrai, Morgan McGuire
 papersource: 'JCGT 2019'
 paperurl: 'https://jcgt.org/published/0008/02/01/'
-status: Working
+status: Complete
 ---
 
 ## 简介
@@ -35,12 +35,18 @@ DDGI 是一种利用 light probe（光照探针）进行动态全局光计算的
 三组信息。
 
 > Recall: radiance 和 irradiance
-> - Radiance (輻射率): 单位面积单位立体角辐射功率，$ d\Phi / (dS d\Omega) $
+> - Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi / (dS d\Omega) $
 > - Irradiance (辐照度): 单位面积辐射功率 $ d\Phi / dS $
 
 ### 利用 probe 进行间接光计算
 
 前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。
+
+对于漫反射，只需要关心入射 irradiance 而不需要具体的 radiance，所以只需要待着色图元的全局光入射 irradiance 信息。
+
+irradiance 场大概可以这样描述：$R^3 \times S^2 \to Spectrum$
+
+输入是 (位置, 方向)，输出是 Spectrum (e.g. RGBSpectrum)
 
 可以想象到，如果场本身的变化相对于 probe 间距离来说变化比较缓慢，那么方法就会工作的比较好。
 
@@ -80,7 +86,7 @@ return square(irradiance.rgb * (1.0 / irradiance.a));
 >
 > 很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系...
 > 
-> 这里的也不是最终的版本，slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改
+> 这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改
 
 #### Chebyshev 项分析
 
@@ -98,7 +104,11 @@ $$
 
 ### 各个项效果对比
 
+原论文中有各项的作用展示：
 
+![DDGI Term Comparation](ddgi/ddgi_term_comparation.png)
+
+其中 classic irradiance probe 应该就是只有三线性插值的结果。
 
 ### 动态更新 probe 信息
 
