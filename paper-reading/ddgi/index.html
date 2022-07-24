@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>论文阅读 | Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields - libreliu&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="简介本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。 框架DDGI light probeDDGI 是一种利用 light probe（光照探针）进行动态全局光计算的方法。 对于位于 $\mathrm{x’}$ 位置的 light probe，所有的出射方向可以视为从 probe 所在位置到以 probe 所在位置为中心的单位球面上点构成的向量的集合。此时，构造一个 $S^2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文阅读 | Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields">
+<meta property="og:url" content="https://blog.libreliu.info/paper-reading/ddgi/">
+<meta property="og:site_name" content="libreliu&#39;s blog">
+<meta property="og:description" content="简介本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。 框架DDGI light probeDDGI 是一种利用 light probe（光照探针）进行动态全局光计算的方法。 对于位于 $\mathrm{x’}$ 位置的 light probe，所有的出射方向可以视为从 probe 所在位置到以 probe 所在位置为中心的单位球面上点构成的向量的集合。此时，构造一个 $S^2">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/ddgi/ddgi_term_comparation.png">
+<meta property="article:published_time" content="2022-07-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-07-24T09:03:12.720Z">
+<meta property="article:author" content="Libre Liu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.libreliu.info/paper-reading/ddgi/ddgi_term_comparation.png">
+  
+  
+    <link rel="icon" href="/css/images/logo.png">
+  
+  <link href="/webfonts/ptserif/main.css" rel='stylesheet' type='text/css'>
+  <link href="/webfonts/source-code-pro/main.css" rel="stylesheet" type="text/css">
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="libreliu's blog" type="application/atom+xml">
+</head>
+
+<body>
+  <div id="container">
+    <header id="header">
+  <div id="header-outer" class="outer">
+    <div id="header-inner" class="inner">
+      <a id="main-nav-toggle" class="nav-icon" href="javascript:;"></a>
+      <a id="logo" class="logo" href="/"></a>
+      <nav id="main-nav">
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/paper-summary">Paper Reading</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://blog.libreliu.info"></form>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <br>
+    <section id="main" class="outer"><article id="paper-reading-paper-reading/ddgi" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读 | Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields
+      <small class=article-detail-date-index>&nbsp; 2022-07-23</small>
+    </h1>
+  
+
+
+        <div class=page-title></div>
+        <br>
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/ddgi/" class="article-date">
+  <time datetime="2022-07-22T16:00:00.000Z" itemprop="datePublished">2022-07-23</time>
+</a>-->
+      <!-- 
+--><!-- by blair 160724 -->
+      <!-- by blair
+      
+      -->
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+          <p>论文标题：Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields</p>
+          <p>论文来源：JCGT 2019</p>
+          <p>论文作者：Zander Majercik, Jean-Philippe Guertin, Derek Nowrouzezahrai, Morgan McGuire</p>
+          <p><a target="_blank" rel="noopener" href='https://jcgt.org/published/0008/02/01/'>论文链接</a></p>
+        </blockquote>
+      
+      
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。</p>
+<h2 id="框架"><a href="#框架" class="headerlink" title="框架"></a>框架</h2><h3 id="DDGI-light-probe"><a href="#DDGI-light-probe" class="headerlink" title="DDGI light probe"></a>DDGI light probe</h3><p>DDGI 是一种利用 light probe（光照探针）进行动态全局光计算的方法。</p>
+<p>对于位于 $\mathrm{x’}$ 位置的 light probe，所有的出射方向可以视为从 probe 所在位置到以 probe 所在位置为中心的单位球面上点构成的向量的集合。此时，构造一个 $S^2 \to R^2$ 的映射，使得球面的八个扇区分别映射到八面体的八个面上，这个映射被称为八面体映射 (octahedron mapping)。</p>
+<blockquote>
+<p>文章中描述到，八面体映射的好处，在于可以将球面以比较均匀的参数化映射到正方形上去，方便之后将每个方向相对应的量储存到 2D 纹理上面去。</p>
+</blockquote>
+<p>通过八面体映射，就可以将 probe 每个方向的信息存储在正方形的纹理贴图上了。</p>
+<p>不过，在这篇文章中，出于性能考虑，作者采用了类似 Variance Shadow Mapping 的方法，极大压缩了纹理贴图的分辨率，同时对于每个 probe 的贴图的每个方向，分别存放</p>
+<ol>
+<li>$E_i(\mathrm{x’}, w)$: probe 以 $\omega$ 方向为天顶的半球的入射 irradiance</li>
+<li>$r(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离在半球面的均值<ul>
+<li>也就是 $\int d(x’, \omega) d \omega$，其中 $d(x, \omega): R^3 \times \Omega \to R$ 为在 $x$ 处沿 $\omega$ 方向到最近邻图元的距离</li>
+</ul>
+</li>
+<li>$r^2(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离的平方在半球面的均值</li>
+</ol>
+<p>三组信息。</p>
+<blockquote>
+<p>Recall: radiance 和 irradiance</p>
+<ul>
+<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li>
+<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li>
+</ul>
+</blockquote>
+<h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p>
+<p>对于漫反射，只需要关心入射 irradiance 而不需要具体的 radiance，所以只需要待着色图元的全局光入射 irradiance 信息。</p>
+<p>irradiance 场大概可以这样描述：$R^3 \times S^2 \to Spectrum$</p>
+<p>输入是 (位置, 方向)，输出是 Spectrum (e.g. RGBSpectrum)</p>
+<p>可以想象到，如果场本身的变化相对于 probe 间距离来说变化比较缓慢，那么方法就会工作的比较好。</p>
+<p>不过，也有一些会导致变化较快的情况：</p>
+<ol>
+<li>图元本身与 probe 所成夹角</li>
+<li>图元被某些物体遮挡</li>
+</ol>
+<p>所以，DDGI 提出了这样的框架来进行着色：</p>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>irradiance.a</code> 的作用是什么..？</p>
+<p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p>
+<p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p>
+</blockquote>
+<h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p>
+<p>$$<br>P(x &gt; t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}<br>$$</p>
+<blockquote>
+<p>可以参考 GAMES202 中<a target="_blank" rel="noopener" href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p>
+</blockquote>
+<p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p>
+<blockquote>
+<p>有没有更好的估计方法？为什么这样估计是最好的？</p>
+</blockquote>
+<h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p>
+<img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation">
+
+<p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p>
+<h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p>
+<ol>
+<li>从 $m$ 个活跃 probe 中，每个 probe 发射 $n$ 条光线，然后存储 $n \times m$ 个交点处的表面元信息（位置，法线）到一个类似 G-buffer 的结构中<ul>
+<li>发射光线时采用每帧不同的 pattern，最大限度避免锯齿<ul>
+<li>作者采用 “stochastically-rotated Fibonacci spiral pattern”<blockquote>
+<p>不过作者 2017 年的文章中并没有详细说明此处的具体实现，需要阅读作者的代码</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>对表面元信息进行直接光和间接光计算<ul>
+<li>直接光：<ul>
+<li>点光源和方向光光源：利用该 G-buffer 进行普通的 deferred rendering + variance shadow mapping</li>
+<li>面积光光源：使用下面间接光方法，第一跳时考虑面积光</li>
+</ul>
+</li>
+<li>间接光：采用周围的 probe 信息进行计算<ul>
+<li>和前面一节描述的方法一致</li>
+</ul>
+</li>
+<li>(多跳)间接光：通过 3 中每次用 Moving Average 方法来更新，实现多跳的信息传播</li>
+</ul>
+</li>
+<li>更新这 $m$ 个活跃 probe 对应的纹理贴图<ul>
+<li>利用 alpha-blending, $\alpha$ 取 0.85 到 0.98</li>
+<li><code>newIrradiance[texelDir] = lerp(oldIrradiance[texelDir], Sum(ProbeRays(max(0,texelDir · rayDir) ∗ rayRadiance)...), alpha)</code></li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>符号说明: <code>lerp(a, b, alpha) = a * alpha + b * (1-alpha)</code></p>
+</blockquote>
+<h3 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://research.nvidia.com/sites/default/files/pubs/2017-02_Real-Time-Global-Illumination/light-field-probes-final.pdf">Real-Time Global Illumination using Precomputed Light Field Probes</a><ul>
+<li>McGuire 这篇 2017 年的工作中关于 GI 的部分和这篇文章很像，只是当时他在 light probe 中存储比较高分辨率的最近邻图元到 probe 距离，并且用这个距离来进行基于 probe 阵列的 ray trace，而不是采用硬件 ray trace。</li>
+<li>并且他在这篇工作中提到，可以采用将 BSDF 分解成 diffuse + glossy (所有不 diffuse 的项)，对 glossy 用其它方法来处理 (比如 raytrace + post filter) 来实现整个场景的 GI。</li>
+</ul>
+</li>
+</ul>
+
+      
+     <!-- by blair add this if sentence at 20160725 -->
+      <br>
+      
+<!-- <div id="bottom-donation-section"> -->
+<!-- <span style="font-size: 1.0em; padding:0em 1em 0.5em 1em; margin: 0 auto;">
+  <strong style="vertical-align: top;">分享到:</strong>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_facebook_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.facebook.com/sharer/sharer.php?u=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_twitter_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://twitter.com/intent/tweet?url=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_line_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.addtoany.com/add_to/line?linkurl=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_wechat_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://api.addthis.com/oexchange/0.8/forward/wechat/offer?url=" target="_blank">
+    </div>
+  <br>  
+  <br>  
+  &nbsp;&nbsp;如果您觉得这篇文章对您的学习很有帮助, 请您也分享它, 让它能再次帮助到更多的需要学习的人.
+您的<a href="/support/"><strong>支持</strong></a>将鼓励我继续创作 !
+  <br>  
+
+</span> -->
+<!--
+<h3 id="bottom-donation-title">支持 让文章变得更优质</h3>
+<div>
+<a id="bottom-donation-button" href="/support">点我 赞助 作者</a>
+</div>
+-->
+<!-- </div> -->
+<!-- <div class="well"> -->
+  <!--
+  原创文章，转载请注明： 转载自<a target="_blank" rel="noopener" href="http://52binge.github.io"> Blair Chan's Blog</a>，作者：
+  <a href="/about">Blair Chan</a> <br>
+  -->
+  <!-- 本文基于<a target="_blank" title="Creative Commons Attribution 4.0 international License" href="https://creativecommons.org/licenses/by-nc/4.0/">署名4.0国际许可协议</a>发布，转载请保留本文署名和文章链接。 如您有任何授权方面的协商，请邮件联系我。 -->
+<!-- </div> -->
+ <!-- by blair add 160724-->
+    
+    </div>
+    
+      <div class="article-toc">
+        <h3>Contents</h3>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%86%E6%9E%B6"><span class="toc-text">框架</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DDGI-light-probe"><span class="toc-text">DDGI light probe</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8-probe-%E8%BF%9B%E8%A1%8C%E9%97%B4%E6%8E%A5%E5%85%89%E8%AE%A1%E7%AE%97"><span class="toc-text">利用 probe 进行间接光计算</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Chebyshev-%E9%A1%B9%E5%88%86%E6%9E%90"><span class="toc-text">Chebyshev 项分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%84%E4%B8%AA%E9%A1%B9%E6%95%88%E6%9E%9C%E5%AF%B9%E6%AF%94"><span class="toc-text">各个项效果对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0-probe-%E4%BF%A1%E6%81%AF"><span class="toc-text">动态更新 probe 信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94"><span class="toc-text">对比</span></a></li></ol></li></ol>
+      </div>
+    
+    
+      <footer class="article-footer">
+        <!-- <div class="well" style="width:100px; height:30px;"></div>  by blair-->
+        
+ <!-- by blair add 160724-->
+        <!--
+        <div style="width:100px; height:30px;"></div> by blair add 160724
+        -->
+        
+
+      </footer>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/test-ul-nested/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">测试嵌套 ul 和 li&nbsp;<span>&gt;</span></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+    <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 Libre Liu&nbsp;
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>, theme by <a target="_blank" rel="noopener" href="http://github.com/52binge/hexo-theme-blairos">blairos</a>
+    </div>
+  </div>
+</footer>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
+</script>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>

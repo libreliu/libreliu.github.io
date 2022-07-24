@@ -6,7 +6,7 @@
   <link href="https://blog.libreliu.info/atom.xml" rel="self"/>
   
   <link href="https://blog.libreliu.info/"/>
-  <updated>2022-07-23T05:29:06.032Z</updated>
+  <updated>2022-07-24T09:03:12.720Z</updated>
   <id>https://blog.libreliu.info/</id>
   
   <author>
@@ -17,11 +17,32 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>论文阅读 | Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields</title>
+    <link href="https://blog.libreliu.info/paper-reading/ddgi/"/>
+    <id>https://blog.libreliu.info/paper-reading/ddgi/</id>
+    <published>2022-07-22T16:00:00.000Z</published>
+    <updated>2022-07-24T09:03:12.720Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。</p><h2 id="框架"><a href="#框架" class="headerlink" title="框架"></a>框架</h2><h3 id="DDGI-light-probe"><a href="#DDGI-light-probe" class="headerlink" title="DDGI light probe"></a>DDGI light probe</h3><p>DDGI 是一种利用 light probe（光照探针）进行动态全局光计算的方法。</p><p>对于位于 $\mathrm{x’}$ 位置的 light probe，所有的出射方向可以视为从 probe 所在位置到以 probe 所在位置为中心的单位球面上点构成的向量的集合。此时，构造一个 $S^2 \to R^2$ 的映射，使得球面的八个扇区分别映射到八面体的八个面上，这个映射被称为八面体映射 (octahedron mapping)。</p><blockquote><p>文章中描述到，八面体映射的好处，在于可以将球面以比较均匀的参数化映射到正方形上去，方便之后将每个方向相对应的量储存到 2D 纹理上面去。</p></blockquote><p>通过八面体映射，就可以将 probe 每个方向的信息存储在正方形的纹理贴图上了。</p><p>不过，在这篇文章中，出于性能考虑，作者采用了类似 Variance Shadow Mapping 的方法，极大压缩了纹理贴图的分辨率，同时对于每个 probe 的贴图的每个方向，分别存放</p><ol><li>$E_i(\mathrm{x’}, w)$: probe 以 $\omega$ 方向为天顶的半球的入射 irradiance</li><li>$r(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离在半球面的均值<ul><li>也就是 $\int d(x’, \omega) d \omega$，其中 $d(x, \omega): R^3 \times \Omega \to R$ 为在 $x$ 处沿 $\omega$ 方向到最近邻图元的距离</li></ul></li><li>$r^2(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离的平方在半球面的均值</li></ol><p>三组信息。</p><blockquote><p>Recall: radiance 和 irradiance</p><ul><li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li><li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li></ul></blockquote><h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p><p>对于漫反射，只需要关心入射 irradiance 而不需要具体的 radiance，所以只需要待着色图元的全局光入射 irradiance 信息。</p><p>irradiance 场大概可以这样描述：$R^3 \times S^2 \to Spectrum$</p><p>输入是 (位置, 方向)，输出是 Spectrum (e.g. RGBSpectrum)</p><p>可以想象到，如果场本身的变化相对于 probe 间距离来说变化比较缓慢，那么方法就会工作的比较好。</p><p>不过，也有一些会导致变化较快的情况：</p><ol><li>图元本身与 probe 所成夹角</li><li>图元被某些物体遮挡</li></ol><p>所以，DDGI 提出了这样的框架来进行着色：</p><figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure><blockquote><p><code>irradiance.a</code> 的作用是什么..？</p><p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p><p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p></blockquote><h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p><p>$$<br>P(x &gt; t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}<br>$$</p><blockquote><p>可以参考 GAMES202 中<a href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p></blockquote><p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p><blockquote><p>有没有更好的估计方法？为什么这样估计是最好的？</p></blockquote><h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p><img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation"><p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p><h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p><ol><li>从 $m$ 个活跃 probe 中，每个 probe 发射 $n$ 条光线，然后存储 $n \times m$ 个交点处的表面元信息（位置，法线）到一个类似 G-buffer 的结构中<ul><li>发射光线时采用每帧不同的 pattern，最大限度避免锯齿<ul><li>作者采用 “stochastically-rotated Fibonacci spiral pattern”<blockquote><p>不过作者 2017 年的文章中并没有详细说明此处的具体实现，需要阅读作者的代码</p></blockquote></li></ul></li></ul></li><li>对表面元信息进行直接光和间接光计算<ul><li>直接光：<ul><li>点光源和方向光光源：利用该 G-buffer 进行普通的 deferred rendering + variance shadow mapping</li><li>面积光光源：使用下面间接光方法，第一跳时考虑面积光</li></ul></li><li>间接光：采用周围的 probe 信息进行计算<ul><li>和前面一节描述的方法一致</li></ul></li><li>(多跳)间接光：通过 3 中每次用 Moving Average 方法来更新，实现多跳的信息传播</li></ul></li><li>更新这 $m$ 个活跃 probe 对应的纹理贴图<ul><li>利用 alpha-blending, $\alpha$ 取 0.85 到 0.98</li><li><code>newIrradiance[texelDir] = lerp(oldIrradiance[texelDir], Sum(ProbeRays(max(0,texelDir · rayDir) ∗ rayRadiance)...), alpha)</code></li></ul></li></ol><blockquote><p>符号说明: <code>lerp(a, b, alpha) = a * alpha + b * (1-alpha)</code></p></blockquote><h3 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h3><ul><li><a href="https://research.nvidia.com/sites/default/files/pubs/2017-02_Real-Time-Global-Illumination/light-field-probes-final.pdf">Real-Time Global Illumination using Precomputed Light Field Probes</a><ul><li>McGuire 这篇 2017 年的工作中关于 GI 的部分和这篇文章很像，只是当时他在 light probe 中存储比较高分辨率的最近邻图元到 probe 距离，并且用这个距离来进行基于 probe 阵列的 ray trace，而不是采用硬件 ray trace。</li><li>并且他在这篇工作中提到，可以采用将 BSDF 分解成 diffuse + glossy (所有不 diffuse 的项)，对 glossy 用其它方法来处理 (比如 raytrace + post filter) 来实现整个场景的 GI。</li></ul></li></ul>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。&lt;/p&gt;
+&lt;h2 id=&quot;框架&quot;&gt;&lt;a href=&quot;#框架&quot; clas</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
     <title>测试嵌套 ul 和 li</title>
     <link href="https://blog.libreliu.info/test-ul-nested/"/>
     <id>https://blog.libreliu.info/test-ul-nested/</id>
     <published>2022-07-06T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<p>这是一些正常的测试文本。</p><ul><li>first class ul<ul><li>second class ul<ul><li>third class ul</li></ul></li></ul></li></ul><ol><li>测试 first class li<br>测试缩进后文字显示<ul><li>测试 inner class ul<ul><li>测试更内部显示</li></ul></li></ul></li><li>测试 first class li<br>测试缩进后文字显示<ul><li>测试 inner class ul<ul><li>测试更内部显示</li></ul></li></ul></li></ol>]]></content>
     
@@ -52,7 +73,7 @@
     <link href="https://blog.libreliu.info/paper-reading/ears/"/>
     <id>https://blog.libreliu.info/paper-reading/ears/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p><p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p><p>作为例子，考虑如下的场景（图源论文）：</p><img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene"><p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p><p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p><ul><li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li><li>(Splitting) 是否需要将这条光线分裂成多份？如果需要的话，分裂成多少份？</li></ul><p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p><h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>]]></content>
     
@@ -72,7 +93,7 @@
     <link href="https://blog.libreliu.info/paper-reading/gris/"/>
     <id>https://blog.libreliu.info/paper-reading/gris/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>]]></content>
     
@@ -92,7 +113,7 @@
     <link href="https://blog.libreliu.info/paper-reading/nrc/"/>
     <id>https://blog.libreliu.info/paper-reading/nrc/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了用于实时渲染的神经辐射度缓存。</p>]]></content>
     
@@ -113,7 +134,7 @@
     <link href="https://blog.libreliu.info/paper-reading/restir-gi/"/>
     <id>https://blog.libreliu.info/paper-reading/restir-gi/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。</p>]]></content>
     
@@ -134,7 +155,7 @@
     <link href="https://blog.libreliu.info/paper-reading/restir/"/>
     <id>https://blog.libreliu.info/paper-reading/restir/</id>
     <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法。</p>]]></content>
     
@@ -155,7 +176,7 @@
     <link href="https://blog.libreliu.info/blog-reborn/"/>
     <id>https://blog.libreliu.info/blog-reborn/</id>
     <published>2022-07-01T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<p>之前的博客已经有一段时间没更新了，以至于竟然连之前的源文件都找不到了。</p><p>这次将博客的源文件放到 GitHub 上，并且把之前的文章收集整理一下，进行一下重构。</p><h2 id="用什么博客框架？"><a href="#用什么博客框架？" class="headerlink" title="用什么博客框架？"></a>用什么博客框架？</h2><p>在 Hexo 和 Pelican 中选择了 Hexo，主要社区和主题的维护者都更活跃一些。</p><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="生成-amp-测试"><a href="#生成-amp-测试" class="headerlink" title="生成 &amp; 测试"></a>生成 &amp; 测试</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./node_modules/.bin/hexo generate</span><br><span class="line">./node_modules/.bin/hexo server</span><br></pre></td></tr></table></figure><p>也可以考虑 <code>npm run build</code> 和 <code>npm run server</code>。</p><h3 id="新文章"><a href="#新文章" class="headerlink" title="新文章"></a>新文章</h3><p><code>hexo new &quot;My new post&quot;</code></p><h2 id="修改主题"><a href="#修改主题" class="headerlink" title="修改主题"></a>修改主题</h2><p>主题基于 <a href="https://github.com/52binge/hexo-theme-blairos">BlairOS</a> 这个 Hexo 主题，我裁减了其中的统计代码，更改了 Logo 和相关的 Stylus 代码。</p><h3 id="已知问题"><a href="#已知问题" class="headerlink" title="已知问题"></a>已知问题</h3><ul><li>计划在将来把对 cdn.mathjax.org 的依赖也去掉，变成完全服务端渲染</li><li>这个模板对 ul 嵌套的情况渲染不正确</li></ul>]]></content>
     
@@ -177,7 +198,7 @@
     <link href="https://blog.libreliu.info/ustc-verilog-oj/"/>
     <id>https://blog.libreliu.info/ustc-verilog-oj/</id>
     <published>2022-02-07T16:00:00.000Z</published>
-    <updated>2022-07-23T05:29:06.032Z</updated>
+    <updated>2022-07-24T09:03:12.720Z</updated>
     
     <content type="html"><![CDATA[<blockquote><p>(Remark 2022-07-07): 本文原发于知乎，现在在博客这边补个档。</p></blockquote><p>夜深人静的时候有些难以入眠（实际上可能是早上起太迟了），于是开一篇文章大略记叙一下部署在 <a href="https://verilogoj.ustc.edu.cn/">https://verilogoj.ustc.edu.cn/</a> 处的 USTC Verilog OJ 的设计实现和留下的坑。</p><p>设计一个 Verilog OJ 的想法源于 2020 春的《软件工程》课程，课程伊始要求同学们以 10 人为一组提交一个大作业。正好，当时 lluckydog 提到了这个点子，我们就去找实验中心的老师协商，老师也感觉不错。</p><p>设计之初，考虑到 Verilog 作为硬件描述（和仿真）语言的地位，我们认为 Verilog OJ 本身应该与其它程序设计语言的 OJ 有所不同。这种不同主要是来源于电路这种设计产出与程序这种产出之间的差异。</p><p>电路可以从功能和性能两方面来进行评价。对于功能，用行为级仿真就可以解决，而对于性能，则要将其放到后端当中去，从占用的资源，完成功能所需要的时钟周期和可以达到的最高时钟频率，以及使用到的资源等来综合的进行评价。这就意味着，OJ 在执行架构上需要兼容各种不同的评价任务，并且可以灵活配置。</p><p>针对这一点，我们认为应该将每个判题任务配置为 shell 脚本，在脚本中读取用户输入的文件，并且进行输出操作，这样就可以比较灵活的进行不同评测任务的配置了。</p><p>我们当时还调研了前端和后端评测任务的一些可能方向，比如<a href="https://github.com/YAVGroup/Verilog-OJ/blob/master/doc/research/OpenTimer%E6%97%B6%E5%BA%8F%E5%88%86%E6%9E%90.md">使用 OpenTimer 进行静态时序分析</a>，<a href="https://github.com/YAVGroup/Verilog-OJ/blob/master/doc/research/%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87%E8%AF%84%E4%BB%B7.md">使用 Yosys 进行综合并且判断电路综合后有没有 latch</a> 等等。</p><h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><p>前端方面我们是从 <a href="https://github.com/Linzecong/LPOJ">LPOJ</a> 的代码基础上开始修改的，所以也沿用了 Element UI + Vue.js 的组合；编辑代码采用 CodeMirror，显示波形采用 Wavedrom。</p><p>后端采用 Django + Django RESTful Framework，Django 赋予的快速原型能力我们整体还是比较满意的。</p><p>后端和判题机通过消息队列 Celery 实现解耦，为增加新的判题机留出空间，同时将两个过程掰开。判题机提交判题结果的方法就是把 SubmissionResult 对象进行 HTTP PATCH。</p><p>判题机本身会在每个新的判题请求到来时，从后端拉下来所有需要的文件，同时新启动一个 Docker 容器用来判题，判题完成时会将容器中分数、日志、波形（app_data）拷出并上传，之后销毁容器。容器本身有时间和内存限制。</p><blockquote><p>大多数判题任务就是在参考答案和用户提交答案上面跑一个 testbench 并且 dump vcd，然后做一个波形比较。vcd 文件解析使用的是 pyDigitalWaveTools。</p></blockquote><p>使用 Nginx 做反代，方便调整一些请求头之类的，上面所有的部分都打包为容器，并且用 docker-compose 进行部署。</p><h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>软工课程答辩前，我们设计了几道简单的题目来验证 Verilog OJ 的功能。<a href="https://github.com/YAVGroup/Verilog-OJ/tree/master/assets">这些题目</a>包括输出 0，输出 1，3-8 译码器和三个数的比较器等。前面几道题目是行为级的仿真，最后一题用到了 Yosys 进行综合，并且对综合后结果进行仿真（大概就是 <code>yosys -p &quot;read_verilog ./submit/code.v; synth -top top_module; write_verilog code_synthed.v&quot; -v 3</code>）</p><p>不过软工结束之后，由于鸽子们鸽来鸽去，想搞的计算机组成原理实验自动评测一直没有动静，助教们最后也还是决定手工检查，所以系统就有派上用场。</p><p>2021 年署假的时候，老师决定先翻译一些 <a href="https://hdlbits.01xz.net/">HDLBits</a> 上面的题目，作为下学期数字电路实验的一小部分，来帮助 Verilog 的学习。</p><p>在这学期出题和同学们做题的过程中，也发现并且修复了一些脚本上的问题，主要是 VCD 的一些 corner case。</p><h2 id="剩下的坑"><a href="#剩下的坑" class="headerlink" title="剩下的坑"></a>剩下的坑</h2><p>使用过程中同学们提了很多意见，这些意见基本都以 Issue 的形式放到了仓库当中去。不过不少问题都被我们一直鸽着，也缺乏感兴趣的新同学加入进来。</p><p>远期来说，我个人希望这个平台可以帮助希望做硬件开发的同学们更贴近 IC 业界考虑的问题，并且对硬件设计本身有更好的理解——当然鉴于我本人是个硬件菜鸡，这还需要很多大佬的支持才能办到。</p><p>就我个人从前辈处了解到的一些信息来说，IC 的验证和后端的流程普通的同学还是很难接触到的，可能在平台中有关于验证和后端设计需要关心的问题进行设计并包装成为题目是值得尝试的一些方向。</p><blockquote><p>比如说，SystemVerilog &#x2F; UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p></blockquote><p>另一个可能值得尝试的坑是对接 USTC FPGAOL 平台，将片上的表现作为评估和设计迭代的依据。</p><p>（不过听着就是大坑.jpg）</p><h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>赶紧来个大佬填坑吧！（x）</p><p>希望有更多感兴趣的同学加入到我们的开发（和提 Issue）的工作当中ww</p>]]></content>
     
