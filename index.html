@@ -279,6 +279,58 @@
 
 
     
+      <article id="paper-reading-paper-reading/gris" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/gris/"><strong>论文阅读 | Generalized RIS</strong></a>
+      <small class=article-date-index>&nbsp; 2022-07-03</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/gris/" class="article-date">
+  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="paper-reading-paper-reading/ears" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -326,58 +378,6 @@
 </ul>
 <p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p>
 <h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>
-
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
-      <article id="paper-reading-paper-reading/gris" class="article article-type-paper-reading" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/paper-reading/gris/"><strong>论文阅读 | Generalized RIS</strong></a>
-      <small class=article-date-index>&nbsp; 2022-07-03</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/paper-reading/gris/" class="article-date">
-  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>
 
       
     </div>
@@ -537,7 +537,36 @@
 <blockquote>
 <p>注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。</p>
 </blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="Importance-Sampling-重要性采样"><a href="#Importance-Sampling-重要性采样" class="headerlink" title="Importance Sampling (重要性采样)"></a>Importance Sampling (重要性采样)</h3><p>按分布 $p(x)$ 采样得到 $x$，然后进行 Monte Carlo 积分</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3><p>$$<br>\begin{aligned}<br>L_o(x, \omega_o) &amp;&#x3D; \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \<br>&amp;&#x3D; \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x’, \omega_i) \frac{\cos \theta^x_i \cos \theta^{x’}<em>{o}}{| x - x’ |^2} dA \qquad \text{(with light from } x’ \text{)} \<br>&amp;&#x3D; \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x’) L_o(x’, \omega_i) \frac{\cos \theta^x_i \cos \theta^{x’}</em>{o}}{| x - x’ |^2} dA \<br>\end{aligned}<br>$$</p>
+<p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。<br>$$<br>V(x, x’) :&#x3D;<br>\left{<br>\begin{aligned}<br>&amp;1 ,&amp; x’ \text{ is visible from } x \<br>&amp;0 ,&amp; \text{otherwise}<br>\end{aligned}<br>\right.<br>$$</p>
+<!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
+
+<p>对于上面的积分，我们希望用一些离散的采样构成的一个估计量来进行原积分的估计。采样方式和利用采样得到的值进行运算从而构造估计量的方式被称为一种估计方法。</p>
+<p>数理统计告诉我们，估计量也是满足一个分布的，在绝大多数时候我们通过估计量的<strong>期望</strong>和<strong>方差</strong>来衡量一个估计的好坏。</p>
+<p>既然本篇论文是关于采样方法的改进，那么就首先回顾一下 Monte Carlo 求解渲染方程时会使用到的估计方法。</p>
+<h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计<br>$$<br>I :&#x3D; \int_\Omega f(x) dx<br>$$</p>
+<p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${X_i}<em>{i&#x3D;1}^n$，那么我们就可以构造估计量 $\bar I$<br>$$<br>\bar I :&#x3D; \frac{1}{N} \sum</em>{i&#x3D;1}^n f(X_i)<br>$$</p>
+<p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是<br>$$<br>\begin{aligned}<br>\operatorname{E}[\bar I] &amp;&#x3D; \frac{1}{N} \sum_{i&#x3D;1}^n \operatorname{E}[f(X_i)] \<br>&amp;&#x3D; \operatorname{E}[f(X_1)] &amp; \text{(} {X_i} \text{ satisfy i.i.d.)} \<br>&amp;&#x3D; \int_\Omega f(X_1) dX_1 \<br>&amp;&#x3D; I<br>\end{aligned}<br>$$</p>
+<blockquote>
+<p>Note: 形如<br>$$<br>\int_\Omega f(X) dX<br>$$<br>的积分是表示在 $\Omega$ 这个空间的积分，这个空间如果比如想 (局部) 变换到平直的 $\mathbb{R}^3$ 那就需要乘上一个 Jacobian，在一维的时候就是 $\int f(x) g(x) dx$ （假设 $X$ 出现的<strong>概率</strong>是 $g(x)$）</p>
+<p>总之，只要想象连续就是离散情况的细分，一般就都能推对。</p>
+</blockquote>
+<!-- TODO: 看下概率论课本是怎么用测度 (?) 把这件事说的更明白的 -->
+
+<p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：<br>$$<br>\begin{aligned}<br>\operatorname{Var}[\bar I] &amp;&#x3D; \frac{1}{N^2} \operatorname{Var} \left[ \sum_{i&#x3D;1}^{n} f(X_i) \right] \<br>&amp;&#x3D; \frac{1}{N} \operatorname{Var}[f(X_1)] \<br>&amp;&#x3D; \frac{1}{N} \left( \operatorname{E}[f(X_1)^2] - I^2 \right) \<br>&amp;&#x3D; \frac{1}{N} \left[ \int_\Omega f(X^2) , dX - \left( \int_\Omega f(X) , dX \right)^2 \right]<br>\end{aligned}<br>$$</p>
+<!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
+
+<!-- TODO: 补一些 Var 的图 -->
+<!-- 写一个 browser-side 画函数的工具？(大坑) -->
+
+<blockquote>
+<p>Note: </p>
+<ol>
+<li>$Var[X] &#x3D; E[(X-E[X])^2] &#x3D; E[X^2-2 \cdot X \cdot E[X] + (E[X])^2] &#x3D; E[X^2]-(E[X])^2$ </li>
+<li>$\operatorname{Var}[aX+bY] &#x3D; a^2\operatorname{Var}[X] + b^2\operatorname{Var}[Y] + 2ab \operatorname{Cov}[X, Y]$</li>
+</ol>
+</blockquote>
+<h3 id="Importance-Sampling-重要性采样"><a href="#Importance-Sampling-重要性采样" class="headerlink" title="Importance Sampling (重要性采样)"></a>Importance Sampling (重要性采样)</h3><p>按分布 $p(x)$ 采样得到 $x$，然后进行 Monte Carlo 积分</p>
 <p>方法：<br>$$<br>\int_\Omega f(𝑥) dx \approx \frac{1}{N} \sum \frac{f(𝑥_𝑖)}{𝑝(𝑥_𝑖)} \</p>
 <p>s.t.  \quad p(x) &gt; 0\ \text{for}\ x \in supp(f)<br>$$</p>
 <p>可以证明，如果分布 p 对 f 近似的越好，相同样本数量下估计量的方差越低，并且方差可以渐进的到达 0，即 “asymptotic zero-variance estimation”</p>
