@@ -109,8 +109,8 @@
 <blockquote>
 <p>Recall: radiance 和 irradiance</p>
 <ul>
-<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li>
-<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li>
+<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi / (dS d\Omega) $</li>
+<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi / dS $</li>
 </ul>
 </blockquote>
 <h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p>
@@ -125,15 +125,14 @@
 </ol>
 <p>所以，DDGI 提出了这样的框架来进行着色：</p>
 <figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure>
-
 <blockquote>
 <p><code>irradiance.a</code> 的作用是什么..？</p>
 <p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p>
 <p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p>
 </blockquote>
 <h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p>
-<p>$$<br>P(x &gt; t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}<br>$$</p>
-<blockquote>
+<script type="math/tex; mode=display">
+P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
 <p>可以参考 GAMES202 中<a target="_blank" rel="noopener" href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p>
 </blockquote>
 <p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p>
@@ -142,7 +141,6 @@
 </blockquote>
 <h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p>
 <img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation">
-
 <p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p>
 <h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p>
 <ol>
@@ -279,58 +277,6 @@
 
 
     
-      <article id="paper-reading-paper-reading/gris" class="article article-type-paper-reading" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/paper-reading/gris/"><strong>论文阅读 | Generalized RIS</strong></a>
-      <small class=article-date-index>&nbsp; 2022-07-03</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/paper-reading/gris/" class="article-date">
-  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>
-
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
       <article id="paper-reading-paper-reading/ears" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -369,8 +315,7 @@
 <p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p>
 <p>作为例子，考虑如下的场景（图源论文）：</p>
 <img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene">
-
-<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
+<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF / BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
 <p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p>
 <ul>
 <li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li>
@@ -378,6 +323,58 @@
 </ul>
 <p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p>
 <h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
+      <article id="paper-reading-paper-reading/gris" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/gris/"><strong>论文阅读 | Generalized RIS</strong></a>
+      <small class=article-date-index>&nbsp; 2022-07-03</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/gris/" class="article-date">
+  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>
 
       
     </div>
@@ -533,44 +530,83 @@
 	
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;= 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
 <blockquote>
 <p>注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。</p>
 </blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3><p>$$<br>\begin{aligned}<br>L_o(x, \omega_o) &amp;&#x3D; \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \<br>&amp;&#x3D; \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x’, \omega_i) \frac{\cos \theta^x_i \cos \theta^{x’}<em>{o}}{| x - x’ |^2} dA \qquad \text{(with light from } x’ \text{)} \<br>&amp;&#x3D; \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x’) L_o(x’, \omega_i) \frac{\cos \theta^x_i \cos \theta^{x’}</em>{o}}{| x - x’ |^2} dA \<br>\end{aligned}<br>$$</p>
-<p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。<br>$$<br>V(x, x’) :&#x3D;<br>\left{<br>\begin{aligned}<br>&amp;1 ,&amp; x’ \text{ is visible from } x \<br>&amp;0 ,&amp; \text{otherwise}<br>\end{aligned}<br>\right.<br>$$</p>
-<!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
-
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3><script type="math/tex; mode=display">
+\begin{aligned}
+L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
+&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o}}{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
+&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o}}{| x - x' |^2} dA \\
+\end{aligned}</script><p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
+<script type="math/tex; mode=display">
+V(x, x') := 
+\left\{
+\begin{aligned}
+&1 ,& x' \text{ is visible from } x \\
+&0 ,& \text{otherwise}
+\end{aligned}
+\right.</script><!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
 <p>对于上面的积分，我们希望用一些离散的采样构成的一个估计量来进行原积分的估计。采样方式和利用采样得到的值进行运算从而构造估计量的方式被称为一种估计方法。</p>
 <p>数理统计告诉我们，估计量也是满足一个分布的，在绝大多数时候我们通过估计量的<strong>期望</strong>和<strong>方差</strong>来衡量一个估计的好坏。</p>
 <p>既然本篇论文是关于采样方法的改进，那么就首先回顾一下 Monte Carlo 求解渲染方程时会使用到的估计方法。</p>
-<h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计<br>$$<br>I :&#x3D; \int_\Omega f(x) dx<br>$$</p>
-<p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${X_i}<em>{i&#x3D;1}^n$，那么我们就可以构造估计量 $\bar I$<br>$$<br>\bar I :&#x3D; \frac{1}{N} \sum</em>{i&#x3D;1}^n f(X_i)<br>$$</p>
-<p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是<br>$$<br>\begin{aligned}<br>\operatorname{E}[\bar I] &amp;&#x3D; \frac{1}{N} \sum_{i&#x3D;1}^n \operatorname{E}[f(X_i)] \<br>&amp;&#x3D; \operatorname{E}[f(X_1)] &amp; \text{(} {X_i} \text{ satisfy i.i.d.)} \<br>&amp;&#x3D; \int_\Omega f(X_1) dX_1 \<br>&amp;&#x3D; I<br>\end{aligned}<br>$$</p>
-<blockquote>
-<p>Note: 形如<br>$$<br>\int_\Omega f(X) dX<br>$$<br>的积分是表示在 $\Omega$ 这个空间的积分，这个空间如果比如想 (局部) 变换到平直的 $\mathbb{R}^3$ 那就需要乘上一个 Jacobian，在一维的时候就是 $\int f(x) g(x) dx$ （假设 $X$ 出现的<strong>概率</strong>是 $g(x)$）</p>
+<h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计</p>
+<script type="math/tex; mode=display">
+I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${X<em>i}</em>{i=1}^n$，那么我们就可以构造估计量 $\bar I$</p>
+<script type="math/tex; mode=display">
+\bar I := \frac{1}{N} \sum_{i=1}^n f(X_i)</script><p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\operatorname{E}[\bar I] &= \frac{1}{N} \sum_{i=1}^n \operatorname{E}[f(X_i)] \\
+&= \operatorname{E}[f(X_1)] & \text{(} \{X_i\} \text{ satisfy i.i.d.)} \\
+&= \int_\Omega f(X_1) dX_1 \\
+&= I
+\end{aligned}</script><blockquote>
+<p>Note: 形如</p>
+<script type="math/tex; mode=display">
+\int_\Omega f(X) dX</script><p>的积分是表示在 $\Omega$ 这个空间的积分，这个空间如果比如想 (局部) 变换到平直的 $\mathbb{R}^3$ 那就需要乘上一个 Jacobian，在一维的时候就是 $\int f(x) g(x) dx$ （假设 $X$ 出现的<strong>概率</strong>是 $g(x)$）</p>
 <p>总之，只要想象连续就是离散情况的细分，一般就都能推对。</p>
 </blockquote>
 <!-- TODO: 看下概率论课本是怎么用测度 (?) 把这件事说的更明白的 -->
+<!-- 
+比如说我们在初等概率论中学到的随机变量，在测度论角度来讲就是一种可测函数，而初等概率论在很多计算上面是直接在取值空间进行计算的，也就是实数空间，它的很多积分的运算你放在测度论来看就是直接应用了积分变换定理。在概率论中提到的“分布”，其实就是根据这个随机变量（可测函数）在原空间和取值空间进行一个测度变换，站在这个角度去看待一些概率论问题就会感觉一切是那么合理，简直就是一种艺术。
 
-<p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：<br>$$<br>\begin{aligned}<br>\operatorname{Var}[\bar I] &amp;&#x3D; \frac{1}{N^2} \operatorname{Var} \left[ \sum_{i&#x3D;1}^{n} f(X_i) \right] \<br>&amp;&#x3D; \frac{1}{N} \operatorname{Var}[f(X_1)] \<br>&amp;&#x3D; \frac{1}{N} \left( \operatorname{E}[f(X_1)^2] - I^2 \right) \<br>&amp;&#x3D; \frac{1}{N} \left[ \int_\Omega f(X^2) , dX - \left( \int_\Omega f(X) , dX \right)^2 \right]<br>\end{aligned}<br>$$</p>
-<!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
-
+作者：再熬夜是猪
+链接：https://www.zhihu.com/question/29800166/answer/1884856359
+来源：知乎
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+-->
+<p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\operatorname{Var}[\bar I] &= \frac{1}{N^2} \operatorname{Var} \left[ \sum_{i=1}^{n} f(X_i) \right] \\
+&= \frac{1}{N} \operatorname{Var}[f(X_1)] \\
+&= \frac{1}{N} \left( \operatorname{E}[f(X_1)^2] - I^2 \right) \\
+&= \frac{1}{N} \left[ \int_\Omega f(X^2) \, dX - \left( \int_\Omega f(X) \, dX \right)^2 \right]
+\end{aligned}</script><!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
 <!-- TODO: 补一些 Var 的图 -->
 <!-- 写一个 browser-side 画函数的工具？(大坑) -->
-
 <blockquote>
 <p>Note: </p>
 <ol>
-<li>$Var[X] &#x3D; E[(X-E[X])^2] &#x3D; E[X^2-2 \cdot X \cdot E[X] + (E[X])^2] &#x3D; E[X^2]-(E[X])^2$ </li>
-<li>$\operatorname{Var}[aX+bY] &#x3D; a^2\operatorname{Var}[X] + b^2\operatorname{Var}[Y] + 2ab \operatorname{Cov}[X, Y]$</li>
+<li>$Var[X] = E[(X-E[X])^2] = E[X^2-2 \cdot X \cdot E[X] + (E[X])^2] = E[X^2]-(E[X])^2$ </li>
+<li>$\operatorname{Var}[aX+bY] = a^2\operatorname{Var}[X] + b^2\operatorname{Var}[Y] + 2ab \operatorname{Cov}[X, Y]$</li>
 </ol>
 </blockquote>
 <h3 id="Importance-Sampling-重要性采样"><a href="#Importance-Sampling-重要性采样" class="headerlink" title="Importance Sampling (重要性采样)"></a>Importance Sampling (重要性采样)</h3><p>按分布 $p(x)$ 采样得到 $x$，然后进行 Monte Carlo 积分</p>
-<p>方法：<br>$$<br>\int_\Omega f(𝑥) dx \approx \frac{1}{N} \sum \frac{f(𝑥_𝑖)}{𝑝(𝑥_𝑖)} \</p>
-<p>s.t.  \quad p(x) &gt; 0\ \text{for}\ x \in supp(f)<br>$$</p>
-<p>可以证明，如果分布 p 对 f 近似的越好，相同样本数量下估计量的方差越低，并且方差可以渐进的到达 0，即 “asymptotic zero-variance estimation”</p>
-<h3 id="Resampled-Importance-Sampling"><a href="#Resampled-Importance-Sampling" class="headerlink" title="Resampled Importance Sampling"></a>Resampled Importance Sampling</h3>
+<p>方法：</p>
+<script type="math/tex; mode=display">
+\int_\Omega f(𝑥) dx \approx \frac{1}{N} \sum \frac{f(𝑥_𝑖)}{𝑝(𝑥_𝑖)} \\
+
+s.t.  \quad p(x) > 0\ \text{for}\ x \in supp(f)</script><p>可以证明，如果分布 p 对 f 近似的越好，相同样本数量下估计量的方差越低，并且方差可以渐进的到达 0，即 “asymptotic zero-variance estimation”</p>
+<h3 id="Resampled-Importance-Sampling"><a href="#Resampled-Importance-Sampling" class="headerlink" title="Resampled Importance Sampling"></a>Resampled Importance Sampling</h3><p>从前面的 Importance Sampling 方法中我们了解到，我们采样的分布 $p(x)$ 的形状越接近 $f(x)$，那么采样的效果就越好。</p>
+<p>如果我们有一个很棒的分布 $q(x)$，但是我们很难直接采样出符合 $q(x)$ 分布的样本，但与此同时我们有一个劣化版本 $p(x)$ 可以进行直接采样。</p>
+<p>此时，我们可以采用如下方法，采样出符合 $q(x)$ 分布的样本：</p>
+<ol>
+<li>从 p(x) 分布中采样</li>
+</ol>
+
       
     </div>
 	
@@ -625,7 +661,6 @@
 <p>这次将博客的源文件放到 GitHub 上，并且把之前的文章收集整理一下，进行一下重构。</p>
 <h2 id="用什么博客框架？"><a href="#用什么博客框架？" class="headerlink" title="用什么博客框架？"></a>用什么博客框架？</h2><p>在 Hexo 和 Pelican 中选择了 Hexo，主要社区和主题的维护者都更活跃一些。</p>
 <h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="生成-amp-测试"><a href="#生成-amp-测试" class="headerlink" title="生成 &amp; 测试"></a>生成 &amp; 测试</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./node_modules/.bin/hexo generate</span><br><span class="line">./node_modules/.bin/hexo server</span><br></pre></td></tr></table></figure>
-
 <p>也可以考虑 <code>npm run build</code> 和 <code>npm run server</code>。</p>
 <h3 id="新文章"><a href="#新文章" class="headerlink" title="新文章"></a>新文章</h3><p><code>hexo new &quot;My new post&quot;</code></p>
 <h2 id="修改主题"><a href="#修改主题" class="headerlink" title="修改主题"></a>修改主题</h2><p>主题基于 <a target="_blank" rel="noopener" href="https://github.com/52binge/hexo-theme-blairos">BlairOS</a> 这个 Hexo 主题，我裁减了其中的统计代码，更改了 Logo 和相关的 Stylus 代码。</p>
@@ -709,7 +744,7 @@
 <p>远期来说，我个人希望这个平台可以帮助希望做硬件开发的同学们更贴近 IC 业界考虑的问题，并且对硬件设计本身有更好的理解——当然鉴于我本人是个硬件菜鸡，这还需要很多大佬的支持才能办到。</p>
 <p>就我个人从前辈处了解到的一些信息来说，IC 的验证和后端的流程普通的同学还是很难接触到的，可能在平台中有关于验证和后端设计需要关心的问题进行设计并包装成为题目是值得尝试的一些方向。</p>
 <blockquote>
-<p>比如说，SystemVerilog &#x2F; UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p>
+<p>比如说，SystemVerilog / UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p>
 </blockquote>
 <p>另一个可能值得尝试的坑是对接 USTC FPGAOL 平台，将片上的表现作为评估和设计迭代的依据。</p>
 <p>（不过听着就是大坑.jpg）</p>

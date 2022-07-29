@@ -5,16 +5,16 @@
   
   <title>论文阅读 | EARS - libreliu&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="简介本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。 首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。 作为例子，考虑如下的场景（图源论文）：   该场景中，池底的表面为漫反射材质，但是">
+  <meta name="description" content="简介本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。 首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。 作为例子，考虑如下的场景（图源论文）：  该场景中，池底的表面为漫反射材质，但是路">
 <meta property="og:type" content="article">
 <meta property="og:title" content="论文阅读 | EARS">
 <meta property="og:url" content="https://blog.libreliu.info/paper-reading/ears/">
 <meta property="og:site_name" content="libreliu&#39;s blog">
-<meta property="og:description" content="简介本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。 首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。 作为例子，考虑如下的场景（图源论文）：   该场景中，池底的表面为漫反射材质，但是">
+<meta property="og:description" content="简介本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。 首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。 作为例子，考虑如下的场景（图源论文）：  该场景中，池底的表面为漫反射材质，但是路">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://blog.libreliu.info/paper-reading/ears/pool-scene.png">
 <meta property="article:published_time" content="2022-07-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-07-27T17:01:09.265Z">
+<meta property="article:modified_time" content="2022-07-29T14:40:05.005Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blog.libreliu.info/paper-reading/ears/pool-scene.png">
@@ -103,8 +103,7 @@
 <p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p>
 <p>作为例子，考虑如下的场景（图源论文）：</p>
 <img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene">
-
-<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
+<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF / BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
 <p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p>
 <ul>
 <li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li>
@@ -175,17 +174,17 @@
     
 <nav id="article-nav">
   
-    <a href="/paper-reading/gris/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/test-ul-nested/" id="article-nav-newer" class="article-nav-link-wrap">
       <div class="article-nav-title"><span>&lt;</span>&nbsp;
         
-          论文阅读 | Generalized RIS
+          测试嵌套 ul 和 li
         
       </div>
     </a>
   
   
-    <a href="/paper-reading/nrc/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">论文阅读 | Neural Radiance Caching&nbsp;<span>&gt;</span></div>
+    <a href="/paper-reading/gris/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">论文阅读 | Generalized RIS&nbsp;<span>&gt;</span></div>
     </a>
   
 </nav>

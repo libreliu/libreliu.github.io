@@ -14,7 +14,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://blog.libreliu.info/paper-reading/ddgi/ddgi_term_comparation.png">
 <meta property="article:published_time" content="2022-07-22T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-07-27T17:01:09.265Z">
+<meta property="article:modified_time" content="2022-07-29T14:40:05.001Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blog.libreliu.info/paper-reading/ddgi/ddgi_term_comparation.png">
@@ -119,8 +119,8 @@
 <blockquote>
 <p>Recall: radiance 和 irradiance</p>
 <ul>
-<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li>
-<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li>
+<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi / (dS d\Omega) $</li>
+<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi / dS $</li>
 </ul>
 </blockquote>
 <h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p>
@@ -135,15 +135,14 @@
 </ol>
 <p>所以，DDGI 提出了这样的框架来进行着色：</p>
 <figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure>
-
 <blockquote>
 <p><code>irradiance.a</code> 的作用是什么..？</p>
 <p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p>
 <p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p>
 </blockquote>
 <h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p>
-<p>$$<br>P(x &gt; t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}<br>$$</p>
-<blockquote>
+<script type="math/tex; mode=display">
+P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
 <p>可以参考 GAMES202 中<a target="_blank" rel="noopener" href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p>
 </blockquote>
 <p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p>
@@ -152,7 +151,6 @@
 </blockquote>
 <h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p>
 <img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation">
-
 <p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p>
 <h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p>
 <ol>
