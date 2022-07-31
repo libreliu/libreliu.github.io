@@ -55,6 +55,147 @@
 
     <br>
     <section id="main" class="outer">
+      <article id="paper-reading-paper-reading/slang-shader-framework" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/slang-shader-framework/"><strong>论文阅读 | Slang</strong></a>
+      <small class=article-date-index>&nbsp; 2022-07-31</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/slang-shader-framework/" class="article-date">
+  <time datetime="2022-07-30T16:00:00.000Z" itemprop="datePublished">2022-07-31</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Slang 是在 HLSL 之上扩展的着色器语言，其旨在保证<strong>没有额外性能损失</strong>的情况下，解决现代游戏引擎和实时渲染应用中出现的，不同光源 / 材质组合出现的 Shader 代码膨胀、晦涩难懂的基于宏的复用等问题。</p>
+<p>Slang 针对原 HLSL，主要增加了以下的新特性：</p>
+<ol>
+<li>带可选成员类型约束的接口系统 (Interfaces)<ul>
+<li>以及 <code>extension</code> 关键字来覆盖接口系统的默认行为，提供最大灵活性</li>
+</ul>
+</li>
+<li>泛型系统 (Generics)</li>
+<li>显式参数块 (Explicit Parameter Blocks)</li>
+<li>Slang 编译器和提供运行时类型特化支持的编译器运行时 API</li>
+<li>(论文发表后新增) 语法糖和其它易用性改进<ul>
+<li>类 C# 的 getter/setter 语法糖</li>
+<li>运算符重载</li>
+<li>模块系统</li>
+</ul>
+</li>
+<li>(论文发表后新增) CUDA, OptiX 等非传统 Shader 编译目标</li>
+</ol>
+<p>从上面可以看出，Slang 自论文发布后还存在有功能演进，说明作为 Shader 语言本身还是有一定生命力的。</p>
+<p>截至 2022 年 7 月 31 日，<a target="_blank" rel="noopener" href="https://github.com/shader-slang/slang">Slang 的 GitHub 仓库</a> 共有 978 个 Star，235 Open Issue 和 284 Closed Issue，最后一次提交在两天前，证明项目还是比较活跃的。</p>
+<blockquote>
+<p>Note: 据我浅薄的了解，HLSL 也在不断迭代新的功能，如 <a target="_blank" rel="noopener" href="https://devblogs.microsoft.com/directx/announcing-hlsl-2021/">HLSL 2021</a> 的 <code>template</code> 泛型支持等。<del>不过 GLSL 好像没啥大动作</del>(?)</p>
+</blockquote>
+<h2 id="Slang-语言特性介绍"><a href="#Slang-语言特性介绍" class="headerlink" title="Slang 语言特性介绍"></a>Slang 语言特性介绍</h2><h3 id="接口系统-Interfaces"><a href="#接口系统-Interfaces" class="headerlink" title="接口系统 (Interfaces)"></a>接口系统 (Interfaces)</h3><p>Slang 的接口表示一种约定，比如约定里面会有某种特定函数原型的函数实现，某种特定的成员结构体等，与 “traits” 的语言概念比较接近。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define a interface</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title">IFoo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="built_in">int</span> <span class="title">myMethod</span>(<span class="params"><span class="built_in">float</span> arg</span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// declare that MyType have conformance to interface IFoo</span></span><br><span class="line"><span class="keyword">struct</span> MyType : IFoo</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="built_in">int</span> <span class="title">myMethod</span>(<span class="params"><span class="built_in">float</span> arg</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (<span class="built_in">int</span>)arg + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="泛型系统-Generics"><a href="#泛型系统-Generics" class="headerlink" title="泛型系统 (Generics)"></a>泛型系统 (Generics)</h3><p>泛型系统可以实现同时支持不同类型实例的函数。特别的，可以约束传入的形参类型为实现某种接口的类型，如下面的 <code>myGenericMethod</code> 约束 <code>T</code> 为实现 <code>IFoo</code> 接口的类型。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define</span></span><br><span class="line"><span class="type">int</span> myGenericMethod&lt;T: IFoo&gt;(T arg)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> arg.myMethod(<span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// invoke</span></span><br><span class="line">MyType obj;</span><br><span class="line"><span class="type">int</span> a = myGenericMethod&lt;MyType&gt;(obj); <span class="comment">// OK, explicit type argument</span></span><br><span class="line"><span class="type">int</span> b = myGenericMethod(obj); <span class="comment">// OK, automatic type deduction</span></span><br></pre></td></tr></table></figure>
+<p>同时，Slang 还支持类似 C++ 的非类型模板形参的泛型参数输入，比如下面的 <code>N</code>：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> Array&lt;T, <span class="keyword">let</span> N : <span class="built_in">int</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    T arrayContent[N];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数，<code>struct</code> 等语言组件都支持泛型。</p>
+<blockquote>
+<p>Note: HLSL 本身就支持作为 struct 的 arg 拥有成员函数。</p>
+</blockquote>
+<h3 id="显式参数块-Explicit-Parameter-Blocks"><a href="#显式参数块-Explicit-Parameter-Blocks" class="headerlink" title="显式参数块 (Explicit Parameter Blocks)"></a>显式参数块 (Explicit Parameter Blocks)</h3><blockquote>
+<p>这个特性在 Slang 官方的语言文档中没有着重强调，主要是在 Slang 的这篇论文中强调了。</p>
+</blockquote>
+<p>现代图形 API（D3D12, Vulkan）对于 Shader 的输入参数是以 “parameter block” 的形式来组织的（例：Vulkan 中术语为 Descriptor Set），一个 Shader 的输入可以由多个 Descriptor Set 组成。</p>
+<p>考虑到场景的绘制过程中，有一部分 Shader 参数是不变的（比如同一个绘制到主 RenderTarget 的 Pass 中摄像机的位置），那么把这些不变的参数单独拿出来组织成一个 Parameter Block，把剩下的一些变化频率不太一致的另一些参数（比如模型的 <code>modelMatrix</code>）拿出来作为一个或多个 Parameter Block 的话，就可以降低一部分绘制时的开销。</p>
+<p>但是手工组织 Shader 的 layout（特别是对于不同的材质，我们有不同的 Shader 要用）是比较繁琐的，Slang 则对这个 Parameter Binding 和 Parameter Block 有专门的设计（<code>Shader Parameters</code>），可以方便的自动推导符合程序员设计要求的 layout 和 block。</p>
+<h3 id="编译器和运行时-API"><a href="#编译器和运行时-API" class="headerlink" title="编译器和运行时 API"></a>编译器和运行时 API</h3><p>Slang 提供了功能丰富的运行时 API，其功能经过一些演进和论文中描述的也不是特别一致了。</p>
+<p>Slang 的运行时 API 大概提供了如下机制：</p>
+<ol>
+<li>运行时 Shader 编译和特化 API<ul>
+<li>比如，运行时要对新的材质类型重新编译 Shader，就可以使用这些 API</li>
+</ul>
+</li>
+<li>反射机制<ul>
+<li>可以获得某段 Slang Shader 中的函数、Shader 入口参数等信息</li>
+</ul>
+</li>
+</ol>
+<h3 id="语法糖"><a href="#语法糖" class="headerlink" title="语法糖"></a>语法糖</h3><p>Slang 的文档中描述了不少 Slang 的语法糖和易用性改进。</p>
+<h4 id="类似-C-的-getter-setter-语法糖"><a href="#类似-C-的-getter-setter-语法糖" class="headerlink" title="类似 C# 的 getter / setter 语法糖"></a>类似 C# 的 getter / setter 语法糖</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> MyType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">uint</span> flag;</span><br><span class="line"></span><br><span class="line">    property <span class="built_in">uint</span> highBits</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> flag &gt;&gt; <span class="number">16</span>; &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; flag = (flag &amp; <span class="number">0xFF</span>) + (newValue &lt;&lt; <span class="number">16</span>); &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="基于全局函数的运算符重载"><a href="#基于全局函数的运算符重载" class="headerlink" title="基于全局函数的运算符重载"></a>基于<strong>全局函数</strong>的运算符重载</h4><blockquote>
+<p>HLSL 2021 支持了基于<strong>成员函数</strong>的运算符重载：[Announcing HLSL 2021</p>
+<ul>
+<li>DirectX Developer Blog](<a target="_blank" rel="noopener" href="https://devblogs.microsoft.com/directx/announcing-hlsl-2021/">https://devblogs.microsoft.com/directx/announcing-hlsl-2021/</a>)</li>
+</ul>
+<p>而 GLSL 截至 2022 年 7 月 31 日还在咕咕：<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/GLSL/issues/107">Operator overloading · Issue #107 · KhronosGroup/GLSL</a></p>
+</blockquote>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> MyType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> val;</span><br><span class="line">    __init(<span class="built_in">int</span> x) &#123; val = x; &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">MyType <span class="keyword">operator</span>+(MyType a, MyType b)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> MyType(a.val + b.val);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="built_in">int</span> <span class="title">test</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    MyType rs = MyType(<span class="number">1</span>) + MyType(<span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> rs.val; <span class="comment">// returns 3.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="模块机制"><a href="#模块机制" class="headerlink" title="模块机制"></a>模块机制</h4><p>Slang 支持一个简单的模块机制，可以把要 import 的目标模块（就是一个 .slang 的 Slang Shader）中的定义导入当前单元。如果该模块此时再被其它模块 import 的话，这些被导入的模块是不会导入到它的“上一层”的单元中的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MyShader.slang</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 正常的导入</span></span><br><span class="line"><span class="keyword">import</span> YourLibrary;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 当然，也可以导入时覆盖前面描述的行为</span></span><br><span class="line">__export <span class="keyword">import</span> SomeOtherModule;</span><br></pre></td></tr></table></figure>
+<h2 id="重构-Falcor-渲染器"><a href="#重构-Falcor-渲染器" class="headerlink" title="重构 Falcor 渲染器"></a>重构 Falcor 渲染器</h2><p>Falcor 是一个基于 D3D12 的实时渲染器。</p>
+<blockquote>
+<p>根据 README，Vulkan 实验性支持在进行中。</p>
+</blockquote>
+<p>作者从 Falcor 的 2.0.2 版本出发，重构了 5400 行着色器代码。</p>
+<p>改进主要集中在如下方面：</p>
+<ol>
+<li>将一个大的 Parameter Block 拆分成 per-material 的 block</li>
+<li><p>Falcor 原来的 Material 采用层次化的设计，每一层 (e.g. GGX, Lambertian, Phong) 都和下一层进行 blend，而渲染时，根据不同的 material 要 dispatch 不同的 shader 时，采用了很多 <code>#define</code> 和基于文本的 Shader Varient Cache 的查询环节。</p>
+<p>作者重构时将这套系统用 Slang 的泛型系统重构，并且将标准材质的 Varient 用非类型形参编码成了若干个 int，进而加快了查询速度。</p>
+</li>
+<li>针对与 Material 类似的技术，实现了光源上的特化，在场景中只有某种类型光源的时候采用静态特化好的 Shader 变体，减少运行时判断的开销</li>
+</ol>
+<h3 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h3><p>通过重构 Falcor 渲染器，在 NVIDIA 的 ORCA 场景上的测试表明</p>
+<ul>
+<li>每帧 CPU 执行时间降低了 30%</li>
+<li>光源和材料特化改进对部分场景的 GPU 时间有加速作用</li>
+</ul>
+<h3 id="可扩展性"><a href="#可扩展性" class="headerlink" title="可扩展性"></a>可扩展性</h3><p>作者分别在重构前和重构后的 Falcor 上实现了（基于 LTC 方法的）多边形面光源，</p>
+<ul>
+<li>重构前：需要改动 7 处，4 个文件，246 行</li>
+<li>重构前，但加入光源分离机制：需要改动 8 处，5 个文件，253 行</li>
+<li>重构后：只需要改动 1 处，1 个文件，249 行</li>
+</ul>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><blockquote>
+<p>We believe that all real-time graphics programmers could benefit from<br>a new generation of shader compilation tools informed by these<br>ideas. —— <em>Slang: language mechanisms for extensible real-time shading systems</em></p>
+</blockquote>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="paper-reading-paper-reading/ddgi" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
