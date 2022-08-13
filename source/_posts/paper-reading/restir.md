@@ -222,3 +222,36 @@ $$
 
 方差也可以相应计算如下：
 
+$$
+\begin{aligned}
+\operatorname{Var}\left[\bar I^{1, M}_{ris}\right]
+&= \frac{1}{M^2} \operatorname{Var}\left[ \frac{f(x_z)}{\hat p(x_z)} \cdot \left(  \sum^M_{j=1} w(x_j) \right) \right] \\
+&= ?
+\end{aligned}
+$$
+
+<!-- TODO: Multi-sample RIS -->
+
+### 带权蓄水池抽样 (Weighted Reservoir Sampling)
+
+前面提到，重采样重要性采样需要先抽 $ M $ 个样本，然后从中再抽样出最终的值。
+
+经过仔细观察，拥有如下结构的抽样问题可以用带权蓄水池抽样 (Weighted Reservoir Sampling) 来解决：
+
+$$
+p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}
+$$
+
+(WRS) 假设对于序列 $ \{x_1, ..., x_m\} $，我们希望按上述概率抽样得到样本 $x_z$
+1. 维护一个当前总权重 $ w_\text{sum} $，当前总样本数 $ M $ 和最终样本 $ y $
+2. 初始化 $ y:=x_1; \, M:=1; \, w_\text{sum}:=w(x_1) $
+3. 对于每个新样本 $x_i$
+   - 以 $ w(x_i) / w_\text{sum} $ 概率：$ y:=x_i; \, M:=M+1; \, w_\text{sum} := w_\text{sum}+w(x_i) $
+   - 以 $ 1 - w(x_i) / w_\text{sum} $ 概率：$ M:=M+1; \, w_\text{sum} := w_\text{sum}+w(x_i) $
+
+这样对于某个样本 $ x_k $，经过这个过程最后被选中的概率为 `P(第 k 次被选中) * P(第 k 次之后都没有被换掉)`，乘起来很容易证明正确性。
+
+WRS 方法的优势在于，不需要完成存储 $ \{x_i\} $ 序列本身，而是线性扫描一遍这个序列就可以得出结果，非常适合和前面的 RIS 方法搭配使用。
+### 蓄水池合并 (Reservoir Merging)
+
+TODO: implement
