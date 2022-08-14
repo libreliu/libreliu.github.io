@@ -13,7 +13,7 @@
 <meta property="og:description" content="简介本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-07-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-08-06T16:47:41.224Z">
+<meta property="article:modified_time" content="2022-08-14T16:36:11.091Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
   
@@ -201,7 +201,31 @@
     }
   });
 </script>
-<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true,
+    },
+    options: {
+    renderActions: {
+      findScript: [10, function (doc) {
+        for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+          const display = !!node.type.match(/; *mode=display/);
+          const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+          const text = document.createTextNode('');
+          node.parentNode.replaceChild(text, node);
+          math.start = {node: text, delim: '', n: 0};
+          math.end = {node: text, delim: '', n: 0};
+          doc.math.push(math);
+        }
+      }, '']
+    }
+  }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-chtml.js">
 </script>
 
     
