@@ -22,8 +22,8 @@ status: Working
 $$
 \begin{aligned}
 L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
-&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o}}{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
-&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o}}{| x - x' |^2} dA \\
+&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
+&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
 \end{aligned}
 $$
 
@@ -197,7 +197,7 @@ $$
 则
 
 $$
-p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{{\hat p(x_z)}/{p(x_z)}}{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)
+p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)
 $$
 
 则
@@ -206,7 +206,7 @@ $$
 \begin{aligned}
 \operatorname{E}\left[\bar I^{1, M}_{ris}\right]
 &= \int_{x_1, ..., x_M} \sum_{z=1}^M \bar I^{1, M}_{ris}(z, x_1, ..., x_M) \, p(z \, | \, x_1, ..., x_M) \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
-&= \int_{x_1, ..., x_M} \sum_{z=1}^M \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right) \frac{{\hat p(x_z)}/{p(x_z)}}{\sum_{j=1}^M w(x_j)} \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
+&= \int_{x_1, ..., x_M} \sum_{z=1}^M \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right) \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{j=1}^M w(x_j)} \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
 &= \frac{1}{M} \int_{x_1, ..., x_M} \sum_{z=1}^M \frac{f(x_z)}{p(x_z)} \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
 &= \frac{1}{M} \operatorname{E}\left[ \sum_{z=1}^{M} \frac{f(x_z)}{p(x_z)} \right] \\
 &= \operatorname{E}\left[ \frac{f(x)}{p(x)} \right] \qquad \text{(} \because x_i \text{ i.i.d.)} \\
