@@ -67,4 +67,4 @@ npm install github:libreliu/hexo-renderer-marked-math#master --save
 
 [这里](https://gist.github.com/3846masa/cde99a18a8d7ad225cf7)在 2015 年对 VSCode 的 Markdown 渲染的 patch 对本更改有参考意义。
 
-不过这些资料都比较老了，直接把 diff 放到新版上去 patch 肯定是不行的。
+[math-marked](https://github.com/zq1997/math-marked)这个项目在我基本写完之后才看到，不过作者没有基于原来的 commit 继续改，后续升版本会比较费劲。
