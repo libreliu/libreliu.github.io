@@ -3,17 +3,13 @@
 <head>
   <meta charset="utf-8">
   
-  <title>USTC Verilog OJ | 设计、实现、剩下的坑 - libreliu&#39;s blog</title>
+  <title>libreliu&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="(Remark 2022-07-07): 本文原发于知乎，现在在博客这边补个档。  夜深人静的时候有些难以入眠（实际上可能是早上起太迟了），于是开一篇文章大略记叙一下部署在 https:&#x2F;&#x2F;verilogoj.ustc.edu.cn&#x2F; 处的 USTC Verilog OJ 的设计实现和留下的坑。 设计一个 Verilog OJ 的想法源于 2020 春的《软件工程》课程，课程伊始要求同学们以 1">
-<meta property="og:type" content="article">
-<meta property="og:title" content="USTC Verilog OJ | 设计、实现、剩下的坑">
-<meta property="og:url" content="https://blog.libreliu.info/ustc-verilog-oj/">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="libreliu&#39;s blog">
+<meta property="og:url" content="https://blog.libreliu.info/page/2/">
 <meta property="og:site_name" content="libreliu&#39;s blog">
-<meta property="og:description" content="(Remark 2022-07-07): 本文原发于知乎，现在在博客这边补个档。  夜深人静的时候有些难以入眠（实际上可能是早上起太迟了），于是开一篇文章大略记叙一下部署在 https:&#x2F;&#x2F;verilogoj.ustc.edu.cn&#x2F; 处的 USTC Verilog OJ 的设计实现和留下的坑。 设计一个 Verilog OJ 的想法源于 2020 春的《软件工程》课程，课程伊始要求同学们以 1">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2022-02-07T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-08-25T17:30:19.431Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
   
@@ -58,37 +54,40 @@
 </header>
 
     <br>
-    <section id="main" class="outer"><article id="post-ustc-verilog-oj" class="article article-type-post" itemscope itemprop="blogPost">
+    <section id="main" class="outer">
+      <article id="post-ustc-verilog-oj" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-inner">
     
     
       <header class="article-header">
         
   
-    <h1 class="article-title" itemprop="name">
-      USTC Verilog OJ | 设计、实现、剩下的坑
-      <small class=article-detail-date-index>&nbsp; 2022-02-08</small>
-    </h1>
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/ustc-verilog-oj/"><strong>USTC Verilog OJ | 设计、实现、剩下的坑</strong></a>
+      <small class=article-date-index>&nbsp; 2022-02-08</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
   
 
 
-        <div class=page-title></div>
-        <br>
       </header>
     
     <div class="article-meta">
       <!--<a href="/ustc-verilog-oj/" class="article-date">
   <time datetime="2022-02-07T16:00:00.000Z" itemprop="datePublished">2022-02-08</time>
 </a>-->
-      <!-- 
---><!-- by blair 160724 -->
-      <!-- by blair
+      <!--
+-->
+      <!--
       
       -->
     </div>
+	
     <div class="article-entry" itemprop="articleBody">
-      
-      
       
         <blockquote>
 <p>(Remark 2022-07-07): 本文原发于知乎，现在在博客这边补个档。</p>
@@ -123,80 +122,25 @@
 <p>希望有更多感兴趣的同学加入到我们的开发（和提 Issue）的工作当中ww</p>
 
       
-     <!-- by blair add this if sentence at 20160725 -->
-      <br>
-      
-<!-- <div id="bottom-donation-section"> -->
-<!-- <span style="font-size: 1.0em; padding:0em 1em 0.5em 1em; margin: 0 auto;">
-  <strong style="vertical-align: top;">分享到:</strong>
-    <div class="j_handlclick"  style="background: url(/images/logos/share_facebook_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.facebook.com/sharer/sharer.php?u=" target="_blank">
     </div>
-    <div class="j_handlclick"  style="background: url(/images/logos/share_twitter_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://twitter.com/intent/tweet?url=" target="_blank">
-    </div>
-    <div class="j_handlclick"  style="background: url(/images/logos/share_line_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.addtoany.com/add_to/line?linkurl=" target="_blank">
-    </div>
-    <div class="j_handlclick"  style="background: url(/images/logos/share_wechat_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://api.addthis.com/oexchange/0.8/forward/wechat/offer?url=" target="_blank">
-    </div>
-  <br>  
-  <br>  
-  &nbsp;&nbsp;如果您觉得这篇文章对您的学习很有帮助, 请您也分享它, 让它能再次帮助到更多的需要学习的人.
-您的<a href="/support/"><strong>支持</strong></a>将鼓励我继续创作 !
-  <br>  
-
-</span> -->
-<!--
-<h3 id="bottom-donation-title">支持 让文章变得更优质</h3>
-<div>
-<a id="bottom-donation-button" href="/support">点我 赞助 作者</a>
-</div>
--->
-<!-- </div> -->
-<!-- <div class="well"> -->
-  <!--
-  原创文章，转载请注明： 转载自<a target="_blank" rel="noopener" href="http://52binge.github.io"> Blair Chan's Blog</a>，作者：
-  <a href="/about">Blair Chan</a> <br>
-  -->
-  <!-- 本文基于<a target="_blank" title="Creative Commons Attribution 4.0 international License" href="https://creativecommons.org/licenses/by-nc/4.0/">署名4.0国际许可协议</a>发布，转载请保留本文署名和文章链接。 如您有任何授权方面的协商，请邮件联系我。 -->
-<!-- </div> -->
- <!-- by blair add 160724-->
+	
+    <!--
+	
+    -->
+    <!--
     
-    </div>
-    
-      <div class="article-toc">
-        <h3>Contents</h3>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84"><span class="toc-text">架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE"><span class="toc-text">题目</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%A9%E4%B8%8B%E7%9A%84%E5%9D%91"><span class="toc-text">剩下的坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
-      </div>
-    
-    
-      <footer class="article-footer">
-        <!-- <div class="well" style="width:100px; height:30px;"></div>  by blair-->
-        
- <!-- by blair add 160724-->
-        <!--
-        <div style="width:100px; height:30px;"></div> by blair add 160724
-        -->
-        
-
-      </footer>
-    
+    -->
   </div>
   
-    
-<nav id="article-nav">
-  
-    <a href="/blog-reborn/" id="article-nav-newer" class="article-nav-link-wrap">
-      <div class="article-nav-title"><span>&lt;</span>&nbsp;
-        
-          博客复活！
-        
-      </div>
-    </a>
-  
-  
-</nav>
-
-  
 </article>
+
+
+
+    
+      <nav id="page-nav">
+        <a class="extend prev" rel="prev" href="/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+      </nav>
+    
 
 </section>
     <footer id="footer">
