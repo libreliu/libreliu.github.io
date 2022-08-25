@@ -89,7 +89,7 @@
 	
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Slang 是在 HLSL 之上扩展的着色器语言，其旨在保证<strong>没有额外性能损失</strong>的情况下，解决现代游戏引擎和实时渲染应用中出现的，不同光源 / 材质组合出现的 Shader 代码膨胀、晦涩难懂的基于宏的复用等问题。</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Slang 是在 HLSL 之上扩展的着色器语言，其旨在保证<strong>没有额外性能损失</strong>的情况下，解决现代游戏引擎和实时渲染应用中出现的，不同光源 &#x2F; 材质组合出现的 Shader 代码膨胀、晦涩难懂的基于宏的复用等问题。</p>
 <p>Slang 针对原 HLSL，主要增加了以下的新特性：</p>
 <ol>
 <li>带可选成员类型约束的接口系统 (Interfaces)<ul>
@@ -100,7 +100,7 @@
 <li>显式参数块 (Explicit Parameter Blocks)</li>
 <li>Slang 编译器和提供运行时类型特化支持的编译器运行时 API</li>
 <li>(论文发表后新增) 语法糖和其它易用性改进<ul>
-<li>类 C# 的 getter/setter 语法糖</li>
+<li>类 C# 的 getter&#x2F;setter 语法糖</li>
 <li>运算符重载</li>
 <li>模块系统</li>
 </ul>
@@ -114,10 +114,13 @@
 </blockquote>
 <h2 id="Slang-语言特性介绍"><a href="#Slang-语言特性介绍" class="headerlink" title="Slang 语言特性介绍"></a>Slang 语言特性介绍</h2><h3 id="接口系统-Interfaces"><a href="#接口系统-Interfaces" class="headerlink" title="接口系统 (Interfaces)"></a>接口系统 (Interfaces)</h3><p>Slang 的接口表示一种约定，比如约定里面会有某种特定函数原型的函数实现，某种特定的成员结构体等，与 “traits” 的语言概念比较接近。</p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define a interface</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title">IFoo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="built_in">int</span> <span class="title">myMethod</span>(<span class="params"><span class="built_in">float</span> arg</span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// declare that MyType have conformance to interface IFoo</span></span><br><span class="line"><span class="keyword">struct</span> MyType : IFoo</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="built_in">int</span> <span class="title">myMethod</span>(<span class="params"><span class="built_in">float</span> arg</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (<span class="built_in">int</span>)arg + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <h3 id="泛型系统-Generics"><a href="#泛型系统-Generics" class="headerlink" title="泛型系统 (Generics)"></a>泛型系统 (Generics)</h3><p>泛型系统可以实现同时支持不同类型实例的函数。特别的，可以约束传入的形参类型为实现某种接口的类型，如下面的 <code>myGenericMethod</code> 约束 <code>T</code> 为实现 <code>IFoo</code> 接口的类型。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define</span></span><br><span class="line"><span class="type">int</span> myGenericMethod&lt;T: IFoo&gt;(T arg)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> arg.myMethod(<span class="number">1.0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// invoke</span></span><br><span class="line">MyType obj;</span><br><span class="line"><span class="type">int</span> a = myGenericMethod&lt;MyType&gt;(obj); <span class="comment">// OK, explicit type argument</span></span><br><span class="line"><span class="type">int</span> b = myGenericMethod(obj); <span class="comment">// OK, automatic type deduction</span></span><br></pre></td></tr></table></figure>
+
 <p>同时，Slang 还支持类似 C++ 的非类型模板形参的泛型参数输入，比如下面的 <code>N</code>：</p>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> Array&lt;T, <span class="keyword">let</span> N : <span class="built_in">int</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    T arrayContent[N];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>函数，<code>struct</code> 等语言组件都支持泛型。</p>
 <blockquote>
 <p>Note: HLSL 本身就支持作为 struct 的 arg 拥有成员函数。</p>
@@ -141,17 +144,20 @@
 </li>
 </ol>
 <h3 id="语法糖"><a href="#语法糖" class="headerlink" title="语法糖"></a>语法糖</h3><p>Slang 的文档中描述了不少 Slang 的语法糖和易用性改进。</p>
-<h4 id="类似-C-的-getter-setter-语法糖"><a href="#类似-C-的-getter-setter-语法糖" class="headerlink" title="类似 C# 的 getter / setter 语法糖"></a>类似 C# 的 getter / setter 语法糖</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> MyType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">uint</span> flag;</span><br><span class="line"></span><br><span class="line">    property <span class="built_in">uint</span> highBits</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> flag &gt;&gt; <span class="number">16</span>; &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; flag = (flag &amp; <span class="number">0xFF</span>) + (newValue &lt;&lt; <span class="number">16</span>); &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="类似-C-的-getter-x2F-setter-语法糖"><a href="#类似-C-的-getter-x2F-setter-语法糖" class="headerlink" title="类似 C# 的 getter &#x2F; setter 语法糖"></a>类似 C# 的 getter &#x2F; setter 语法糖</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> MyType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">uint</span> flag;</span><br><span class="line"></span><br><span class="line">    property <span class="built_in">uint</span> highBits</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> flag &gt;&gt; <span class="number">16</span>; &#125;</span><br><span class="line">        <span class="keyword">set</span> &#123; flag = (flag &amp; <span class="number">0xFF</span>) + (newValue &lt;&lt; <span class="number">16</span>); &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
 <h4 id="基于全局函数的运算符重载"><a href="#基于全局函数的运算符重载" class="headerlink" title="基于全局函数的运算符重载"></a>基于<strong>全局函数</strong>的运算符重载</h4><blockquote>
 <p>HLSL 2021 支持了基于<strong>成员函数</strong>的运算符重载：[Announcing HLSL 2021</p>
 <ul>
 <li>DirectX Developer Blog](<a target="_blank" rel="noopener" href="https://devblogs.microsoft.com/directx/announcing-hlsl-2021/">https://devblogs.microsoft.com/directx/announcing-hlsl-2021/</a>)</li>
 </ul>
-<p>而 GLSL 截至 2022 年 7 月 31 日还在咕咕：<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/GLSL/issues/107">Operator overloading · Issue #107 · KhronosGroup/GLSL</a></p>
+<p>而 GLSL 截至 2022 年 7 月 31 日还在咕咕：<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/GLSL/issues/107">Operator overloading · Issue #107 · KhronosGroup&#x2F;GLSL</a></p>
 </blockquote>
 <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> MyType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> val;</span><br><span class="line">    __init(<span class="built_in">int</span> x) &#123; val = x; &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">MyType <span class="keyword">operator</span>+(MyType a, MyType b)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> MyType(a.val + b.val);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="built_in">int</span> <span class="title">test</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    MyType rs = MyType(<span class="number">1</span>) + MyType(<span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> rs.val; <span class="comment">// returns 3.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <h4 id="模块机制"><a href="#模块机制" class="headerlink" title="模块机制"></a>模块机制</h4><p>Slang 支持一个简单的模块机制，可以把要 import 的目标模块（就是一个 .slang 的 Slang Shader）中的定义导入当前单元。如果该模块此时再被其它模块 import 的话，这些被导入的模块是不会导入到它的“上一层”的单元中的。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MyShader.slang</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 正常的导入</span></span><br><span class="line"><span class="keyword">import</span> YourLibrary;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 当然，也可以导入时覆盖前面描述的行为</span></span><br><span class="line">__export <span class="keyword">import</span> SomeOtherModule;</span><br></pre></td></tr></table></figure>
+
 <h2 id="重构-Falcor-渲染器"><a href="#重构-Falcor-渲染器" class="headerlink" title="重构 Falcor 渲染器"></a>重构 Falcor 渲染器</h2><p>Falcor 是一个基于 D3D12 的实时渲染器。</p>
 <blockquote>
 <p>根据 README，Vulkan 实验性支持在进行中。</p>
@@ -159,11 +165,13 @@
 <p>作者从 Falcor 的 2.0.2 版本出发，重构了 5400 行着色器代码。</p>
 <p>改进主要集中在如下方面：</p>
 <ol>
-<li>将一个大的 Parameter Block 拆分成 per-material 的 block</li>
+<li><p>将一个大的 Parameter Block 拆分成 per-material 的 block</p>
+</li>
 <li><p>Falcor 原来的 Material 采用层次化的设计，每一层 (e.g. GGX, Lambertian, Phong) 都和下一层进行 blend，而渲染时，根据不同的 material 要 dispatch 不同的 shader 时，采用了很多 <code>#define</code> 和基于文本的 Shader Varient Cache 的查询环节。</p>
 <p>作者重构时将这套系统用 Slang 的泛型系统重构，并且将标准材质的 Varient 用非类型形参编码成了若干个 int，进而加快了查询速度。</p>
 </li>
-<li>针对与 Material 类似的技术，实现了光源上的特化，在场景中只有某种类型光源的时候采用静态特化好的 Shader 变体，减少运行时判断的开销</li>
+<li><p>针对与 Material 类似的技术，实现了光源上的特化，在场景中只有某种类型光源的时候采用静态特化好的 Shader 变体，减少运行时判断的开销</p>
+</li>
 </ol>
 <h3 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h3><p>通过重构 Falcor 渲染器，在 NVIDIA 的 ORCA 场景上的测试表明</p>
 <ul>
@@ -239,7 +247,7 @@
 <p>通过八面体映射，就可以将 probe 每个方向的信息存储在正方形的纹理贴图上了。</p>
 <p>不过，在这篇文章中，出于性能考虑，作者采用了类似 Variance Shadow Mapping 的方法，极大压缩了纹理贴图的分辨率，同时对于每个 probe 的贴图的每个方向，分别存放</p>
 <ol>
-<li>$E_i(\mathrm{x’}, w)$: probe 以 $\omega$ 方向为天顶的半球的入射 irradiance</li>
+<li>$E_i(\mathrm{x'}, w)$: probe 以 $\omega$ 方向为天顶的半球的入射 irradiance</li>
 <li>$r(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离在半球面的均值<ul>
 <li>也就是 $\int d(x’, \omega) d \omega$，其中 $d(x, \omega): R^3 \times \Omega \to R$ 为在 $x$ 处沿 $\omega$ 方向到最近邻图元的距离</li>
 </ul>
@@ -250,8 +258,8 @@
 <blockquote>
 <p>Recall: radiance 和 irradiance</p>
 <ul>
-<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi / (dS d\Omega) $</li>
-<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi / dS $</li>
+<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li>
+<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li>
 </ul>
 </blockquote>
 <h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p>
@@ -266,14 +274,18 @@
 </ol>
 <p>所以，DDGI 提出了这样的框架来进行着色：</p>
 <figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure>
+
 <blockquote>
 <p><code>irradiance.a</code> 的作用是什么..？</p>
 <p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p>
 <p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p>
 </blockquote>
 <h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p>
-<script type="math/tex; mode=display">
-P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
+$$
+P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}
+$$
+
+<blockquote>
 <p>可以参考 GAMES202 中<a target="_blank" rel="noopener" href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p>
 </blockquote>
 <p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p>
@@ -282,6 +294,7 @@ P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
 </blockquote>
 <h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p>
 <img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation">
+
 <p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p>
 <h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p>
 <ol>
@@ -456,7 +469,8 @@ P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
 <p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p>
 <p>作为例子，考虑如下的场景（图源论文）：</p>
 <img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene">
-<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF / BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
+
+<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
 <p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p>
 <ul>
 <li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li>
@@ -671,33 +685,46 @@ P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}</script><blockquote>
 	
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;= 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
 <blockquote>
 <p>注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。</p>
 </blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3><script type="math/tex; mode=display">
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3>$$
 \begin{aligned}
 L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
 &= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
 &= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
-\end{aligned}</script><p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
-<script type="math/tex; mode=display">
+\end{aligned}
+$$
+
+<p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
+$$
 V(x, x') := 
 \left\{
 \begin{aligned}
 &1 ,& x' \text{ is visible from } x \\
 &0 ,& \text{otherwise}
 \end{aligned}
-\right.</script><!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
+\right.
+$$
+
+<!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
+
 <p>对于上面的积分，我们希望用一些离散的采样构成的一个估计量来进行原积分的估计。采样方式和利用采样得到的值进行运算从而构造估计量的方式被称为一种估计方法。</p>
 <p>数理统计告诉我们，估计量也是满足一个分布的，在绝大多数时候我们通过估计量的<strong>期望</strong>和<strong>方差</strong>来衡量一个估计的好坏。</p>
 <p>既然本篇论文是关于采样方法的改进，那么就首先回顾一下 Monte Carlo 求解渲染方程时会使用到的估计方法。</p>
 <h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计</p>
-<script type="math/tex; mode=display">
-I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${x<em>i}</em>{i=1}^n$，那么我们就可以构造估计量 $\bar I$</p>
-<script type="math/tex; mode=display">
-\bar I := \frac{|\Omega|}{N} \sum_{i=1}^n f(x_i)</script><p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
-<script type="math/tex; mode=display">
+$$
+I := \int_\Omega f(x) dx
+$$
+
+<p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${x_i}_{i&#x3D;1}^n$，那么我们就可以构造估计量 $\bar I$</p>
+$$
+\bar I := \frac{|\Omega|}{N} \sum_{i=1}^n f(x_i)
+$$
+
+<p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
+$$
 \begin{aligned}
 \operatorname{E}[\bar I] &= \frac{|\Omega|}{N} \sum_{i=1}^n \operatorname{E}[f(X_i)] \\
 &= |\Omega| \operatorname{E}[f(x_1)] & \text{(} \{X_i\} \text{ satisfy i.i.d.)} \\
@@ -705,10 +732,15 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 &= |\Omega| \int_\Omega f(x) \mu(x) dx \\
 &= |\Omega| \int_\Omega f(x) \frac{1}{|\Omega|} dx \\
 &= I
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>Note: 形如</p>
-<script type="math/tex; mode=display">
-\int_\Omega f(x) d\mu(x)</script><p>的积分中，$\mu(x)$ 是随机变量 $X$ 所对应的概率密度函数，在这里是均匀分布所以 $\mu(x) = 1/|\Omega|$ 。期望的本质就是 “$\sum x \times p(x)$”</p>
+$$
+\int_\Omega f(x) d\mu(x) 
+$$
+<p>的积分中，$\mu(x)$ 是随机变量 $X$ 所对应的概率密度函数，在这里是均匀分布所以 $\mu(x) &#x3D; 1&#x2F;|\Omega|$ 。期望的本质就是 “$\sum x \times p(x)$”</p>
 </blockquote>
 <!-- 
 比如说我们在初等概率论中学到的随机变量，在测度论角度来讲就是一种可测函数，而初等概率论在很多计算上面是直接在取值空间进行计算的，也就是实数空间，它的很多积分的运算你放在测度论来看就是直接应用了积分变换定理。在概率论中提到的“分布”，其实就是根据这个随机变量（可测函数）在原空间和取值空间进行一个测度变换，站在这个角度去看待一些概率论问题就会感觉一切是那么合理，简直就是一种艺术。
@@ -718,18 +750,24 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 来源：知乎
 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 -->
+
 <p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 \operatorname{Var}[\bar I] &= \frac{|\Omega|^2}{N^2} \operatorname{Var} \left[ \sum_{i=1}^{n} f(x_i) \right] \\
 &= \frac{|\Omega|^2}{N} \operatorname{Var}[f(x)] \\
 &= \frac{|\Omega|^2}{N} \left( \operatorname{E}[f(x)^2] - \operatorname{E}[f(x)]^2 \right) \\
 &= \frac{|\Omega|^2}{N} \left[ \int_\Omega f(x)^2 \mu(x) dx - \left( \int_\Omega f(x) \mu(x) dx \right)^2 \right] \\
 &= \frac{1}{N} \left[ |\Omega| \int_\Omega f(x)^2 dx - \left( \int_\Omega f(x) dx \right)^2 \right]
-\end{aligned}</script><p>我们观察到，后面的方括号中的内容和抽样次数 N 无关，所以只要 $\operatorname{Var}[f(X_i)]$ 有限，即可说明增加抽样次数，估计量最终可以<strong>在方差意义上</strong>收敛到原函数。</p>
+\end{aligned}
+$$
+
+<p>我们观察到，后面的方括号中的内容和抽样次数 N 无关，所以只要 $\operatorname{Var}[f(X_i)]$ 有限，即可说明增加抽样次数，估计量最终可以<strong>在方差意义上</strong>收敛到原函数。</p>
 <!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
+
 <!-- TODO: 补一些 Var 的图 -->
 <!-- 写一个 browser-side 画函数的工具？(大坑) -->
+
 <blockquote>
 <p>Note: </p>
 <ol>
@@ -739,23 +777,32 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 </ol>
 </blockquote>
 <h3 id="重要性采样-Importance-Sampling"><a href="#重要性采样-Importance-Sampling" class="headerlink" title="重要性采样 (Importance Sampling)"></a>重要性采样 (Importance Sampling)</h3><p>仍然假设我们需要估计</p>
-<script type="math/tex; mode=display">
-I := \int_\Omega f(x) dx</script><p>但是这次，我们选择一个连续分布，记其概率密度函数为 $p(x)$，并且我们从该分布中抽样得到样本 ${x<em>i}</em>{i=1}^N$，我们用这些样本构造估计量 $\bar I$</p>
-<script type="math/tex; mode=display">
-\bar I := \frac{1}{N} \sum_{i=1}^n \frac{f(x_i)}{p(x_i)}</script><p>那么，</p>
-<script type="math/tex; mode=display">
+$$
+I := \int_\Omega f(x) dx
+$$
+
+<p>但是这次，我们选择一个连续分布，记其概率密度函数为 $p(x)$，并且我们从该分布中抽样得到样本 ${x_i}_{i&#x3D;1}^N$，我们用这些样本构造估计量 $\bar I$</p>
+$$
+\bar I := \frac{1}{N} \sum_{i=1}^n \frac{f(x_i)}{p(x_i)}
+$$
+
+<p>那么，</p>
+$$
 \begin{aligned}
 \operatorname{E}[\bar I] &= \operatorname{E}\left[\frac{f(x_1)}{p(x_1)}\right] \\
 &= \int_\Omega \frac{f(x)}{p(x)} p(x) dx \\
 &= \int_\Omega f(x) dx \\
 &= I
 
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>此处的推导隐含 $p(x)$ 在 $\Omega$ 上的值<strong>非零</strong>，考虑到 $p(x)$ 是概率密度函数，$p(x) &gt; 0$</p>
 <p>不过事实上我们只需要 $p(x) &gt; 0$ 在 $\operatorname{supp}(f)$ 成立即可。</p>
 </blockquote>
 <p>方差：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 
 \operatorname{Var}[\bar I]
@@ -765,36 +812,53 @@ I := \int_\Omega f(x) dx</script><p>但是这次，我们选择一个连续分�
 &= \frac{1}{N} \left[ \int_\Omega \left(\frac{f(x)}{p(x)}\right)^2 p(x) dx - \left( \int_\Omega \frac{f(x)}{p(x)} p(x) dx \right)^2 \right] \\
 &= \frac{1}{N} \left[ \int_\Omega \frac{f(x)^2}{p(x)} dx - \left( \int_\Omega f(x) dx \right)^2 \right] \\
 
-\end{aligned}</script><p>则加大 N 后方差可以渐进趋于 0。</p>
+\end{aligned}
+$$
+
+<p>则加大 N 后方差可以渐进趋于 0。</p>
 <p>如果我们可以找到概率密度函数 $p(x)$ 满足</p>
-<script type="math/tex; mode=display">
-p(x) = \frac{f(x)}{\int_\Omega f(t) \, dt}</script><p>的话，带入上面的式子可以得到</p>
-<script type="math/tex; mode=display">
+$$
+p(x) = \frac{f(x)}{\int_\Omega f(t) \, dt}
+$$
+
+<p>的话，带入上面的式子可以得到</p>
+$$
 \begin{aligned}
 \operatorname{Var}[\bar I]
 &= \frac{1}{N} \left[ \left(\int_\Omega f(x) dx\right)^2 - \left( \int_\Omega f(x) dx \right)^2 \right] = 0
-\end{aligned}</script><p>一般的，由 $p(x)$ 决定的分布对 $f(x)$ 近似的越好，相同样本数量下估计量的方差就会越低。</p>
+\end{aligned}
+$$
+
+<p>一般的，由 $p(x)$ 决定的分布对 $f(x)$ 近似的越好，相同样本数量下估计量的方差就会越低。</p>
 <h3 id="重采样重要性采样-Resampled-Importance-Sampling"><a href="#重采样重要性采样-Resampled-Importance-Sampling" class="headerlink" title="重采样重要性采样 (Resampled Importance Sampling)"></a>重采样重要性采样 (Resampled Importance Sampling)</h3><p>从前面的重要性采样方法中我们了解到，我们采样的 $p(x)$ 的形状越接近 $f(x)$，那么采样的效果就越好。</p>
 <blockquote>
-<p>所谓形状接近，就是函数贴近 ${f(x)}/{\int_\Omega f(t) \, dt}$。</p>
+<p>所谓形状接近，就是函数贴近 ${f(x)}&#x2F;{\int_\Omega f(t) , dt}$。</p>
 </blockquote>
 <p>如果我们有一个很棒的分布 $\hat p(x)$，他比较接近 $f(x)$ 的形状，但是我们没法直接采样出符合 $\hat p(x)$ 分布的样本。</p>
 <p><em>(1-sample RIS)</em> 假设我们此时还可以找到一个分布 $p(x)$，其与 $\hat p(x)$ 比较接近，那么此时，我们可以采用如下方法，采样出符合 $ \hat p(x)$ 分布的样本：</p>
 <ol>
-<li>从 $p(x)$ 分布中抽样得到集合 $ X = {x_1, …, x_M } $</li>
-<li>按如下所给的条件概率抽样一个<strong>索引</strong> $ z \in {1, …, M} $<script type="math/tex; mode=display">
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}</script></li>
-<li>按下式计算估计量<script type="math/tex; mode=display">
+<li>从 $p(x)$ 分布中抽样得到集合 $ X &#x3D; {x_1, …, x_M } $</li>
+<li>按如下所给的条件概率抽样一个<strong>索引</strong> $ z \in {1, …, M} $$$
+p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}
+$$</li>
+<li>按下式计算估计量$$
 \begin{aligned}
 \bar I^{1, M}_{ris}(z, x_1, ..., x_M) = \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right)
-\end{aligned}</script></li>
+\end{aligned}
+$$</li>
 </ol>
 <p>首先，我们需要证明这个方法正确。证明的核心在于计算两步抽样最终抽到 $ x_z $ 的概率。记</p>
-<script type="math/tex; mode=display">
-p(z_0, x_z) := \lim_{\epsilon \to 0} P(z = z_0,  x_z \le x \le x_z + \epsilon) / \epsilon</script><p>则</p>
-<script type="math/tex; mode=display">
-p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)</script><p>则</p>
-<script type="math/tex; mode=display">
+$$
+p(z_0, x_z) := \lim_{\epsilon \to 0} P(z = z_0,  x_z \le x \le x_z + \epsilon) / \epsilon
+$$
+
+<p>则</p>
+$$
+p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)
+$$
+
+<p>则</p>
+$$
 \begin{aligned}
 \operatorname{E}\left[\bar I^{1, M}_{ris}\right]
 &= \int_{x_1, ..., x_M} \sum_{z=1}^M \bar I^{1, M}_{ris}(z, x_1, ..., x_M) \, p(z \, | \, x_1, ..., x_M) \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
@@ -803,31 +867,42 @@ p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {
 &= \frac{1}{M} \operatorname{E}\left[ \sum_{z=1}^{M} \frac{f(x_z)}{p(x_z)} \right] \\
 &= \operatorname{E}\left[ \frac{f(x)}{p(x)} \right] \qquad \text{(} \because x_i \text{ i.i.d.)} \\
 &= \int_\Omega f(x) \, dx
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>NOTE: </p>
 <ol>
-<li>$ \int<em>{x_1, …, x_M} $ 和 $ \int</em>{\mathcal{\Omega}^M} $ 是一样的，是他们各自的空间 $ \Omega $ 的直积。</li>
+<li>$ \int_{x_1, ..., x_M} $ 和 $ \int_{\mathcal{\Omega}^M} $ 是一样的，是他们各自的空间 $ \Omega $ 的直积。</li>
 <li>$ \operatorname{E}[X+Y] = \operatorname{E}[X] + \operatorname{E}[Y] $ 不依赖于 $ X $ 和 $ Y $ 独立。</li>
 </ol>
 </blockquote>
 <!-- TODO: 补充个 2 的证明 -->
+
 <p>方差也可以相应计算如下：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 \operatorname{Var}\left[\bar I^{1, M}_{ris}\right]
 &= \frac{1}{M^2} \operatorname{Var}\left[ \frac{f(x_z)}{\hat p(x_z)} \cdot \left(  \sum^M_{j=1} w(x_j) \right) \right] \\
 &= ?
-\end{aligned}</script><!-- TODO: Multi-sample RIS -->
+\end{aligned}
+$$
+
+<!-- TODO: Multi-sample RIS -->
+
 <h3 id="带权蓄水池抽样-Weighted-Reservoir-Sampling"><a href="#带权蓄水池抽样-Weighted-Reservoir-Sampling" class="headerlink" title="带权蓄水池抽样 (Weighted Reservoir Sampling)"></a>带权蓄水池抽样 (Weighted Reservoir Sampling)</h3><p>前面提到，重采样重要性采样需要先抽 $ M $ 个样本，然后从中再抽样出最终的值。</p>
 <p>经过仔细观察，拥有如下结构的抽样问题可以用带权蓄水池抽样 (Weighted Reservoir Sampling) 来解决：</p>
-<script type="math/tex; mode=display">
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}</script><p>(WRS) 假设对于序列 $ {x_1, …, x_m} $，我们希望按上述概率抽样得到样本 $x_z$</p>
+$$
+p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}
+$$
+
+<p>(WRS) 假设对于序列 $ {x_1, …, x_m} $，我们希望按上述概率抽样得到样本 $x_z$</p>
 <ol>
 <li>维护一个当前总权重 $ w_\text{sum} $，当前总样本数 $ M $ 和最终样本 $ y $</li>
-<li>初始化 $ y:=x<em>1; \, M:=1; \, w</em>\text{sum}:=w(x_1) $</li>
+<li>初始化 $ y:&#x3D;x_1; , M:&#x3D;1; , w_\text{sum}:&#x3D;w(x_1) $</li>
 <li>对于每个新样本 $x_i$<ul>
-<li>以 $ w(x<em>i) / w</em>\text{sum} $ 概率：$ y:=x<em>i; \, M:=M+1; \, w</em>\text{sum} := w_\text{sum}+w(x_i) $</li>
-<li>以 $ 1 - w(x<em>i) / w</em>\text{sum} $ 概率：$ M:=M+1; \, w<em>\text{sum} := w</em>\text{sum}+w(x_i) $</li>
+<li>以 $ w(x_i) &#x2F; w_\text{sum} $ 概率：$ y:&#x3D;x_i; , M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
+<li>以 $ 1 - w(x_i) &#x2F; w_\text{sum} $ 概率：$ M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
 </ul>
 </li>
 </ol>
@@ -888,6 +963,7 @@ p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}</script><p>(WRS)
 <p>这次将博客的源文件放到 GitHub 上，并且把之前的文章收集整理一下，进行一下重构。</p>
 <h2 id="用什么博客框架？"><a href="#用什么博客框架？" class="headerlink" title="用什么博客框架？"></a>用什么博客框架？</h2><p>在 Hexo 和 Pelican 中选择了 Hexo，主要社区和主题的维护者都更活跃一些。</p>
 <h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="生成-amp-测试"><a href="#生成-amp-测试" class="headerlink" title="生成 &amp; 测试"></a>生成 &amp; 测试</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./node_modules/.bin/hexo generate</span><br><span class="line">./node_modules/.bin/hexo server</span><br></pre></td></tr></table></figure>
+
 <p>也可以考虑 <code>npm run build</code> 和 <code>npm run server</code>。</p>
 <h3 id="新文章"><a href="#新文章" class="headerlink" title="新文章"></a>新文章</h3><p><code>hexo new &quot;My new post&quot;</code></p>
 <h2 id="修改主题"><a href="#修改主题" class="headerlink" title="修改主题"></a>修改主题</h2><p>主题基于 <a target="_blank" rel="noopener" href="https://github.com/52binge/hexo-theme-blairos">BlairOS</a> 这个 Hexo 主题，我裁减了其中的统计代码，更改了 Logo 和相关的 Stylus 代码。</p>
@@ -971,7 +1047,7 @@ p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}</script><p>(WRS)
 <p>远期来说，我个人希望这个平台可以帮助希望做硬件开发的同学们更贴近 IC 业界考虑的问题，并且对硬件设计本身有更好的理解——当然鉴于我本人是个硬件菜鸡，这还需要很多大佬的支持才能办到。</p>
 <p>就我个人从前辈处了解到的一些信息来说，IC 的验证和后端的流程普通的同学还是很难接触到的，可能在平台中有关于验证和后端设计需要关心的问题进行设计并包装成为题目是值得尝试的一些方向。</p>
 <blockquote>
-<p>比如说，SystemVerilog / UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p>
+<p>比如说，SystemVerilog &#x2F; UMD 通用验证方法学 的超快速入门，调教时序问题的小实战等</p>
 </blockquote>
 <p>另一个可能值得尝试的坑是对接 USTC FPGAOL 平台，将片上的表现作为评估和设计迭代的依据。</p>
 <p>（不过听着就是大坑.jpg）</p>

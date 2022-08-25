@@ -5,15 +5,15 @@
   
   <title>论文阅读 | ReSTIR - libreliu&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="简介本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。  注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。  背景BSDF 适用的渲染方程 \begin{aligned} L_o(x, \omega_o) &amp;&#x3D; \int_\Omega f(x, \">
+  <meta name="description" content="简介本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。  注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。  背景BSDF 适用的渲染方程$$ \begin{aligned} L_o(x, \omega_o) &amp;&#x3D; \int_\Omega">
 <meta property="og:type" content="article">
 <meta property="og:title" content="论文阅读 | ReSTIR">
 <meta property="og:url" content="https://blog.libreliu.info/paper-reading/restir/">
 <meta property="og:site_name" content="libreliu&#39;s blog">
-<meta property="og:description" content="简介本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。  注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。  背景BSDF 适用的渲染方程 \begin{aligned} L_o(x, \omega_o) &amp;&#x3D; \int_\Omega f(x, \">
+<meta property="og:description" content="简介本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。  注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。  背景BSDF 适用的渲染方程$$ \begin{aligned} L_o(x, \omega_o) &amp;&#x3D; \int_\Omega">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-07-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-08-14T16:36:11.091Z">
+<meta property="article:modified_time" content="2022-08-25T15:41:19.305Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
   
@@ -97,33 +97,46 @@
       
       
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;= 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
 <blockquote>
 <p>注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。</p>
 </blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3><script type="math/tex; mode=display">
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3>$$
 \begin{aligned}
 L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
 &= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
 &= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
-\end{aligned}</script><p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
-<script type="math/tex; mode=display">
+\end{aligned}
+$$
+
+<p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
+$$
 V(x, x') := 
 \left\{
 \begin{aligned}
 &1 ,& x' \text{ is visible from } x \\
 &0 ,& \text{otherwise}
 \end{aligned}
-\right.</script><!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
+\right.
+$$
+
+<!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
+
 <p>对于上面的积分，我们希望用一些离散的采样构成的一个估计量来进行原积分的估计。采样方式和利用采样得到的值进行运算从而构造估计量的方式被称为一种估计方法。</p>
 <p>数理统计告诉我们，估计量也是满足一个分布的，在绝大多数时候我们通过估计量的<strong>期望</strong>和<strong>方差</strong>来衡量一个估计的好坏。</p>
 <p>既然本篇论文是关于采样方法的改进，那么就首先回顾一下 Monte Carlo 求解渲染方程时会使用到的估计方法。</p>
 <h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计</p>
-<script type="math/tex; mode=display">
-I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${x<em>i}</em>{i=1}^n$，那么我们就可以构造估计量 $\bar I$</p>
-<script type="math/tex; mode=display">
-\bar I := \frac{|\Omega|}{N} \sum_{i=1}^n f(x_i)</script><p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
-<script type="math/tex; mode=display">
+$$
+I := \int_\Omega f(x) dx
+$$
+
+<p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${x_i}_{i&#x3D;1}^n$，那么我们就可以构造估计量 $\bar I$</p>
+$$
+\bar I := \frac{|\Omega|}{N} \sum_{i=1}^n f(x_i)
+$$
+
+<p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
+$$
 \begin{aligned}
 \operatorname{E}[\bar I] &= \frac{|\Omega|}{N} \sum_{i=1}^n \operatorname{E}[f(X_i)] \\
 &= |\Omega| \operatorname{E}[f(x_1)] & \text{(} \{X_i\} \text{ satisfy i.i.d.)} \\
@@ -131,10 +144,15 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 &= |\Omega| \int_\Omega f(x) \mu(x) dx \\
 &= |\Omega| \int_\Omega f(x) \frac{1}{|\Omega|} dx \\
 &= I
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>Note: 形如</p>
-<script type="math/tex; mode=display">
-\int_\Omega f(x) d\mu(x)</script><p>的积分中，$\mu(x)$ 是随机变量 $X$ 所对应的概率密度函数，在这里是均匀分布所以 $\mu(x) = 1/|\Omega|$ 。期望的本质就是 “$\sum x \times p(x)$”</p>
+$$
+\int_\Omega f(x) d\mu(x) 
+$$
+<p>的积分中，$\mu(x)$ 是随机变量 $X$ 所对应的概率密度函数，在这里是均匀分布所以 $\mu(x) &#x3D; 1&#x2F;|\Omega|$ 。期望的本质就是 “$\sum x \times p(x)$”</p>
 </blockquote>
 <!-- 
 比如说我们在初等概率论中学到的随机变量，在测度论角度来讲就是一种可测函数，而初等概率论在很多计算上面是直接在取值空间进行计算的，也就是实数空间，它的很多积分的运算你放在测度论来看就是直接应用了积分变换定理。在概率论中提到的“分布”，其实就是根据这个随机变量（可测函数）在原空间和取值空间进行一个测度变换，站在这个角度去看待一些概率论问题就会感觉一切是那么合理，简直就是一种艺术。
@@ -144,18 +162,24 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 来源：知乎
 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 -->
+
 <p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 \operatorname{Var}[\bar I] &= \frac{|\Omega|^2}{N^2} \operatorname{Var} \left[ \sum_{i=1}^{n} f(x_i) \right] \\
 &= \frac{|\Omega|^2}{N} \operatorname{Var}[f(x)] \\
 &= \frac{|\Omega|^2}{N} \left( \operatorname{E}[f(x)^2] - \operatorname{E}[f(x)]^2 \right) \\
 &= \frac{|\Omega|^2}{N} \left[ \int_\Omega f(x)^2 \mu(x) dx - \left( \int_\Omega f(x) \mu(x) dx \right)^2 \right] \\
 &= \frac{1}{N} \left[ |\Omega| \int_\Omega f(x)^2 dx - \left( \int_\Omega f(x) dx \right)^2 \right]
-\end{aligned}</script><p>我们观察到，后面的方括号中的内容和抽样次数 N 无关，所以只要 $\operatorname{Var}[f(X_i)]$ 有限，即可说明增加抽样次数，估计量最终可以<strong>在方差意义上</strong>收敛到原函数。</p>
+\end{aligned}
+$$
+
+<p>我们观察到，后面的方括号中的内容和抽样次数 N 无关，所以只要 $\operatorname{Var}[f(X_i)]$ 有限，即可说明增加抽样次数，估计量最终可以<strong>在方差意义上</strong>收敛到原函数。</p>
 <!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
+
 <!-- TODO: 补一些 Var 的图 -->
 <!-- 写一个 browser-side 画函数的工具？(大坑) -->
+
 <blockquote>
 <p>Note: </p>
 <ol>
@@ -165,23 +189,32 @@ I := \int_\Omega f(x) dx</script><p>的值，并且我们可以<strong>等概率
 </ol>
 </blockquote>
 <h3 id="重要性采样-Importance-Sampling"><a href="#重要性采样-Importance-Sampling" class="headerlink" title="重要性采样 (Importance Sampling)"></a>重要性采样 (Importance Sampling)</h3><p>仍然假设我们需要估计</p>
-<script type="math/tex; mode=display">
-I := \int_\Omega f(x) dx</script><p>但是这次，我们选择一个连续分布，记其概率密度函数为 $p(x)$，并且我们从该分布中抽样得到样本 ${x<em>i}</em>{i=1}^N$，我们用这些样本构造估计量 $\bar I$</p>
-<script type="math/tex; mode=display">
-\bar I := \frac{1}{N} \sum_{i=1}^n \frac{f(x_i)}{p(x_i)}</script><p>那么，</p>
-<script type="math/tex; mode=display">
+$$
+I := \int_\Omega f(x) dx
+$$
+
+<p>但是这次，我们选择一个连续分布，记其概率密度函数为 $p(x)$，并且我们从该分布中抽样得到样本 ${x_i}_{i&#x3D;1}^N$，我们用这些样本构造估计量 $\bar I$</p>
+$$
+\bar I := \frac{1}{N} \sum_{i=1}^n \frac{f(x_i)}{p(x_i)}
+$$
+
+<p>那么，</p>
+$$
 \begin{aligned}
 \operatorname{E}[\bar I] &= \operatorname{E}\left[\frac{f(x_1)}{p(x_1)}\right] \\
 &= \int_\Omega \frac{f(x)}{p(x)} p(x) dx \\
 &= \int_\Omega f(x) dx \\
 &= I
 
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>此处的推导隐含 $p(x)$ 在 $\Omega$ 上的值<strong>非零</strong>，考虑到 $p(x)$ 是概率密度函数，$p(x) &gt; 0$</p>
 <p>不过事实上我们只需要 $p(x) &gt; 0$ 在 $\operatorname{supp}(f)$ 成立即可。</p>
 </blockquote>
 <p>方差：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 
 \operatorname{Var}[\bar I]
@@ -191,36 +224,53 @@ I := \int_\Omega f(x) dx</script><p>但是这次，我们选择一个连续分�
 &= \frac{1}{N} \left[ \int_\Omega \left(\frac{f(x)}{p(x)}\right)^2 p(x) dx - \left( \int_\Omega \frac{f(x)}{p(x)} p(x) dx \right)^2 \right] \\
 &= \frac{1}{N} \left[ \int_\Omega \frac{f(x)^2}{p(x)} dx - \left( \int_\Omega f(x) dx \right)^2 \right] \\
 
-\end{aligned}</script><p>则加大 N 后方差可以渐进趋于 0。</p>
+\end{aligned}
+$$
+
+<p>则加大 N 后方差可以渐进趋于 0。</p>
 <p>如果我们可以找到概率密度函数 $p(x)$ 满足</p>
-<script type="math/tex; mode=display">
-p(x) = \frac{f(x)}{\int_\Omega f(t) \, dt}</script><p>的话，带入上面的式子可以得到</p>
-<script type="math/tex; mode=display">
+$$
+p(x) = \frac{f(x)}{\int_\Omega f(t) \, dt}
+$$
+
+<p>的话，带入上面的式子可以得到</p>
+$$
 \begin{aligned}
 \operatorname{Var}[\bar I]
 &= \frac{1}{N} \left[ \left(\int_\Omega f(x) dx\right)^2 - \left( \int_\Omega f(x) dx \right)^2 \right] = 0
-\end{aligned}</script><p>一般的，由 $p(x)$ 决定的分布对 $f(x)$ 近似的越好，相同样本数量下估计量的方差就会越低。</p>
+\end{aligned}
+$$
+
+<p>一般的，由 $p(x)$ 决定的分布对 $f(x)$ 近似的越好，相同样本数量下估计量的方差就会越低。</p>
 <h3 id="重采样重要性采样-Resampled-Importance-Sampling"><a href="#重采样重要性采样-Resampled-Importance-Sampling" class="headerlink" title="重采样重要性采样 (Resampled Importance Sampling)"></a>重采样重要性采样 (Resampled Importance Sampling)</h3><p>从前面的重要性采样方法中我们了解到，我们采样的 $p(x)$ 的形状越接近 $f(x)$，那么采样的效果就越好。</p>
 <blockquote>
-<p>所谓形状接近，就是函数贴近 ${f(x)}/{\int_\Omega f(t) \, dt}$。</p>
+<p>所谓形状接近，就是函数贴近 ${f(x)}&#x2F;{\int_\Omega f(t) , dt}$。</p>
 </blockquote>
 <p>如果我们有一个很棒的分布 $\hat p(x)$，他比较接近 $f(x)$ 的形状，但是我们没法直接采样出符合 $\hat p(x)$ 分布的样本。</p>
 <p><em>(1-sample RIS)</em> 假设我们此时还可以找到一个分布 $p(x)$，其与 $\hat p(x)$ 比较接近，那么此时，我们可以采用如下方法，采样出符合 $ \hat p(x)$ 分布的样本：</p>
 <ol>
-<li>从 $p(x)$ 分布中抽样得到集合 $ X = {x_1, …, x_M } $</li>
-<li>按如下所给的条件概率抽样一个<strong>索引</strong> $ z \in {1, …, M} $<script type="math/tex; mode=display">
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}</script></li>
-<li>按下式计算估计量<script type="math/tex; mode=display">
+<li>从 $p(x)$ 分布中抽样得到集合 $ X &#x3D; {x_1, …, x_M } $</li>
+<li>按如下所给的条件概率抽样一个<strong>索引</strong> $ z \in {1, …, M} $$$
+p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}
+$$</li>
+<li>按下式计算估计量$$
 \begin{aligned}
 \bar I^{1, M}_{ris}(z, x_1, ..., x_M) = \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right)
-\end{aligned}</script></li>
+\end{aligned}
+$$</li>
 </ol>
 <p>首先，我们需要证明这个方法正确。证明的核心在于计算两步抽样最终抽到 $ x_z $ 的概率。记</p>
-<script type="math/tex; mode=display">
-p(z_0, x_z) := \lim_{\epsilon \to 0} P(z = z_0,  x_z \le x \le x_z + \epsilon) / \epsilon</script><p>则</p>
-<script type="math/tex; mode=display">
-p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)</script><p>则</p>
-<script type="math/tex; mode=display">
+$$
+p(z_0, x_z) := \lim_{\epsilon \to 0} P(z = z_0,  x_z \le x \le x_z + \epsilon) / \epsilon
+$$
+
+<p>则</p>
+$$
+p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)
+$$
+
+<p>则</p>
+$$
 \begin{aligned}
 \operatorname{E}\left[\bar I^{1, M}_{ris}\right]
 &= \int_{x_1, ..., x_M} \sum_{z=1}^M \bar I^{1, M}_{ris}(z, x_1, ..., x_M) \, p(z \, | \, x_1, ..., x_M) \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
@@ -229,31 +279,42 @@ p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {
 &= \frac{1}{M} \operatorname{E}\left[ \sum_{z=1}^{M} \frac{f(x_z)}{p(x_z)} \right] \\
 &= \operatorname{E}\left[ \frac{f(x)}{p(x)} \right] \qquad \text{(} \because x_i \text{ i.i.d.)} \\
 &= \int_\Omega f(x) \, dx
-\end{aligned}</script><blockquote>
+\end{aligned}
+$$
+
+<blockquote>
 <p>NOTE: </p>
 <ol>
-<li>$ \int<em>{x_1, …, x_M} $ 和 $ \int</em>{\mathcal{\Omega}^M} $ 是一样的，是他们各自的空间 $ \Omega $ 的直积。</li>
+<li>$ \int_{x_1, ..., x_M} $ 和 $ \int_{\mathcal{\Omega}^M} $ 是一样的，是他们各自的空间 $ \Omega $ 的直积。</li>
 <li>$ \operatorname{E}[X+Y] = \operatorname{E}[X] + \operatorname{E}[Y] $ 不依赖于 $ X $ 和 $ Y $ 独立。</li>
 </ol>
 </blockquote>
 <!-- TODO: 补充个 2 的证明 -->
+
 <p>方差也可以相应计算如下：</p>
-<script type="math/tex; mode=display">
+$$
 \begin{aligned}
 \operatorname{Var}\left[\bar I^{1, M}_{ris}\right]
 &= \frac{1}{M^2} \operatorname{Var}\left[ \frac{f(x_z)}{\hat p(x_z)} \cdot \left(  \sum^M_{j=1} w(x_j) \right) \right] \\
 &= ?
-\end{aligned}</script><!-- TODO: Multi-sample RIS -->
+\end{aligned}
+$$
+
+<!-- TODO: Multi-sample RIS -->
+
 <h3 id="带权蓄水池抽样-Weighted-Reservoir-Sampling"><a href="#带权蓄水池抽样-Weighted-Reservoir-Sampling" class="headerlink" title="带权蓄水池抽样 (Weighted Reservoir Sampling)"></a>带权蓄水池抽样 (Weighted Reservoir Sampling)</h3><p>前面提到，重采样重要性采样需要先抽 $ M $ 个样本，然后从中再抽样出最终的值。</p>
 <p>经过仔细观察，拥有如下结构的抽样问题可以用带权蓄水池抽样 (Weighted Reservoir Sampling) 来解决：</p>
-<script type="math/tex; mode=display">
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}</script><p>(WRS) 假设对于序列 $ {x_1, …, x_m} $，我们希望按上述概率抽样得到样本 $x_z$</p>
+$$
+p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}
+$$
+
+<p>(WRS) 假设对于序列 $ {x_1, …, x_m} $，我们希望按上述概率抽样得到样本 $x_z$</p>
 <ol>
 <li>维护一个当前总权重 $ w_\text{sum} $，当前总样本数 $ M $ 和最终样本 $ y $</li>
-<li>初始化 $ y:=x<em>1; \, M:=1; \, w</em>\text{sum}:=w(x_1) $</li>
+<li>初始化 $ y:&#x3D;x_1; , M:&#x3D;1; , w_\text{sum}:&#x3D;w(x_1) $</li>
 <li>对于每个新样本 $x_i$<ul>
-<li>以 $ w(x<em>i) / w</em>\text{sum} $ 概率：$ y:=x<em>i; \, M:=M+1; \, w</em>\text{sum} := w_\text{sum}+w(x_i) $</li>
-<li>以 $ 1 - w(x<em>i) / w</em>\text{sum} $ 概率：$ M:=M+1; \, w<em>\text{sum} := w</em>\text{sum}+w(x_i) $</li>
+<li>以 $ w(x_i) &#x2F; w_\text{sum} $ 概率：$ y:&#x3D;x_i; , M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
+<li>以 $ 1 - w(x_i) &#x2F; w_\text{sum} $ 概率：$ M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
 </ul>
 </li>
 </ol>
