@@ -62,3 +62,9 @@ npm install github:libreliu/hexo-renderer-marked-math#master --save
 
    可以注意到，`marked` 的 `main` 是 `./lib/marked.cjs`，这个文件需要运行 `npm run build` 生成。
 2. 调试 Promise 链可以采用 Bluebird 的[Promise.longStackTraces()](http://bluebirdjs.com/docs/api/promise.longstacktraces.html)。
+
+## 相关工作
+
+[这里](https://gist.github.com/3846masa/cde99a18a8d7ad225cf7)在 2015 年对 VSCode 的 Markdown 渲染的 patch 对本更改有参考意义。
+
+不过这些资料都比较老了，直接把 diff 放到新版上去 patch 肯定是不行的。
