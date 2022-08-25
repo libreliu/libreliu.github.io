@@ -13,7 +13,7 @@
 <meta property="og:description" content="经过一周多陆陆续续的折腾，到现在本博客基本实现了博客 Markdown 渲染和 Typora, VSCode 等的默认预览中数学公式的表现一致。  Note: 大于号（&gt;）小于号（&lt;）目前没有做额外的转义（它们本身是 HTML 标签的结束和开始），但是这个用 \lt 和 \gt 就行了，所以有点懒得改。 如果要改的话，就对 math 的处理加上这两个东西的 escape 就好，Math">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-08-25T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-08-25T17:30:19.431Z">
+<meta property="article:modified_time" content="2022-08-25T17:39:31.828Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
   
@@ -137,6 +137,8 @@ $$
 <li><p>调试 Promise 链可以采用 Bluebird 的<a target="_blank" rel="noopener" href="http://bluebirdjs.com/docs/api/promise.longstacktraces.html">Promise.longStackTraces()</a>。</p>
 </li>
 </ol>
+<h2 id="相关工作"><a href="#相关工作" class="headerlink" title="相关工作"></a>相关工作</h2><p><a target="_blank" rel="noopener" href="https://gist.github.com/3846masa/cde99a18a8d7ad225cf7">这里</a>在 2015 年对 VSCode 的 Markdown 渲染的 patch 对本更改有参考意义。</p>
+<p>不过这些资料都比较老了，直接把 diff 放到新版上去 patch 肯定是不行的。</p>
 
       
      <!-- by blair add this if sentence at 20160725 -->
@@ -180,7 +182,7 @@ $$
     
       <div class="article-toc">
         <h3>Contents</h3>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%96%B0%E9%80%A0%E4%B8%80%E4%B8%AA%E8%BD%AE%E5%AD%90%EF%BC%9F"><span class="toc-text">为什么要新造一个轮子？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B9%E5%8A%A8%E7%AE%80%E4%BB%8B"><span class="toc-text">改动简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EF%BC%88%E4%BD%9C%E4%B8%BA%E8%8F%9C%E9%B8%A1%EF%BC%89%E8%B8%A9%E8%BF%87%E7%9A%84%E5%9D%91"><span class="toc-text">（作为菜鸡）踩过的坑</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%96%B0%E9%80%A0%E4%B8%80%E4%B8%AA%E8%BD%AE%E5%AD%90%EF%BC%9F"><span class="toc-text">为什么要新造一个轮子？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B9%E5%8A%A8%E7%AE%80%E4%BB%8B"><span class="toc-text">改动简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%EF%BC%88%E4%BD%9C%E4%B8%BA%E8%8F%9C%E9%B8%A1%EF%BC%89%E8%B8%A9%E8%BF%87%E7%9A%84%E5%9D%91"><span class="toc-text">（作为菜鸡）踩过的坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E5%B7%A5%E4%BD%9C"><span class="toc-text">相关工作</span></a></li></ol>
       </div>
     
     
