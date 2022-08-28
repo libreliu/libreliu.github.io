@@ -12,16 +12,16 @@
 <meta property="og:site_name" content="libreliu&#39;s blog">
 <meta property="og:description" content="简介本篇文章介绍了基于物理的特征线渲染方法。 特征线渲染是一种非真实感渲染技术，常常被用在剪影、产品效果图等一些需要特殊的艺术效果的场合。 本篇文章提出的，基于路径方法的特征线渲染方法，是基于如下的两方面观察：  从路径的角度出发，现有的特征线渲染方法将特征线处理成了光源 特征线相交测试可以对任意的边开展，而不仅仅是在屏幕空间中  基于上面的观察，本文提出的方法  对一整个路径中每条路径段分别进行">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://blog.libreliu.info/pbr-feature-line%5Ccone-intersection-test.png">
-<meta property="og:image" content="https://blog.libreliu.info/pbr-feature-line%5Cprogressively-unbias.png">
-<meta property="og:image" content="https://blog.libreliu.info/pbr-feature-line%5Cfeature-line-condition.png">
-<meta property="og:image" content="https://blog.libreliu.info/pbr-feature-line%5Cfeature-line-condition-breakdown.png">
-<meta property="og:image" content="https://blog.libreliu.info/pbr-feature-line%5Cteaser.png">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/cone-intersection-test.png">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/progressively-unbias.png">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/feature-line-condition.png">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/feature-line-condition-breakdown.png">
+<meta property="og:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/teaser.png">
 <meta property="article:published_time" content="2022-08-27T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-08-28T12:37:25.520Z">
+<meta property="article:modified_time" content="2022-08-28T12:40:11.596Z">
 <meta property="article:author" content="Libre Liu">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://blog.libreliu.info/pbr-feature-line%5Ccone-intersection-test.png">
+<meta name="twitter:image" content="https://blog.libreliu.info/paper-reading/pbr-feature-line/cone-intersection-test.png">
   
   
     <link rel="icon" href="/css/images/logo.png">
@@ -126,20 +126,25 @@
 </ol>
 <h3 id="相交判断"><a href="#相交判断" class="headerlink" title="相交判断"></a>相交判断</h3><p>从该 path segment 出发，以固定扩张率和当前路径总长度做一锥体，寻找锥体中的特征线。</p>
 <p>实现上，本文采用从锥体较窄的一端发射查询射线，并且判断交点是否为特征线上的点的方法来进行判断，可能和 cone tracing 比较相似。</p>
-<p><img src="/pbr-feature-line%5Ccone-intersection-test.png" alt="cone-intersection-test"></p>
+<img src="/paper-reading/pbr-feature-line/cone-intersection-test.png" class="" title="cone-intersection-test">
+
 <h3 id="采样权重修改"><a href="#采样权重修改" class="headerlink" title="采样权重修改"></a>采样权重修改</h3><p>前面提到，“如果相交，则将特征线视为理想光源，并不再追下面的光源”。本文中会将这种情况整条采样路径每个点的 pdf 值处理成和打到刚好有光源位于这里的情况完全一致。</p>
 <p>不过，这样会让整个估计变成有偏估计，因为还存在有特征线（i.e. 有光源）但是没有采样到的情况，这种情况使用正常 pdf 会让最后相机处接收的 Irradiance 期望偏小，也就是特征线会比无偏的情况更不明显。</p>
 <p>比较幸运的是，通过加密相交判断中发射的查询射线的数量，可以渐进的趋于无偏的情况。</p>
-<p><img src="/pbr-feature-line%5Cprogressively-unbias.png" alt="progressively-unbias"></p>
+<img src="/paper-reading/pbr-feature-line/progressively-unbias.png" class="" title="progressively-unbias">
+
 <h3 id="特征线判据"><a href="#特征线判据" class="headerlink" title="特征线判据"></a>特征线判据</h3><p>特征线的判断通过锥体中采样到的点和本 path segment 的起点和终点联合进行判断，主要有 MeshID, Albedo, Normal 和 Depth 四个方面的判据。</p>
-<p><img src="/pbr-feature-line%5Cfeature-line-condition.png" alt="feature-line-condition"></p>
+<img src="/paper-reading/pbr-feature-line/feature-line-condition.png" class="" title="feature-line-condition">
+
 <blockquote>
 <p>其中 $ t_{\text{depth}} $ 文中提到有一个较为启发的设置方法。</p>
 </blockquote>
 <p>各项的效果如图所示：</p>
-<p><img src="/pbr-feature-line%5Cfeature-line-condition-breakdown.png" alt="feature-line-condition-breakdown"></p>
+<img src="/paper-reading/pbr-feature-line/feature-line-condition-breakdown.png" class="" title="feature-line-condition-breakdown">
+
 <h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p>可以参考本文 Teaser：</p>
-<p><img src="/pbr-feature-line%5Cteaser.png" alt="teaser"></p>
+<img src="/paper-reading/pbr-feature-line/teaser.png" class="" title="teaser">
+
 <p>可以看到，本文渲染的特征线有色散、景深模糊、反射等基于物理的效果。</p>
 <h2 id="未来的工作"><a href="#未来的工作" class="headerlink" title="未来的工作"></a>未来的工作</h2><p>文章最后主要提及了如下的 Future Work：</p>
 <ul>
