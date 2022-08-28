@@ -39,7 +39,7 @@ status: Complete
 
 实现上，本文采用从锥体较窄的一端发射查询射线，并且判断交点是否为特征线上的点的方法来进行判断，可能和 cone tracing 比较相似。
 
-![cone-intersection-test](pbr-feature-line\cone-intersection-test.png)
+![cone-intersection-test](pbr-feature-line/cone-intersection-test.png)
 
 ### 采样权重修改
 
@@ -49,25 +49,25 @@ status: Complete
 
 比较幸运的是，通过加密相交判断中发射的查询射线的数量，可以渐进的趋于无偏的情况。
 
-![progressively-unbias](pbr-feature-line\progressively-unbias.png)
+![progressively-unbias](pbr-feature-line/progressively-unbias.png)
 
 ### 特征线判据
 
 特征线的判断通过锥体中采样到的点和本 path segment 的起点和终点联合进行判断，主要有 MeshID, Albedo, Normal 和 Depth 四个方面的判据。
 
-![feature-line-condition](pbr-feature-line\feature-line-condition.png)
+![feature-line-condition](pbr-feature-line/feature-line-condition.png)
 
 > 其中 $ t_{\text{depth}} $ 文中提到有一个较为启发的设置方法。
 
 各项的效果如图所示：
 
-![feature-line-condition-breakdown](pbr-feature-line\feature-line-condition-breakdown.png)
+![feature-line-condition-breakdown](pbr-feature-line/feature-line-condition-breakdown.png)
 
 ## 效果
 
 可以参考本文 Teaser：
 
-![teaser](pbr-feature-line\teaser.png)
+![teaser](pbr-feature-line/teaser.png)
 
 可以看到，本文渲染的特征线有色散、景深模糊、反射等基于物理的效果。
 
