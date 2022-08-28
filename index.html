@@ -55,6 +55,109 @@
 
     <br>
     <section id="main" class="outer">
+      <article id="paper-reading-paper-reading/pbr-feature-line" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/pbr-feature-line/"><strong>论文阅读 | 基于物理的特征线渲染</strong></a>
+      <small class=article-date-index>&nbsp; 2022-08-28</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/pbr-feature-line/" class="article-date">
+  <time datetime="2022-08-27T16:00:00.000Z" itemprop="datePublished">2022-08-28</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章介绍了基于物理的特征线渲染方法。</p>
+<p>特征线渲染是一种非真实感渲染技术，常常被用在剪影、产品效果图等一些需要特殊的艺术效果的场合。</p>
+<p>本篇文章提出的，基于路径方法的特征线渲染方法，是基于如下的两方面观察：</p>
+<ol>
+<li>从路径的角度出发，现有的特征线渲染方法将特征线处理成了光源</li>
+<li>特征线相交测试可以对任意的边开展，而不仅仅是在屏幕空间中</li>
+</ol>
+<p>基于上面的观察，本文提出的方法</p>
+<ol>
+<li>对一整个路径中每条路径段分别进行和特征线的相交测试</li>
+<li>将交到的特征线视为吸收所有入射光，然后辐射用户自定义颜色的光源</li>
+</ol>
+<blockquote>
+<p>TL;DR: 用 Path Tracing 做描边，把要描的边处理成光源，让描边也有景深、色散和反射等效果。</p>
+</blockquote>
+<h2 id="算法描述"><a href="#算法描述" class="headerlink" title="算法描述"></a>算法描述</h2><p>算法的基本架构很简单。</p>
+<p>从传统的 Path Tracer 出发：</p>
+<ol>
+<li>对每个 path segment 依次进行和特征线的相交判断，并且</li>
+<li>如果相交，则将特征线视为理想光源，并不再追下面的光源</li>
+</ol>
+<h3 id="相交判断"><a href="#相交判断" class="headerlink" title="相交判断"></a>相交判断</h3><p>从该 path segment 出发，以固定扩张率和当前路径总长度做一锥体，寻找锥体中的特征线。</p>
+<p>实现上，本文采用从锥体较窄的一端发射查询射线，并且判断交点是否为特征线上的点的方法来进行判断，可能和 cone tracing 比较相似。</p>
+<p><img src="/pbr-feature-line%5Ccone-intersection-test.png" alt="cone-intersection-test"></p>
+<h3 id="采样权重修改"><a href="#采样权重修改" class="headerlink" title="采样权重修改"></a>采样权重修改</h3><p>前面提到，“如果相交，则将特征线视为理想光源，并不再追下面的光源”。本文中会将这种情况整条采样路径每个点的 pdf 值处理成和打到刚好有光源位于这里的情况完全一致。</p>
+<p>不过，这样会让整个估计变成有偏估计，因为还存在有特征线（i.e. 有光源）但是没有采样到的情况，这种情况使用正常 pdf 会让最后相机处接收的 Irradiance 期望偏小，也就是特征线会比无偏的情况更不明显。</p>
+<p>比较幸运的是，通过加密相交判断中发射的查询射线的数量，可以渐进的趋于无偏的情况。</p>
+<p><img src="/pbr-feature-line%5Cprogressively-unbias.png" alt="progressively-unbias"></p>
+<h3 id="特征线判据"><a href="#特征线判据" class="headerlink" title="特征线判据"></a>特征线判据</h3><p>特征线的判断通过锥体中采样到的点和本 path segment 的起点和终点联合进行判断，主要有 MeshID, Albedo, Normal 和 Depth 四个方面的判据。</p>
+<p><img src="/pbr-feature-line%5Cfeature-line-condition.png" alt="feature-line-condition"></p>
+<blockquote>
+<p>其中 $ t_{\text{depth}} $ 文中提到有一个较为启发的设置方法。</p>
+</blockquote>
+<p>各项的效果如图所示：</p>
+<p><img src="/pbr-feature-line%5Cfeature-line-condition-breakdown.png" alt="feature-line-condition-breakdown"></p>
+<h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p>可以参考本文 Teaser：</p>
+<p><img src="/pbr-feature-line%5Cteaser.png" alt="teaser"></p>
+<p>可以看到，本文渲染的特征线有色散、景深模糊、反射等基于物理的效果。</p>
+<h2 id="未来的工作"><a href="#未来的工作" class="headerlink" title="未来的工作"></a>未来的工作</h2><p>文章最后主要提及了如下的 Future Work：</p>
+<ul>
+<li>其它路径采样方法 (i.e. BDPT)</li>
+<li>特征线锥形区域估计改进</li>
+<li>特征线区域缓存</li>
+<li>特征线模型改进<ul>
+<li>反射 &#x2F; 半透特征线模型等</li>
+</ul>
+</li>
+<li>将 lens blur 和色散效果集成到 <a target="_blank" rel="noopener" href="https://pixl.cs.princeton.edu/pubs/Cole_2006_DGI/index.php">Stylized Focus</a><ul>
+<li>Stylized Focus 主要通过多个光栅化 pass 的叠加来实现风格化的景深和聚焦效果</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="post-towards-math-markdown" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1009,69 +1112,6 @@ $$
 <p>这样对于某个样本 $ x_k $，经过这个过程最后被选中的概率为 <code>P(第 k 次被选中) * P(第 k 次之后都没有被换掉)</code>，乘起来很容易证明正确性。</p>
 <p>WRS 方法的优势在于，不需要完成存储 $ {x_i} $ 序列本身，而是线性扫描一遍这个序列就可以得出结果，非常适合和前面的 RIS 方法搭配使用。</p>
 <h3 id="蓄水池合并-Reservoir-Merging"><a href="#蓄水池合并-Reservoir-Merging" class="headerlink" title="蓄水池合并 (Reservoir Merging)"></a>蓄水池合并 (Reservoir Merging)</h3><!-- 假设我们要从 $ \{x_1, ..., x_m, y_1, ..., y_n\} $ 中抽样， -->
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
-      <article id="post-blog-reborn" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/blog-reborn/"><strong>博客复活！</strong></a>
-      <small class=article-date-index>&nbsp; 2022-07-02</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/blog-reborn/" class="article-date">
-  <time datetime="2022-07-01T16:00:00.000Z" itemprop="datePublished">2022-07-02</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>之前的博客已经有一段时间没更新了，以至于竟然连之前的源文件都找不到了。</p>
-<p>这次将博客的源文件放到 GitHub 上，并且把之前的文章收集整理一下，进行一下重构。</p>
-<h2 id="用什么博客框架？"><a href="#用什么博客框架？" class="headerlink" title="用什么博客框架？"></a>用什么博客框架？</h2><p>在 Hexo 和 Pelican 中选择了 Hexo，主要社区和主题的维护者都更活跃一些。</p>
-<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><h3 id="生成-amp-测试"><a href="#生成-amp-测试" class="headerlink" title="生成 &amp; 测试"></a>生成 &amp; 测试</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./node_modules/.bin/hexo generate</span><br><span class="line">./node_modules/.bin/hexo server</span><br></pre></td></tr></table></figure>
-
-<p>也可以考虑 <code>npm run build</code> 和 <code>npm run server</code>。</p>
-<h3 id="新文章"><a href="#新文章" class="headerlink" title="新文章"></a>新文章</h3><p><code>hexo new &quot;My new post&quot;</code></p>
-<h2 id="修改主题"><a href="#修改主题" class="headerlink" title="修改主题"></a>修改主题</h2><p>主题基于 <a target="_blank" rel="noopener" href="https://github.com/52binge/hexo-theme-blairos">BlairOS</a> 这个 Hexo 主题，我裁减了其中的统计代码，更改了 Logo 和相关的 Stylus 代码。</p>
-<h3 id="已知问题"><a href="#已知问题" class="headerlink" title="已知问题"></a>已知问题</h3><ul>
-<li>计划在将来把对 cdn.mathjax.org 的依赖也去掉，变成完全服务端渲染</li>
-<li>这个模板对 ul 嵌套的情况渲染不正确</li>
-</ul>
-
       
     </div>
 	
