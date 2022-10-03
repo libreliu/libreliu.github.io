@@ -6,6 +6,7 @@ date: 2022-09-27
 # RenderDoc 源码分析
 
 > 本文基于 [commit dff0196](https://github.com/baldurk/renderdoc/commit/dff0196bfbd3a30c1f04435692b83aa96c1728f0) 进行分析，这是笔者写作时 v1.x 分支的最新提交。
+> 本文默认跟踪 Windows 平台下的实现。
 
 ## 相关资料
 
@@ -26,7 +27,7 @@ date: 2022-09-27
   - Python modules
     - `pyrenderdoc_module`
     - `qrenderdoc_module`
-- drivers:
+- drivers: 下面每一个会编译成为一个静态库，然后链接到 `renderdoc.dll`
   - IHV
     - `AMD`
     - `ARM`
@@ -43,7 +44,7 @@ date: 2022-09-27
   - `dxgi`
   - `gl`
   - `vulkan`
-- `renderdoc`
+- `renderdoc`: networking, os 相关, replay, 资源管理等功能；与上面所有 drivers 链接在一起成为 `renderdoc.dll`
 - Utility
   - `renderdoccmd`
   - `renderdocshim`
@@ -61,108 +62,41 @@ date: 2022-09-27
      - 若有，则用 `LoadLibraryW` 装载 RenderDoc，并且调用 RenderDoc DLL 中的 `INTERNAL_SetCaptureOptions`，`INTERNAL_SetLogFile`，`INTERNAL_SetDebugLogFile` 来根据 ShimData 中数据设置对应项
      - 否则，清场撤退
 
-## 公用 Hook 设施
+## `renderdoc`
 
-Hook 设施的文档在 `hooks/hooks.h` 中有比较详尽的说明。
+DLL 入口点位于 `os/win32/win32_libentry.cpp`，主要是检测 Replay 模式，然后进行初始化。
 
-```c
-// == Hooking workflow overview ==
-//
-// Each subsystem that wants to hook libraries creates a LibraryHook instance. That registers with
-// LibraryHooks via the singleton in global constructors, but does nothing initially.
-//
-// Early in init, during RenderDoc's initialisation, the last thing that happens is a call to
-// LibraryHooks::RegisterHooks(). This iterates through the LibraryHook instances and calls
-// RegisterHooks on each of them.
-//
-// Each subsystem should call LibraryHooks::RegisterLibraryHook() for the filename of each library
-// it wants to hook, then LibraryHooks::RegisterFunctionHook() for each function it wants to hook
-// within that library. Note that not all platforms will use all the information provided, but only
-// in a way that's invisible to the user. These are lightweight calls to register the hooks, and
-// don't do any work yet.
-//
-// A registered library hook can get an optional callback when that library is first loaded.
-//
-// Similarly a registered function hook can provide a function pointer location which will be filled
-// out with the function pointer to call onwards. This may just be the real implementation, or a
-// trampoline, depending on the platform hooking method.
-//
-// Once all of this is completed, these hooks will be applied and activated as necessary. If any
-// libraries are already loaded, library callbacks will fire here. Similarly function hook original
-// pointers will be filled out if they are already available. Library callbacks will fire precisely
-// once, the first time the library is loaded.
-//
-// NOTE: An important result of the behaviour above is that original function pointers are not
-// necessarily available until the function is actually hooked. The hooking will automatically
-// propagate all functions hooked in a library once it's loaded, and since some platforms may
-// trampoline-hook target functions it is *not* safe to just get the target function's pointer as
-// this may then call back into hooks. The only exception to this is with a library-specific
-// function for fetching pointers such as GetProcAddress on OpenGL/Vulkan. However in this case care
-// must be taken to suppress any effect of function interception by calling the relevant suppression
-// functions. This ensures that if the API-specific GetProcAddress calls into the platform function
-// fetch, it doesn't form an infinite loop.
-//
-// Also in the case that a function may come from many libraries, or it has multiple aliased names,
-// the order of registration is important. The hooking implementations will always follow the order
-// provided as a priority list, so if you register libFoo before libBar, any functions in libFoo
-// have precedence. Similarly if you register foofunc() before barfunc() but pointed to the same
-// pointer location for storing the original function pointer, barfunc()'s pointer will not
-// overwrite foofunc() if it exists.
-//
-// == Hooking details (platform-specific) ==
-//
-// The method of hooking varies by platform but follows the same general pattern. During
-// registration we build up lists of which libraries and functions are to be hooked. Once the
-// registration is complete we apply all of the hooks.
-//
-// NOTE: The library name for function hooks is only used on windows, since on linux/android
-// namespace resolution is a bit fuzzier. At the time of writing there are no cases where two
-// libraries have the same function that aren't functionally equivalent.
-//
-// - Windows -
-// On windows this involves iterating over all loaded libraries and hooking their IAT tables. We
-// also hook internally any functions for dynamically loading libraries or fetching functions, so
-// that we can continue to re-wrap any newly loaded libraries.
-//
-// Loaded libraries at startup (most likely because the exe linked against them) have their
-// callbacks fired immediately. Otherwise any time a new library is found on a subsequent iteration
-// from a LoadLibrary-type call we fire the callback.
-//
-// Whenever a library is newly found, we hook all the entry points and update any original function
-// pointers that are set to NULL.
-//
-// - Linux -
-// On linux we rely on exporting all hooked symbols, and using LD_PRELOAD to load our library first
-// in resolution order. All we do is hook dlopen so that when a new library is loaded we can
-// redirect the returned library handle to ourselves, as well as process any pending function hooks.
-//
-// - Android -
-// On android the implementation varies depending on whether we're using interceptor-lib or not.
-// This is optional at build time but produces more reliable results:
-//
-// Without interceptor-lib:
-// The implementation is similar to windows. Since we don't have LD_PRELOAD we need to patch import
-// tables of any loaded libraries. We also cannot reliably hook dlopen on android to redirect the
-// library handle to ourselves, so instead we hook dlsym and check to see if it corresponds to a
-// function we're intercepting. This is the need for the 'suppress hooking' function, since if
-// eglGetProcAddress calls into dlsym we don't want to intercept that dlsym and return our own
-// function.
-//
-// With interceptor-lib:
-// Instead of patching imports we overwrite the assembly at each entry point in the *target*
-// library, and patch it to call into our hooks. Then we create trampolines to restore the original
-// function for onwards-calling.
-//
-// To ensure sanity, we always load all registered libraries in the first hook applying phase. This
-// ensures that we don't end up in a weird situation where one library is loaded, not all functions
-// are hooked, the user code tries to populate any missing functions and then later another library
-// is loaded and we patch it after having requested function pointers. Ensuring all libraries that
-// we *might* patch are loaded ASAP, everything is consistent since after that any functions that
-// don't have trampolines provided will never be trampolined in the future.
-//
-// Sometimes interceptor-lib can fail, at which point we fall back to the path above for those
-// functions and try to follow and patch any imports to them.
-```
+DLL 中有一个单例对象 `RenderDoc`，负责一些中心化的状态。
 
-所有要 Hook 的函数会继承 `LibraryHook` 类。
+### `RenderDoc::Inst().Initialise()`
+
+初始化的事情，先跳过。
+
+### Hook 设施初始化 - `LibraryHooks::RegisterHooks()`
+
+Hook 设施的文档在 `hooks/hooks.h` 的注释中有比较详尽的说明。
+
+每种类型的 Hook （e.g. 在 `d3d11_hooks.cpp` 中的 `D3D11Hook`） 都会继承 `LibraryHook` 类，并且实现 `RegisterHooks()` 方法。`LibraryHook::LibraryHook()` 方法会获取全局函数 `LibList()` 中的静态列表 `libs`，并且将自己添加到这个静态的列表中。
+
+单例类 `LibraryHooks` 的 `LibraryHooks::RegisterHooks()` 方法则会调用所有注册在 `LibList` 中的对象的 `RegisterHooks()` 方法。
+
+## drivers
+
+### `d3d11`
+
+`d3d11` 这个 driver 负责 Direct3D 11 的 API 截获与抓帧。
+
+首先看，在其 `RengisterHooks()` 中实现了对 `D3D11CreateDevice` 和 `D3D11CreateDeviceAndSwapChain` 两个函数的截获。
+
+- `D3D11Hook` 在 `RengisterHooks()` 中注册了对 `d3d11.dll` 中 `D3D11CreateDevice` 和 `D3D11CreateDeviceAndSwapChain` 两个函数的钩子
+	- 当第一次被调用时，调用 `Create_Internal()`; 同时注意检查递归调用的情况，以防其它程序也在 Hook D3D 的东西，然后又被这边的钩子捕获
+- 如果是 `D3D11CreateDevice`，就认为 Swapchain 相关参数为 `NULL`；同时根据捕获设定来 Patch DXGI_SWAP_CHAIN_DESC (allowFullscreen 之类的)
+- 将调用转发到真的 `D3D11CreateDeviceAndSwapChain` 函数当中去，把创建好的 `ID3D11Device` 包到 `WrappedID3D11Device` 当中去
+  - 如果也创建了 `IDXGISwapChain` (i.e. 指定了 SwapChain 的描述符并且被接受了)，则把其包到 `WrappedIDXGISwapChain4` 当中去
+
+> NOTE: `WrappedIDXGISwapChain4` 在 `dxgi` 这个 driver 下面的 `dxgi_wrapped.cpp` 中
+
+Direct3D 11 主要通过[两种类型设备上下文](https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-render-multi-thread-render)来向用户提供渲染数据的提交接口：Immediate Context 和 Deferred Context。这两种接口的类型均为 `ID3D11DeviceContext`。
+
+通过 `ID3D11Device::GetImmediateContext` 可以获取用于即时绘制的设备上下文。在 RenderDoc 中，真实设备的即时绘制上下文在 `WrappedID3D11Device` 创建时，就从真实的设备中拿到，并且用 `WrappedID3D11DeviceContext` 来包装好了。
 
