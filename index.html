@@ -55,6 +55,192 @@
 
     <br>
     <section id="main" class="outer">
+      <article id="paper-reading-paper-reading/icarus-nerf" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/icarus-nerf/"><strong>论文阅读 | ICARUS: NeRF 硬件加速器</strong></a>
+      <small class=article-date-index>&nbsp; 2022-10-07</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/icarus-nerf/" class="article-date">
+  <time datetime="2022-10-06T16:00:00.000Z" itemprop="datePublished">2022-10-07</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章介绍了 NeRF 硬件加速的实现。</p>
+<h2 id="NeRF-回顾"><a href="#NeRF-回顾" class="headerlink" title="NeRF 回顾"></a>NeRF 回顾</h2><img src="/paper-reading/icarus-nerf/nerf-overview.png" class="" title="NeRF Overview from Original Paper">
+
+<p>Neural Radiance Field，简称 NeRF，最开始在 ECCV 2020 上<a target="_blank" rel="noopener" href="https://www.matthewtancik.com/nerf">被提出</a>，提出了以神经网络编码辐射场的一种技术，并且将其运用到了基于图片的场景重建等多个领域中，是近年来受关注度相当高的一篇工作。</p>
+<p>NeRF 的网络部分输入为 5D: 位置 $ (x,y,z) $ 和朝向 $ (\theta, \phi) $，输出为该位置的 RGB 颜色和密度。</p>
+<p>NeRF 在给定相机位置下最终渲染的输出用类似体渲染 (Volumetric Rendering) 的办法来实现。</p>
+<h3 id="NeRF-体渲染"><a href="#NeRF-体渲染" class="headerlink" title="NeRF 体渲染"></a>NeRF 体渲染</h3><p>对给定的相机光线 $ {\bf r}(t) &#x3D; {\bf o} + t{\bf d} $ 来说，最终输出的颜色 $ {\bf C}(r) $ 以下式表示：</p>
+$$
+C({\bf r}) = \int_{t_n}^{t_f} T(t) \sigma({\bf r}(t)) {\bf c}({\bf r}(t), {\bf d}) dt 
+$$
+
+<p>其中：</p>
+<ul>
+<li>$ T(t) = \exp (-\int_{t_n}^{t} \sigma({\bf r}(s)) ds ) $ 为光线从 $ t_n $ 能打到 $ t $ 的概率<ul>
+<li>比如说，如果射线穿过的部分密度都比较大，那 $ T(t) $ 就会比较小</li>
+</ul>
+</li>
+<li>$ \sigma({\bf r}(t)) $ 是该 $ t $ 对应的点 $ {\bf r}(t) $ 的密度</li>
+<li>$ {\bf c}({\bf r}(t), {\bf d}) $ 是网络给定方向和位置后输出的 RGB 颜色值</li>
+<li>$ t_n $ 和 $ t_f $ 分别为射线进入和射出 NeRF 有效区域的包围盒时所对应的最近和最远参数值</li>
+</ul>
+<p>不过这个积分显然不能很容易的解析求解，NeRF 的做法是采用数值积分的那一套。</p>
+<p>首先，利用分层抽样 (stratified sampling) 的技术，将 $ [t_n, t_f] $ 分成 $ N $ 个均匀的小区间，然后在每个小区间均匀采样出一个 $ t_i $ 出来。</p>
+<p>然后，用下面的量 $ \hat C({\bf r}) $ 来估计上面的 $ C({\bf r}) $：</p>
+$$
+\hat C({\bf r}) = \sum_{i=1}^{N} T_i (1-\exp(-\sigma_i \delta_i)) {\bf c}_i
+$$
+
+<p>其中：</p>
+<ul>
+<li>$ T_i = \exp(- \sum_{j=1}^{i-1} \sigma_j \delta_j) $</li>
+<li>$ \delta_i = t_{i+1} - t_i $ 为两临近采样点的距离</li>
+</ul>
+<blockquote>
+<p>为什么会变成这个形式？可以参考 arXiv 上的 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2209.02417.pdf">Volume Rendering Digest (for NeRF)</a></p>
+</blockquote>
+<!-- 没看，TODO: 研究一下 -->
+
+<p>原文中提到，从所有的 $ ({\bf c}_i, \delta_i) $ 对考虑的话，$ \hat C(r) $ 的计算显然是可微的，并且可以看成从最开始一直用 $ \alpha_i &#x3D; 1 - \exp(\sigma_i \delta_i) $ 的透明度往上面做 alpha blending。</p>
+<!-- TODO: why alpha value like that -->
+
+<h3 id="NeRF-网络"><a href="#NeRF-网络" class="headerlink" title="NeRF 网络"></a>NeRF 网络</h3><p>网络部分用位置编码 (Positional Encoding) + Coarse MLP + Fine MLP。</p>
+<h4 id="位置编码"><a href="#位置编码" class="headerlink" title="位置编码"></a>位置编码</h4><p>位置编码用来改善网络对高频细节的学习效果。</p>
+<p>位置编码层可以如下描述：</p>
+$$
+\gamma(p) = (\sin(2^0 \pi p), \cos(2^0 \pi p), ..., \sin(2^{L-1} \pi p), \cos(2^{L-1} \pi p))
+$$
+
+<h4 id="Coarse-amp-Fine-MLP"><a href="#Coarse-amp-Fine-MLP" class="headerlink" title="Coarse &amp; Fine MLP"></a>Coarse &amp; Fine MLP</h4><p>NeRF 同时使用两个 MLP 来表示场景，一个粗粒度 MLP 和一个细粒度 MLP。</p>
+<p>渲染的时候，首先用分层抽样的办法，在粗粒度网络中用前面提到的体渲染方法进行渲染，并且得到输出 $ \hat C_c(r) $：</p>
+$$
+\hat C_c(r) = \sum_{i=1}^{N_c} w_i c_i, \quad w_i = T_i (1-\exp(\sigma_i \delta_i))
+$$
+
+<p>然后，计算归一化权重 $ \hat w_i &#x3D; w_i &#x2F; \sum_{i&#x3D;1}^{N_c} w_i $，并且用计算好的归一化权重作为概率分布函数 (cumulative distribution function)，再在这条直线上采样 $ N_f $ 个位置，将这 $ N_c + N_f $ 个位置送入细粒度 MLP 进行推理，再用前面的办法渲染得到最终的颜色值。</p>
+<h4 id="损失函数"><a href="#损失函数" class="headerlink" title="损失函数"></a>损失函数</h4><p>采用简单的把 Coarse MLP 和 Fine MLP 与真实值之间的 $ L^2 $ 损失直接加起来的办法。</p>
+<h2 id="ICARUS"><a href="#ICARUS" class="headerlink" title="ICARUS"></a>ICARUS</h2><img src="/paper-reading/icarus-nerf/icarus-overview.png" class="" title="ICARUS Overview">
+
+<h3 id="NeRF-计算过程回顾"><a href="#NeRF-计算过程回顾" class="headerlink" title="NeRF 计算过程回顾"></a>NeRF 计算过程回顾</h3><ol>
+<li>对像素所发出射线上的采样，得到点 $ ({\bf p}_1, …, {\bf p}_N) $</li>
+<li>查询 MLP 网络：$ ({\bf p}_i, {\bf d}_i) \to ({\bf c_i}, \sigma_i) $</li>
+<li>进行多次 alpha-blending</li>
+</ol>
+<h3 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h3><p>架构设计时主要有以下目标：</p>
+<ol>
+<li>“端到端” - 芯片输入位置和方向，输出像素颜色，减少片上片外数据交换的额外开销（计算时间、功耗）</li>
+<li>使用定点数 - 有效降低浮点数运算开销</li>
+<li>架构设计要一定灵活性，尽量兼容比较多的 NeRF 衍生网络</li>
+</ol>
+<h4 id="如何使用定点数？"><a href="#如何使用定点数？" class="headerlink" title="如何使用定点数？"></a>如何使用定点数？</h4><p>目前的实现是将在 GPU 上训练好的 NeRF 的权重进行量化 (quantization)，再导出。不过，目前也有一些工作在 quantization-aware training 方面，可能对这个网络的训练过程有所帮助。</p>
+<h3 id="位置编码单元-PEU"><a href="#位置编码单元-PEU" class="headerlink" title="位置编码单元 (PEU)"></a>位置编码单元 (PEU)</h3><p>设计位置编码单元 (Positional Encoding Unit, PEU) 的目的是在 PEU 前和 PEU 后的向量维数增加了很多倍（对原 NeRF 来说位置是 20 倍，方向是 8 倍），如果在 ICARUS 内部进行计算的话，可以减少很大一部分外部存储传输，降低传输总用时。</p>
+<p>PEU 部件主要在做这件事：</p>
+$$
+\phi(x; A) = [\cos A^T x, \sin A^T x]
+$$
+
+<p>其中 $ A $ 一般为一个行数比列数多的矩阵，用来升维。</p>
+<p>PEU 单元对应的设计如下 (Fig. 4(b))：</p>
+<img src="/paper-reading/icarus-nerf/peu-overview.png" class="" title="PEU Overview">
+
+<p>可以看到，就是矩阵乘法单元和 CORDIC 单元的组合。</p>
+<blockquote>
+<p>一些关于矩阵乘和 CORDIC 单元的大概印象：<br>矩阵乘：有很多工作，比如搜索 Systolic array 等等</p>
+<ul>
+<li>不过我不清楚 SOTA 情况<br>CORDIC: <a target="_blank" rel="noopener" href="https://zipcpu.com/dsp/2017/08/30/cordic.html">https://zipcpu.com/dsp/2017/08/30/cordic.html</a></li>
+<li>不过我也不清楚 SOTA 情况</li>
+</ul>
+</blockquote>
+<p>具体设计上来说，ICARUS 支持对 dim&#x3D;3 和 dim&#x3D;6 的两种输入进行位置编码，并且扩展到 dim&#x3D;128。PEU 内部设计有两个 3x128 的内存块和 6 组 MAC (Multiply-ACcumulate) 单元，当计算 dim&#x3D;6 的输入时会全部启用，当计算 dim&#x3D;3 的输入时只启用一半。</p>
+<h3 id="MLP-Engine"><a href="#MLP-Engine" class="headerlink" title="MLP Engine"></a>MLP Engine</h3><p>MLP 引擎主要进行 $ f(Wx+b) $ 类型的计算。</p>
+<p>MLP 引擎包含有：</p>
+<ul>
+<li>一个 Multi-output Network block (MONB)，负责计算中间的隐藏层</li>
+<li>一个 Single-output network block (SONB)，负责计算最后的输出层<ul>
+<li>不继续用 MONB 的原因是，全连接的 MONB 比只输出一个数字的 SONB 面积要大得多</li>
+</ul>
+</li>
+<li>两个 activation memory block</li>
+</ul>
+<p>对于 MLP 计算来说，实现是这样的：</p>
+<img src="/paper-reading/icarus-nerf/mlp-compution-overview.png" class="" title="MLP Overview">
+
+<p>首先，将 MLP 的权重拆成 64 x 64 的小块，方便硬件上的复用，并且同样的权重可以被多组输入向量复用，从而降低内存带宽开销，代价方面只需要暂存该 batch 内的中间结果就可以（这里选择 <code>batch_size=128</code>）。</p>
+<p>每个 64 x 64 的矩阵-向量乘法再进行分片，变成按矩阵列分割的 64 个列向量 - 向量的内积乘法（即 $ [\alpha_1 … \alpha_{64}] [x_1 … x_{64}]^T $，每个 $ \alpha_i x_i $ 的部分和用一个 RMCM 模块实现：</p>
+<img src="/paper-reading/icarus-nerf/working_principle_rmcm.png" class="" title="RMCM Principle">
+
+<p>大概来说，是因为乘法可以变成移位加法：</p>
+$$
+3x = 1x << 1 + 1x
+$$
+
+<p>所以权重 load 进来的作用就是预先选择好路径上的移位和加法器，然后数据从这些器件中流过去就行。</p>
+<p>另一个优化是高一半的移位和加法路径直接用上一次的值来替换，然后网络训练的时候也作此改动。这样可以节省 1&#x2F;3 的面积，同时输出基本没有视觉质量损失。</p>
+<p>SONB 的架构基本上和 MONB 差不多，只是 RMCM 块用不到了，用普通的向量乘法块就可以了。</p>
+<img src="/paper-reading/icarus-nerf/sonb-overview.png" class="" title="SONB Overview">
+
+<h3 id="Volume-Rendering-Unit"><a href="#Volume-Rendering-Unit" class="headerlink" title="Volume Rendering Unit"></a>Volume Rendering Unit</h3><img src="/paper-reading/icarus-nerf/VRU-Overview.png" class="" title="VRU Overview">
+
+<p>VRU 模块主要要负责下面的计算：</p>
+<img src="/paper-reading/icarus-nerf/VRU-classic.png" class="" title="VRU Classic">
+
+<p>这里，他处理成下面的形式：</p>
+<img src="/paper-reading/icarus-nerf/VRU-rewrite.png" class="" title="VRU Rewrite">
+
+<p>然后用上面的网络计算。</p>
+<h3 id="原型验证"><a href="#原型验证" class="headerlink" title="原型验证"></a>原型验证</h3><img src="/paper-reading/icarus-nerf/FPGA-prototyping.png" class="">
+
+<p>验证平台使用的是 Synopsys HAPS-80 S104，验证时使用的工艺是 40nm CMOS 工艺。</p>
+<img src="/paper-reading/icarus-nerf/icarus-comparation.png" class="">
+
+<!-- 
+#### 调整到 Surface Light Field 任务
+
+> TODO
+
+-->
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="paper-reading-paper-reading/pbr-feature-line" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -843,280 +1029,6 @@ $$
       
         <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要将 ReSTIR 这种采样增强方法扩展到了间接光照上。</p>
 
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
-      <article id="paper-reading-paper-reading/restir" class="article article-type-paper-reading" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/paper-reading/restir/"><strong>论文阅读 | ReSTIR</strong></a>
-      <small class=article-date-index>&nbsp; 2022-07-03</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/paper-reading/restir/" class="article-date">
-  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了 ReSTIR 这种用于实时渲染的采样增强方法，该方法可以处理交互式渲染中对大量光源 (&gt;&#x3D; 1k) 的直接光进行采样的问题，也可以用于实时渲染。</p>
-<blockquote>
-<p>注：本篇文章的官方 Slides 我感觉做的很不错，可以在他们的项目主页下载到。</p>
-</blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="BSDF-适用的渲染方程"><a href="#BSDF-适用的渲染方程" class="headerlink" title="BSDF 适用的渲染方程"></a>BSDF 适用的渲染方程</h3>$$
-\begin{aligned}
-L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
-&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
-&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
-\end{aligned}
-$$
-
-<p>其中 $\theta^x_i$ 为 $x$ 处入射光线与 $x$ 所在表面位置法线所成角度，$\theta^{x’}_o$ 为 $x’$ 处出射光线与 $x’$ 所在表面位置法线所成角度。</p>
-$$
-V(x, x') := 
-\left\{
-\begin{aligned}
-&1 ,& x' \text{ is visible from } x \\
-&0 ,& \text{otherwise}
-\end{aligned}
-\right.
-$$
-
-<!-- 之后可以扩展一节专门讲渲染方程，放到基础回顾部分；现在就略写一下 -->
-
-<p>对于上面的积分，我们希望用一些离散的采样构成的一个估计量来进行原积分的估计。采样方式和利用采样得到的值进行运算从而构造估计量的方式被称为一种估计方法。</p>
-<p>数理统计告诉我们，估计量也是满足一个分布的，在绝大多数时候我们通过估计量的<strong>期望</strong>和<strong>方差</strong>来衡量一个估计的好坏。</p>
-<p>既然本篇论文是关于采样方法的改进，那么就首先回顾一下 Monte Carlo 求解渲染方程时会使用到的估计方法。</p>
-<h3 id="简单随机抽样"><a href="#简单随机抽样" class="headerlink" title="简单随机抽样"></a>简单随机抽样</h3><p>假设我们需要估计</p>
-$$
-I := \int_\Omega f(x) dx
-$$
-
-<p>的值，并且我们可以<strong>等概率</strong>且<strong>独立</strong>的从 $\Omega$ 中抽取样本 ${x_i}_{i&#x3D;1}^n$，那么我们就可以构造估计量 $\bar I$</p>
-$$
-\bar I := \frac{|\Omega|}{N} \sum_{i=1}^n f(x_i)
-$$
-
-<p>既然 $X_i$ 是随机变量，那么我们的估计量自然也是个随机变量，它的期望 $\operatorname{E}[\bar I]$ 是</p>
-$$
-\begin{aligned}
-\operatorname{E}[\bar I] &= \frac{|\Omega|}{N} \sum_{i=1}^n \operatorname{E}[f(X_i)] \\
-&= |\Omega| \operatorname{E}[f(x_1)] & \text{(} \{X_i\} \text{ satisfy i.i.d.)} \\
-&= |\Omega| \int_\Omega f(x) d \mu(x) \\
-&= |\Omega| \int_\Omega f(x) \mu(x) dx \\
-&= |\Omega| \int_\Omega f(x) \frac{1}{|\Omega|} dx \\
-&= I
-\end{aligned}
-$$
-
-<blockquote>
-<p>Note: 形如</p>
-$$
-\int_\Omega f(x) d\mu(x) 
-$$
-<p>的积分中，$\mu(x)$ 是随机变量 $X$ 所对应的概率密度函数，在这里是均匀分布所以 $\mu(x) &#x3D; 1&#x2F;|\Omega|$ 。期望的本质就是 “$\sum x \times p(x)$”</p>
-</blockquote>
-<!-- 
-比如说我们在初等概率论中学到的随机变量，在测度论角度来讲就是一种可测函数，而初等概率论在很多计算上面是直接在取值空间进行计算的，也就是实数空间，它的很多积分的运算你放在测度论来看就是直接应用了积分变换定理。在概率论中提到的“分布”，其实就是根据这个随机变量（可测函数）在原空间和取值空间进行一个测度变换，站在这个角度去看待一些概率论问题就会感觉一切是那么合理，简直就是一种艺术。
-
-作者：再熬夜是猪
-链接：https://www.zhihu.com/question/29800166/answer/1884856359
-来源：知乎
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
--->
-
-<p>所以积分最终会收敛，但是估计量 $\bar I$ 的方差依赖于 $f(x)$ 本身的性质：</p>
-$$
-\begin{aligned}
-\operatorname{Var}[\bar I] &= \frac{|\Omega|^2}{N^2} \operatorname{Var} \left[ \sum_{i=1}^{n} f(x_i) \right] \\
-&= \frac{|\Omega|^2}{N} \operatorname{Var}[f(x)] \\
-&= \frac{|\Omega|^2}{N} \left( \operatorname{E}[f(x)^2] - \operatorname{E}[f(x)]^2 \right) \\
-&= \frac{|\Omega|^2}{N} \left[ \int_\Omega f(x)^2 \mu(x) dx - \left( \int_\Omega f(x) \mu(x) dx \right)^2 \right] \\
-&= \frac{1}{N} \left[ |\Omega| \int_\Omega f(x)^2 dx - \left( \int_\Omega f(x) dx \right)^2 \right]
-\end{aligned}
-$$
-
-<p>我们观察到，后面的方括号中的内容和抽样次数 N 无关，所以只要 $\operatorname{Var}[f(X_i)]$ 有限，即可说明增加抽样次数，估计量最终可以<strong>在方差意义上</strong>收敛到原函数。</p>
-<!-- https://math.stackexchange.com/questions/1386113/proving-that-the-variance-is-non-negative -->
-
-<!-- TODO: 补一些 Var 的图 -->
-<!-- 写一个 browser-side 画函数的工具？(大坑) -->
-
-<blockquote>
-<p>Note: </p>
-<ol>
-<li>$\operatorname{Var}[X] = \operatorname{E}[(X-\operatorname{E}[X])^2] = \operatorname{E}[X^2-2 \cdot X \cdot \operatorname{E}[X] + (\operatorname{E}[X])^2] = \operatorname{E}[X^2]-(\operatorname{E}[X])^2$ </li>
-<li>$\operatorname{Var}[aX+bY] = a^2\operatorname{Var}[X] + b^2\operatorname{Var}[Y] + 2ab \operatorname{Cov}[X, Y]$</li>
-<li>如果很严谨，还应该讨论函数具有何种性质时，方差意义上收敛的两个函数是同一个函数。（<del>不过我不会</del>）</li>
-</ol>
-</blockquote>
-<h3 id="重要性采样-Importance-Sampling"><a href="#重要性采样-Importance-Sampling" class="headerlink" title="重要性采样 (Importance Sampling)"></a>重要性采样 (Importance Sampling)</h3><p>仍然假设我们需要估计</p>
-$$
-I := \int_\Omega f(x) dx
-$$
-
-<p>但是这次，我们选择一个连续分布，记其概率密度函数为 $p(x)$，并且我们从该分布中抽样得到样本 ${x_i}_{i&#x3D;1}^N$，我们用这些样本构造估计量 $\bar I$</p>
-$$
-\bar I := \frac{1}{N} \sum_{i=1}^n \frac{f(x_i)}{p(x_i)}
-$$
-
-<p>那么，</p>
-$$
-\begin{aligned}
-\operatorname{E}[\bar I] &= \operatorname{E}\left[\frac{f(x_1)}{p(x_1)}\right] \\
-&= \int_\Omega \frac{f(x)}{p(x)} p(x) dx \\
-&= \int_\Omega f(x) dx \\
-&= I
-
-\end{aligned}
-$$
-
-<blockquote>
-<p>此处的推导隐含 $p(x)$ 在 $\Omega$ 上的值<strong>非零</strong>，考虑到 $p(x)$ 是概率密度函数，$p(x) &gt; 0$</p>
-<p>不过事实上我们只需要 $p(x) &gt; 0$ 在 $\operatorname{supp}(f)$ 成立即可。</p>
-</blockquote>
-<p>方差：</p>
-$$
-\begin{aligned}
-
-\operatorname{Var}[\bar I]
-&= \frac{1}{N^2} \operatorname{Var}\left[ \sum_{i=1}^n \frac{f(x_i)}{p(x_i)} \right] \\
-&= \frac{1}{N} \operatorname{Var}\left[ \frac{f(x)}{p(x)} \right] \\
-&= \frac{1}{N} \left( \operatorname{E}\left[\left[\frac{f(x)}{p(x)}\right]^2\right] - \operatorname{E}\left[\frac{f(x)}{p(x)}\right]^2  \right) \\
-&= \frac{1}{N} \left[ \int_\Omega \left(\frac{f(x)}{p(x)}\right)^2 p(x) dx - \left( \int_\Omega \frac{f(x)}{p(x)} p(x) dx \right)^2 \right] \\
-&= \frac{1}{N} \left[ \int_\Omega \frac{f(x)^2}{p(x)} dx - \left( \int_\Omega f(x) dx \right)^2 \right] \\
-
-\end{aligned}
-$$
-
-<p>则加大 N 后方差可以渐进趋于 0。</p>
-<p>如果我们可以找到概率密度函数 $p(x)$ 满足</p>
-$$
-p(x) = \frac{f(x)}{\int_\Omega f(t) \, dt}
-$$
-
-<p>的话，带入上面的式子可以得到</p>
-$$
-\begin{aligned}
-\operatorname{Var}[\bar I]
-&= \frac{1}{N} \left[ \left(\int_\Omega f(x) dx\right)^2 - \left( \int_\Omega f(x) dx \right)^2 \right] = 0
-\end{aligned}
-$$
-
-<p>一般的，由 $p(x)$ 决定的分布对 $f(x)$ 近似的越好，相同样本数量下估计量的方差就会越低。</p>
-<h3 id="重采样重要性采样-Resampled-Importance-Sampling"><a href="#重采样重要性采样-Resampled-Importance-Sampling" class="headerlink" title="重采样重要性采样 (Resampled Importance Sampling)"></a>重采样重要性采样 (Resampled Importance Sampling)</h3><p>从前面的重要性采样方法中我们了解到，我们采样的 $p(x)$ 的形状越接近 $f(x)$，那么采样的效果就越好。</p>
-<blockquote>
-<p>所谓形状接近，就是函数贴近 ${f(x)}&#x2F;{\int_\Omega f(t) , dt}$。</p>
-</blockquote>
-<p>如果我们有一个很棒的分布 $\hat p(x)$，他比较接近 $f(x)$ 的形状，但是我们没法直接采样出符合 $\hat p(x)$ 分布的样本。</p>
-<p><em>(1-sample RIS)</em> 假设我们此时还可以找到一个分布 $p(x)$，其与 $\hat p(x)$ 比较接近，那么此时，我们可以采用如下方法，采样出符合 $ \hat p(x)$ 分布的样本：</p>
-<ol>
-<li>从 $p(x)$ 分布中抽样得到集合 $ X &#x3D; {x_1, …, x_M } $</li>
-<li>按如下所给的条件概率抽样一个<strong>索引</strong> $ z \in {1, …, M} $$$
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}
-$$</li>
-<li>按下式计算估计量$$
-\begin{aligned}
-\bar I^{1, M}_{ris}(z, x_1, ..., x_M) = \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right)
-\end{aligned}
-$$</li>
-</ol>
-<p>首先，我们需要证明这个方法正确。证明的核心在于计算两步抽样最终抽到 $ x_z $ 的概率。记</p>
-$$
-p(z_0, x_z) := \lim_{\epsilon \to 0} P(z = z_0,  x_z \le x \le x_z + \epsilon) / \epsilon
-$$
-
-<p>则</p>
-$$
-p(z, x_1, ..., x_M) = p(z \, | \, x_1, ..., x_M) \prod_{i=1}^M p(x_i) = \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{i=1}^M \left({\hat p(x_i)}/{p(x_i)}\right)} \prod_{j=1}^M p(x_j)
-$$
-
-<p>则</p>
-$$
-\begin{aligned}
-\operatorname{E}\left[\bar I^{1, M}_{ris}\right]
-&= \int_{x_1, ..., x_M} \sum_{z=1}^M \bar I^{1, M}_{ris}(z, x_1, ..., x_M) \, p(z \, | \, x_1, ..., x_M) \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
-&= \int_{x_1, ..., x_M} \sum_{z=1}^M \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right) \frac{ {\hat p(x_z)}/{p(x_z)} }{\sum_{j=1}^M w(x_j)} \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
-&= \frac{1}{M} \int_{x_1, ..., x_M} \sum_{z=1}^M \frac{f(x_z)}{p(x_z)} \left( \prod_{i=1}^M p(x_i) \right) \, dx_1 ... dx_M \\
-&= \frac{1}{M} \operatorname{E}\left[ \sum_{z=1}^{M} \frac{f(x_z)}{p(x_z)} \right] \\
-&= \operatorname{E}\left[ \frac{f(x)}{p(x)} \right] \qquad \text{(} \because x_i \text{ i.i.d.)} \\
-&= \int_\Omega f(x) \, dx
-\end{aligned}
-$$
-
-<blockquote>
-<p>NOTE: </p>
-<ol>
-<li>$ \int_{x_1, ..., x_M} $ 和 $ \int_{\mathcal{\Omega}^M} $ 是一样的，是他们各自的空间 $ \Omega $ 的直积。</li>
-<li>$ \operatorname{E}[X+Y] = \operatorname{E}[X] + \operatorname{E}[Y] $ 不依赖于 $ X $ 和 $ Y $ 独立。</li>
-</ol>
-</blockquote>
-<!-- TODO: 补充个 2 的证明 -->
-
-<p>方差也可以相应计算如下：</p>
-$$
-\begin{aligned}
-\operatorname{Var}\left[\bar I^{1, M}_{ris}\right]
-&= \frac{1}{M^2} \operatorname{Var}\left[ \frac{f(x_z)}{\hat p(x_z)} \cdot \left(  \sum^M_{j=1} w(x_j) \right) \right] \\
-&= ?
-\end{aligned}
-$$
-
-<!-- TODO: Multi-sample RIS -->
-
-<h3 id="带权蓄水池抽样-Weighted-Reservoir-Sampling"><a href="#带权蓄水池抽样-Weighted-Reservoir-Sampling" class="headerlink" title="带权蓄水池抽样 (Weighted Reservoir Sampling)"></a>带权蓄水池抽样 (Weighted Reservoir Sampling)</h3><p>前面提到，重采样重要性采样需要先抽 $ M $ 个样本，然后从中再抽样出最终的值。</p>
-<p>经过仔细观察，拥有如下结构的抽样问题可以用带权蓄水池抽样 (Weighted Reservoir Sampling) 来解决：</p>
-$$
-p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}
-$$
-
-<p>(WRS) 假设对于序列 $ {x_1, …, x_m} $，我们希望按上述概率抽样得到样本 $x_z$</p>
-<ol>
-<li>维护一个当前总权重 $ w_\text{sum} $，当前总样本数 $ M $ 和最终样本 $ y $</li>
-<li>初始化 $ y:&#x3D;x_1; , M:&#x3D;1; , w_\text{sum}:&#x3D;w(x_1) $</li>
-<li>对于每个新样本 $x_i$<ul>
-<li>以 $ w(x_i) &#x2F; w_\text{sum} $ 概率：$ y:&#x3D;x_i; , M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
-<li>以 $ 1 - w(x_i) &#x2F; w_\text{sum} $ 概率：$ M:&#x3D;M+1; , w_\text{sum} :&#x3D; w_\text{sum}+w(x_i) $</li>
-</ul>
-</li>
-</ol>
-<p>这样对于某个样本 $ x_k $，经过这个过程最后被选中的概率为 <code>P(第 k 次被选中) * P(第 k 次之后都没有被换掉)</code>，乘起来很容易证明正确性。</p>
-<p>WRS 方法的优势在于，不需要完成存储 $ {x_i} $ 序列本身，而是线性扫描一遍这个序列就可以得出结果，非常适合和前面的 RIS 方法搭配使用。</p>
-<h3 id="蓄水池合并-Reservoir-Merging"><a href="#蓄水池合并-Reservoir-Merging" class="headerlink" title="蓄水池合并 (Reservoir Merging)"></a>蓄水池合并 (Reservoir Merging)</h3><!-- 假设我们要从 $ \{x_1, ..., x_m, y_1, ..., y_n\} $ 中抽样， -->
       
     </div>
 	
