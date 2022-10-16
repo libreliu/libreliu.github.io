@@ -2,8 +2,7 @@
 layout: 'paper-reading'
 title: '论文阅读 | ICARUS: NeRF 硬件加速器'
 date: 2022-10-07
-papertitle: 'ICARUS: A Specialized Architecture for Neural Radiance Fields
-Rendering'
+papertitle: 'ICARUS: A Specialized Architecture for Neural Radiance Fields Rendering'
 paperauthors: Chaolin Rao, Huangjie Yu, Haochuan Wan, Jindong Zhou, Yueyang Zheng, Yu Ma, Anpei Chen, Minye Wu, Binzhe Yuan, Pingqiang Zhou, Xin Lou, Jingyi Yu
 papersource: 'SIGGRAPH Asia 2022'
 paperurl: 'https://arxiv.org/abs/2203.01414'
@@ -95,15 +94,108 @@ $$
 
 ![ICARUS Overview](icarus-nerf/icarus-overview.png)
 
-### Positional Encoding Unit
+### NeRF 计算过程回顾
 
-CORDIC: https://zipcpu.com/dsp/2017/08/30/cordic.html
+1. 对像素所发出射线上的采样，得到点 $ ({\bf p}_1, ..., {\bf p}_N) $
+2. 查询 MLP 网络：$ ({\bf p}_i, {\bf d}_i) \to ({\bf c_i}, \sigma_i) $
+3. 进行多次 alpha-blending
 
+### 架构设计
 
+架构设计时主要有以下目标：
+1. "端到端" - 芯片输入位置和方向，输出像素颜色，减少片上片外数据交换的额外开销（计算时间、功耗）
+2. 使用定点数 - 有效降低浮点数运算开销
+3. 架构设计要一定灵活性，尽量兼容比较多的 NeRF 衍生网络
+
+#### 如何使用定点数？
+
+目前的实现是将在 GPU 上训练好的 NeRF 的权重进行量化 (quantization)，再导出。不过，目前也有一些工作在 quantization-aware training 方面，可能对这个网络的训练过程有所帮助。
+
+### 位置编码单元 (PEU)
+
+设计位置编码单元 (Positional Encoding Unit, PEU) 的目的是在 PEU 前和 PEU 后的向量维数增加了很多倍（对原 NeRF 来说位置是 20 倍，方向是 8 倍），如果在 ICARUS 内部进行计算的话，可以减少很大一部分外部存储传输，降低传输总用时。
+
+PEU 部件主要在做这件事：
+
+$$
+\phi(x; A) = [\cos A^T x, \sin A^T x]
+$$
+
+其中 $ A $ 一般为一个行数比列数多的矩阵，用来升维。
+
+PEU 单元对应的设计如下 (Fig. 4(b))：
+
+![PEU Overview](icarus-nerf/peu-overview.png)
+
+可以看到，就是矩阵乘法单元和 CORDIC 单元的组合。
+
+> 一些关于矩阵乘和 CORDIC 单元的大概印象：
+> 矩阵乘：有很多工作，比如搜索 Systolic array 等等
+> - 不过我不清楚 SOTA 情况
+> CORDIC: https://zipcpu.com/dsp/2017/08/30/cordic.html
+> - 不过我也不清楚 SOTA 情况
+
+具体设计上来说，ICARUS 支持对 dim=3 和 dim=6 的两种输入进行位置编码，并且扩展到 dim=128。PEU 内部设计有两个 3x128 的内存块和 6 组 MAC (Multiply-ACcumulate) 单元，当计算 dim=6 的输入时会全部启用，当计算 dim=3 的输入时只启用一半。
 
 ### MLP Engine
 
+MLP 引擎主要进行 $ f(Wx+b) $ 类型的计算。
+
+MLP 引擎包含有：
+- 一个 Multi-output Network block (MONB)，负责计算中间的隐藏层
+- 一个 Single-output network block (SONB)，负责计算最后的输出层
+  - 不继续用 MONB 的原因是，全连接的 MONB 比只输出一个数字的 SONB 面积要大得多
+- 两个 activation memory block
+
+对于 MLP 计算来说，实现是这样的：
+
+![MLP Overview](icarus-nerf/mlp-compution-overview.png)
+
+首先，将 MLP 的权重拆成 64 x 64 的小块，方便硬件上的复用，并且同样的权重可以被多组输入向量复用，从而降低内存带宽开销，代价方面只需要暂存该 batch 内的中间结果就可以（这里选择 `batch_size=128`）。
+
+每个 64 x 64 的矩阵-向量乘法再进行分片，变成按矩阵列分割的 64 个列向量 - 向量的内积乘法（即 $ [\alpha_1 ... \alpha_{64}] [x_1 ... x_{64}]^T $，每个 $ \alpha_i x_i $ 的部分和用一个 RMCM 模块实现：
+
+![RMCM Principle](icarus-nerf/working_principle_rmcm.png)
+
+大概来说，是因为乘法可以变成移位加法：
+
+$$
+3x = 1x << 1 + 1x
+$$
+
+所以权重 load 进来的作用就是预先选择好路径上的移位和加法器，然后数据从这些器件中流过去就行。
+
+另一个优化是高一半的移位和加法路径直接用上一次的值来替换，然后网络训练的时候也作此改动。这样可以节省 1/3 的面积，同时输出基本没有视觉质量损失。
+
+SONB 的架构基本上和 MONB 差不多，只是 RMCM 块用不到了，用普通的向量乘法块就可以了。
+
+![SONB Overview](icarus-nerf/sonb-overview.png)
+
 ### Volume Rendering Unit
 
-### 性能评价
+![VRU Overview](icarus-nerf/VRU-Overview.png)
 
+VRU 模块主要要负责下面的计算：
+
+![VRU Classic](icarus-nerf/VRU-classic.png)
+
+这里，他处理成下面的形式：
+
+![VRU Rewrite](icarus-nerf/VRU-rewrite.png)
+
+然后用上面的网络计算。
+
+### 原型验证
+
+![](icarus-nerf/FPGA-prototyping.png)
+
+验证平台使用的是 Synopsys HAPS-80 S104，验证时使用的工艺是 40nm CMOS 工艺。
+
+![](icarus-nerf/icarus-comparation.png)
+
+<!-- 
+#### 调整到 Surface Light Field 任务
+
+> TODO
+
+-->
