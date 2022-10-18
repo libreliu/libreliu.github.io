@@ -100,3 +100,68 @@ Direct3D 11 主要通过[两种类型设备上下文](https://learn.microsoft.co
 
 通过 `ID3D11Device::GetImmediateContext` 可以获取用于即时绘制的设备上下文。在 RenderDoc 中，真实设备的即时绘制上下文在 `WrappedID3D11Device` 创建时，就从真实的设备中拿到，并且用 `WrappedID3D11DeviceContext` 来包装好了。
 
+#### 一个简单的 D3D11 图形程序
+
+为了仔细观察和理解 Wrapped 的 D3D11 上下文，首先应该简单的回顾一下 D3D11 图形程序的行为。
+
+下面以 [DirectX11-With-Windows-SDK](https://github.com/libreliu/DirectX11-With-Windows-SDK/tree/master/Project%2001-09/03%20Rendering%20a%20Cube) 为例进行说明。
+
+> DXGI (**D**irect**X** **G**raphics **I**nfrastructure) 负责抽象和交换链、DAL 相关的公共部分。关于 DXGI 的资料可以参考 [MSDN](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/d3d10-graphics-programming-guide-dxgi)。
+> 
+> DXGI 封装了多种对象：
+> - 显示适配器 (IDXGIAdapter): 一般对应一块显卡，也可以对应 Reference Rasterizer，或者支持虚拟化的显卡的一个 VF 等
+> - 显示输出 (IDXGIOutput): 显示适配器的输出，一般对应一个显示器
+> - 交换链 (IDXGISwapChain): 用来暂存要显示到输出窗口/全屏幕的 1 到多个 Surface 的对象
+>   - `g_pSwapChain->GetBuffer` 可以拿到表示 Back Buffer 的 `ID3D11Texture`
+>   - 从 `g_pd3dDevice->CreateRenderTargetView` 来创建一个封装该 Texture 的 `ID3D11RenderTargetView`
+>   - `g_pd3dDeviceContext->OMSetRenderTargets` 来设置 Pipeline 的 RenderTarget
+>   - `g_pd3dDeviceContext->RSSetViewports` 来设置 Pipeline 的 Viewport
+
+<!--
+
+> 和 DRM (master) 的相应概念的对比：
+> - NOTE: 我只看过 DRM Master (?) 的相关 API
+> 
+> DRM 里面有
+> - KMS:
+>   - CRT Controller, Encoder, Connector, Plane
+>   - 感觉 IDXGIAdapter 约等于 /dev/dri/card0 ... 等加速设备
+>   - 但也不是，因为 DRM 的 master 节点的访问限制 (?)
+>   - TODO: 理一理 DRM
+> - Buffer Object Management
+
+-->
+
+1. `GameApp::Init()`
+  - `D3DApp::Init()`
+    - `InitMainWindow()`
+      - `RegisterClass(WNDCLASS *)`: 注册
+      - `AdjustWindowRect()`
+      - `CreateWindow()`
+      - `ShowWindow()`
+      - `UpdateWindow()`
+    - `InitDirect3D()`
+      - `D3D11CreateDevice()`: 采用 11.1 的 Feature Level，不行则降级
+      - `ID3D11Device::CheckMultisampleQualityLevels`: 查询给定 DXGI_FORMAT 是否支持给定倍数的 MSAA
+      - 将前面的 `ID3D11Device` Cast 到 `IDXGIDevice`
+        > An `IDXGIDevice` interface implements a derived class for DXGI objects that produce image data.
+      - `IDXGIDevice::GetAdapter` 拿到 `IDXGIAdapter`
+        > The `IDXGIAdapter` interface represents a display subsystem (including one or more GPUs, DACs and video memory).
+      - `IDXGIAdapter::GetParent` 拿到 `IDXGIFactory1`
+        > 这里的 `GetParent` 是 `IDXGIAdapter` 作为 `IDXGIObject` 的方法，可以获得构造它的工厂类。
+        >
+        > The `IDXGIFactory1` interface implements methods for generating DXGI objects.
+      - 尝试将 `IDXGIFactory1` Cast 到 `IDXGIFactory2` (DXGI 1.2 新增)
+        - 如果支持 DXGI 1.2，则用 `CreateSwapChainForHwnd` 来创建交换链
+        - 否则，用 `CreateSwapChain` 来创建交换链
+        > 这两个函数都可以创建窗口 / 全屏幕交换链；DXGI 1.2 增加了新的、到其它输出目标的交换链创建功能，所以这里进行了重构。
+        >
+        > 也要注意，不同 DirectX 可以支持的[交换链的交换行为类型](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect)是不同的。大体上，交换链的交换行为可以分为
+        > - DISCARD vs SEQUENTIAL: [StackExchange](https://gamedev.stackexchange.com/questions/58654/what-is-the-difference-between-dxgi-swap-effect-discard-and-dxgi-swap-effect-seq)
+        > - FILP vs BLIT (Bit Block Transfer): 决定是用交换指针还是数据拷贝的方法来从交换链被 Present 的 Surface 中拿取数据
+
+    - `InitDirect3D()`
+  - `InitEffect()`
+  - `InitResource()`
+2. 每帧
+3. 退出
