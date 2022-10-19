@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>一个示例 D3D11 程序的全流程记录 - libreliu&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="本篇是笔者进行 RenderDoc drivers 层分析时一并记录下来的，是一个渲染 Cube 的简单 D3D11 程序与 API 交互的全流程的记录。 以 DirectX11-With-Windows-SDK - Rendering A Cube 为例进行说明。  DXGI (DirectX Graphics Infrastructure) 负责抽象和交换链、DAL 相关的公共部分。关于 DX">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一个示例 D3D11 程序的全流程记录">
+<meta property="og:url" content="https://blog.libreliu.info/example-d3d11-app-flow/">
+<meta property="og:site_name" content="libreliu&#39;s blog">
+<meta property="og:description" content="本篇是笔者进行 RenderDoc drivers 层分析时一并记录下来的，是一个渲染 Cube 的简单 D3D11 程序与 API 交互的全流程的记录。 以 DirectX11-With-Windows-SDK - Rendering A Cube 为例进行说明。  DXGI (DirectX Graphics Infrastructure) 负责抽象和交换链、DAL 相关的公共部分。关于 DX">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-10-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-10-19T11:22:14.231Z">
+<meta property="article:author" content="Libre Liu">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="icon" href="/css/images/logo.png">
+  
+  <link href="/webfonts/ptserif/main.css" rel='stylesheet' type='text/css'>
+  <link href="/webfonts/source-code-pro/main.css" rel="stylesheet" type="text/css">
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="libreliu's blog" type="application/atom+xml">
+</head>
+
+<body>
+  <div id="container">
+    <header id="header">
+  <div id="header-outer" class="outer">
+    <div id="header-inner" class="inner">
+      <a id="main-nav-toggle" class="nav-icon" href="javascript:;"></a>
+      <a id="logo" class="logo" href="/"></a>
+      <nav id="main-nav">
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/paper-summary">Paper Reading</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://blog.libreliu.info"></form>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <br>
+    <section id="main" class="outer"><article id="post-example-d3d11-app-flow" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      一个示例 D3D11 程序的全流程记录
+      <small class=article-detail-date-index>&nbsp; 2022-10-19</small>
+    </h1>
+  
+
+
+        <div class=page-title></div>
+        <br>
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/example-d3d11-app-flow/" class="article-date">
+  <time datetime="2022-10-18T16:00:00.000Z" itemprop="datePublished">2022-10-19</time>
+</a>-->
+      <!-- 
+--><!-- by blair 160724 -->
+      <!-- by blair
+      
+      -->
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+      
+        <p>本篇是笔者进行 RenderDoc drivers 层分析时一并记录下来的，是一个渲染 Cube 的简单 D3D11 程序与 API 交互的全流程的记录。</p>
+<p>以 <a target="_blank" rel="noopener" href="https://github.com/libreliu/DirectX11-With-Windows-SDK/tree/master/Project%2001-09/03%20Rendering%20a%20Cube">DirectX11-With-Windows-SDK - Rendering A Cube</a> 为例进行说明。</p>
+<blockquote>
+<p>DXGI (<strong>D</strong>irect<strong>X</strong> <strong>G</strong>raphics <strong>I</strong>nfrastructure) 负责抽象和交换链、DAL 相关的公共部分。关于 DXGI 的资料可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/d3d10-graphics-programming-guide-dxgi">MSDN</a>。</p>
+<p>DXGI 封装了多种对象：</p>
+<ul>
+<li>显示适配器 (IDXGIAdapter): 一般对应一块显卡，也可以对应 Reference Rasterizer，或者支持虚拟化的显卡的一个 VF 等</li>
+<li>显示输出 (IDXGIOutput): 显示适配器的输出，一般对应一个显示器</li>
+<li>交换链 (IDXGISwapChain): 用来暂存要显示到输出窗口&#x2F;全屏幕的 1 到多个 Surface 的对象<ul>
+<li><code>g_pSwapChain-&gt;GetBuffer</code> 可以拿到表示 Back Buffer 的 <code>ID3D11Texture</code></li>
+<li>从 <code>g_pd3dDevice-&gt;CreateRenderTargetView</code> 来创建一个封装该 Texture 的 <code>ID3D11RenderTargetView</code></li>
+<li><code>g_pd3dDeviceContext-&gt;OMSetRenderTargets</code> 来设置管线的 RenderTarget</li>
+<li><code>g_pd3dDeviceContext-&gt;RSSetViewports</code> 来设置管线的 Viewport</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<!--
+
+> 和 DRM (master) 的相应概念的对比：
+> - NOTE: 我只看过 DRM Master (?) 的相关 API
+> 
+> DRM 里面有
+> - KMS:
+>   - CRT Controller, Encoder, Connector, Plane
+>   - 感觉 IDXGIAdapter 约等于 /dev/dri/card0 ... 等加速设备
+>   - 但也不是，因为 DRM 的 master 节点的访问限制 (?)
+>   - TODO: 理一理 DRM
+> - Buffer Object Management
+
+-->
+
+<h2 id="GameApp-Init"><a href="#GameApp-Init" class="headerlink" title="GameApp::Init()"></a><code>GameApp::Init()</code></h2><ul>
+<li><code>D3DApp::Init()</code><ul>
+<li><code>InitMainWindow()</code><ul>
+<li><code>RegisterClass(WNDCLASS *)</code>: 注册</li>
+<li><code>AdjustWindowRect()</code></li>
+<li><code>CreateWindow()</code></li>
+<li><code>ShowWindow()</code></li>
+<li><code>UpdateWindow()</code></li>
+</ul>
+</li>
+<li><code>InitDirect3D()</code><ul>
+<li><p><code>D3D11CreateDevice()</code>: 采用 11.1 的 Feature Level，不行则降级</p>
+<p>该函数会返回 Immediate Context (<code>ID3D11DeviceContext</code>), 设备 (<code>ID3D11Device</code>) 和特性等级</p>
+</li>
+<li><p><code>ID3D11Device::CheckMultisampleQualityLevels</code>: 查询给定 DXGI_FORMAT 是否支持给定倍数的 MSAA</p>
+</li>
+<li><p>将前面的 <code>ID3D11Device</code> Cast 到 <code>IDXGIDevice</code></p>
+<blockquote>
+<p>An <code>IDXGIDevice</code> interface implements a derived class for DXGI objects that produce image data.</p>
+</blockquote>
+</li>
+<li><p><code>IDXGIDevice::GetAdapter</code> 拿到 <code>IDXGIAdapter</code></p>
+<blockquote>
+<p>The <code>IDXGIAdapter</code> interface represents a display subsystem (including one or more GPUs, DACs and video memory).</p>
+</blockquote>
+</li>
+<li><p><code>IDXGIAdapter::GetParent</code> 拿到 <code>IDXGIFactory1</code></p>
+<blockquote>
+<p>这里的 <code>GetParent</code> 是 <code>IDXGIAdapter</code> 作为 <code>IDXGIObject</code> 的方法，可以获得构造它的工厂类。</p>
+<p>The <code>IDXGIFactory1</code> interface implements methods for generating DXGI objects.</p>
+</blockquote>
+</li>
+<li><p>尝试将 <code>IDXGIFactory1</code> Cast 到 <code>IDXGIFactory2</code> (DXGI 1.2 新增)</p>
+<ul>
+<li>如果支持 DXGI 1.2，则用 <code>CreateSwapChainForHwnd</code> 来创建交换链</li>
+<li>否则，用 <code>CreateSwapChain</code> 来创建交换链<blockquote>
+<p>这两个函数都可以创建窗口 &#x2F; 全屏幕交换链；DXGI 1.2 增加了新的、到其它输出目标的交换链创建功能，所以这里进行了重构。</p>
+<p>也要注意，不同 DirectX 可以支持的<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect">交换链的交换行为类型</a>是不同的。大体上，交换链的交换行为可以分为</p>
+<ul>
+<li>DISCARD vs SEQUENTIAL: 可以参考 <a target="_blank" rel="noopener" href="https://gamedev.stackexchange.com/questions/58654/what-is-the-difference-between-dxgi-swap-effect-discard-and-dxgi-swap-effect-seq">StackExchange</a>，区别就是一个驱动可以放心扔掉，另一个必须保留回读可能</li>
+<li>FILP vs BLIT (Bit Block Transfer): 决定是用交换指针还是数据拷贝的方法来从交换链被 Present 的 Surface 中拿取数据</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p><code>IDXGIFactory1::MakeWindowAssociation</code> 来取消让 DXGI 接收 Alt-Enter 的键盘消息并且切换窗口和全屏模式</p>
+</li>
+<li><p><code>D3D11SetDebugObjectName()</code></p>
+<ul>
+<li><code>ID3D11DeviceChild::SetPrivateData(WKPDID_D3DDebugObjectName, ...)</code> 来设置资源的内部数据，这里是调试名称</li>
+</ul>
+</li>
+<li><p><code>DXGISetDebugObjectName()</code></p>
+<ul>
+<li><code>IDXGIObject::SetPrivateData(WKPDID_D3DDebugObjectName, ...)</code> 来设置资源的内部数据，这里是调试名称</li>
+</ul>
+</li>
+<li><p><code>OnResize()</code></p>
+<ul>
+<li><code>IDXGISwapChain::ResizeBuffers()</code></li>
+<li><code>IDXGISwapChain::GetBuffer()</code> 拿到 <code>ID3D11Texture2D</code> 形式的 Back Buffer</li>
+<li><code>IDXGISwapChain::CreateRenderTargetView()</code> 创建绑定到上面 Back Buffer 的 Texture 的渲染目标视图</li>
+<li><code>D3D11SetDebugObjectName</code> 来设置 Back Buffer 的调试名称 </li>
+<li><code>ID3D11Device::CreateTexture2D()</code> 来创建深度模板缓冲 (Depth Stencil Buffer)，类型 <code>ID3D11Texture2D</code>，包含大小，MipLevel，采样描述等</li>
+<li><code>ID3D11Device::CreateDepthStencilView()</code> 来创建前面缓冲对应的深度模板视图</li>
+<li><code>ID3D11DeviceContext::OMSetRenderTargets()</code> 来将渲染目标视图和深度木板视图绑定到管线</li>
+<li><code>ID3D11DeviceConetxt::RSSetViewports()</code> 绑定 Viewport 信息到光栅器状态</li>
+<li><code>D3D11SetDebugObjectName()</code> 设置调试前面各种视图对象的对象名</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>InitEffect()</code><ul>
+<li><code>CreateShaderFromFile()</code>: 传入 CSO (Compiled Shader Object) 和 Shader 文件，输出 <code>ID3DBlob *</code><ul>
+<li>如果有缓存，则用 <code>D3DReadFileToBlob</code> 装入，并返回</li>
+<li><code>D3DCompileFromFile()</code>: 编译并生成 <code>ID3DBlob</code> 对象</li>
+<li>如果指定了缓存路径，则 <code>D3DWriteBlobToFile()</code> 进行输出<blockquote>
+<p>分别创建了 <code>vs_5_0</code> 和 <code>ps_5_0</code> Shader Model 的 Shader Blob</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><code>ID3D11Device::CreateVertexShader()</code>，根据 Shader Bytecode 创建 <code>ID3D11VertexShader</code> 对象<blockquote>
+<p>注意这个函数支持传入 Class Linkage，这是一种在 Shader 间共享类型和变量的机制，在 Shader Model 5 被引入。更详细的用法可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/overviews-direct3d-11-hlsl-dynamic-linking-class">Dynamic Linking Class | MSDN</a></p>
+<p>TODO: 研究一下</p>
+</blockquote>
+</li>
+<li><code>ID3D11Device::CreateInputLayout()</code> 传入输入元素描述符和 Shader，传出 <code>ID3D11InputLayout</code> 对象</li>
+<li><code>ID3D11Device::CreatePixelShader()</code> ，根据 Shader Bytecode 创建 <code>ID3D11PixelShader</code> 对象</li>
+</ul>
+</li>
+<li><code>InitResource()</code><ul>
+<li><code>ID3D11Device::CreateBuffer()</code> 创建顶点缓冲区 (<code>ID3D11Buffer</code>) ，并传入初始化数据</li>
+<li><code>ID3D11Device::CreateBuffer()</code> 创建索引缓冲区 (<code>ID3D11Buffer</code>) ，并传入初始化数据</li>
+<li><code>ID3D11DeviceContext::IASetIndexBuffer()</code> 设置 Immediate Context 绑定索引缓冲区</li>
+<li><code>ID3D11Device::CreateBuffer()</code> 创建常量缓冲区 (<code>ID3D11Buffer</code>) ，不是用初始化数据<ul>
+<li>此处设置 <code>D3D11_BUFFER_DESC</code> 的 <code>CPUAccessFlags</code> 为 <code>D3D11_CPU_ACCESS_WRITE</code>，让 CPU 可以改变其值</li>
+</ul>
+</li>
+<li><code>ID3D11DeviceContext::IASetVertexBuffers()</code> 设置顶点缓冲区，stride 和 offset</li>
+<li><code>ID3D11DeviceContext::IASetPrimitiveTopology()</code> 设置图元类型</li>
+<li><code>ID3D11DeviceContext::IASetInputLayout()</code> 设置输入布局</li>
+<li><code>ID3D11DeviceContext::VSSetShader()</code> 绑定顶点着色器到管线</li>
+<li><code>ID3D11DeviceContext::VSSetConstantBuffers()</code> 设置常量缓冲区<blockquote>
+<p>这里当然是拿着 ID3D11Buffer 去设置</p>
+</blockquote>
+</li>
+<li><code>ID3D11DeviceContext::PSSetShader()</code> 设置像素着色器</li>
+<li><code>D3D11SetDebugObjectName()</code> 将 Input Layout, Shader 和 Buffer 设置好调试用名字</li>
+</ul>
+</li>
+</ul>
+<h2 id="GameApp-Run"><a href="#GameApp-Run" class="headerlink" title="GameApp::Run()"></a><code>GameApp::Run()</code></h2><blockquote>
+<p>关于 Windows 消息机制的相关介绍可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/winmsg/about-messages-and-message-queues">About messages and message queues | MSDN</a>。</p>
+</blockquote>
+<p>运行首先依赖 Windows 窗口程序本身的主事件循环（<code>PeekMessage()</code> &#x3D;&gt; <code>TranslateMessage()</code> &#x3D;&gt; <code>DispatchMessage()</code>)。</p>
+<p>主窗口的消息处理函数中，主要会处理：</p>
+<ul>
+<li><code>WM_SIZE</code>: 如果在 <code>WM_ENTERSIZEMOVE</code> 和 <code>WM_EXITSIZEMOVE</code> 中间，则忽略，否则调用 <code>OnResize()</code> 重新配置交换链并绑定到管线</li>
+<li><code>WM_ACTIVATE</code>: 窗口不活跃时暂停渲染</li>
+<li><code>WM_DESTROY</code>: 窗口退出消息</li>
+</ul>
+<p>如果没有待处理的窗口消息，则会进入：</p>
+<ul>
+<li><code>CalculateFrameStats()</code>: 根据定时器计算时长并更新窗口标题</li>
+<li><code>UpdateScene()</code>: 更新场景 (主要是更新常量缓冲)<ul>
+<li>计算更新后的常量缓冲区值</li>
+<li><code>ID3D11DeviceContext::Map</code> 传入 Constant Buffer 对象<blockquote>
+<p><a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-map">MSDN</a>: Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.</p>
+<p>这里要指定映射类型 (CPU 可读，CPU 可写，CPU 可写且原内容可放弃)；不过，这里还有一种类型，叫做 <code>D3D11_MAP_WRITE_NO_OVERWRITE</code>，这块 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_map">MSDN 的文档</a>有比较详细的解释。</p>
+<p>也可以看看<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/341476240">这篇</a>知乎专栏作为参考。</p>
+</blockquote>
+<!-- TODO: 调查一下这个问题 --></li>
+<li><code>memcpy(mappedData.pData, &amp;cpuCBuffer, sizeof(cpuConstBuffer))</code> 将数据拷贝到 <code>D3D11_MAPPED_SUBRESOURCE::pData</code> 成员处</li>
+<li><code>ID3D11DeviceContext::Unmap</code> 解除内存映射</li>
+</ul>
+</li>
+<li><code>DrawScene()</code>: 绘制场景<ul>
+<li><code>ID3D11DeviceContext::ClearRenderTargetView()</code>: 用给定颜色清空渲染目标视图</li>
+<li><code>ID3D11DeviceContext::ClearDepthStencilView()</code>: 用给定深度和模板值清空深度模板视图</li>
+<li><code>ID3D11DeviceContext::DrawIndexed()</code>: 绘制给定的立方体</li>
+<li><code>IDXGISwapChain::Present(SyncInterval=0, flags=0)</code>: 告知交换链已经完成绘制，可以呈现，并且要求立即呈现<blockquote>
+<p><a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present">IDXGISwapChain::Present</a>: Presents a rendered image to the user.</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+
+      
+     <!-- by blair add this if sentence at 20160725 -->
+      <br>
+      
+<!-- <div id="bottom-donation-section"> -->
+<!-- <span style="font-size: 1.0em; padding:0em 1em 0.5em 1em; margin: 0 auto;">
+  <strong style="vertical-align: top;">分享到:</strong>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_facebook_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.facebook.com/sharer/sharer.php?u=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_twitter_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://twitter.com/intent/tweet?url=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_line_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.addtoany.com/add_to/line?linkurl=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_wechat_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://api.addthis.com/oexchange/0.8/forward/wechat/offer?url=" target="_blank">
+    </div>
+  <br>  
+  <br>  
+  &nbsp;&nbsp;如果您觉得这篇文章对您的学习很有帮助, 请您也分享它, 让它能再次帮助到更多的需要学习的人.
+您的<a href="/support/"><strong>支持</strong></a>将鼓励我继续创作 !
+  <br>  
+
+</span> -->
+<!--
+<h3 id="bottom-donation-title">支持 让文章变得更优质</h3>
+<div>
+<a id="bottom-donation-button" href="/support">点我 赞助 作者</a>
+</div>
+-->
+<!-- </div> -->
+<!-- <div class="well"> -->
+  <!--
+  原创文章，转载请注明： 转载自<a target="_blank" rel="noopener" href="http://52binge.github.io"> Blair Chan's Blog</a>，作者：
+  <a href="/about">Blair Chan</a> <br>
+  -->
+  <!-- 本文基于<a target="_blank" title="Creative Commons Attribution 4.0 international License" href="https://creativecommons.org/licenses/by-nc/4.0/">署名4.0国际许可协议</a>发布，转载请保留本文署名和文章链接。 如您有任何授权方面的协商，请邮件联系我。 -->
+<!-- </div> -->
+ <!-- by blair add 160724-->
+    
+    </div>
+    
+      <div class="article-toc">
+        <h3>Contents</h3>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#GameApp-Init"><span class="toc-text">GameApp::Init()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GameApp-Run"><span class="toc-text">GameApp::Run()</span></a></li></ol>
+      </div>
+    
+    
+      <footer class="article-footer">
+        <!-- <div class="well" style="width:100px; height:30px;"></div>  by blair-->
+        
+ <!-- by blair add 160724-->
+        <!--
+        <div style="width:100px; height:30px;"></div> by blair add 160724
+        -->
+        
+
+      </footer>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/paper-reading/icarus-nerf/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">论文阅读 | ICARUS: NeRF 硬件加速器&nbsp;<span>&gt;</span></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+    <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 Libre Liu&nbsp;
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>, theme by <a target="_blank" rel="noopener" href="http://github.com/52binge/hexo-theme-blairos">blairos</a>
+    </div>
+  </div>
+</footer>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true
+    }
+  });
+</script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true,
+    },
+    options: {
+    renderActions: {
+      findScript: [10, function (doc) {
+        for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+          const display = !!node.type.match(/; *mode=display/);
+          const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+          const text = document.createTextNode('');
+          node.parentNode.replaceChild(text, node);
+          math.start = {node: text, delim: '', n: 0};
+          math.end = {node: text, delim: '', n: 0};
+          doc.math.push(math);
+        }
+      }, '']
+    }
+  }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-chtml.js">
+</script>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
