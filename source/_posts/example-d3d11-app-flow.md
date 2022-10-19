@@ -15,8 +15,8 @@ date: 2022-10-19
 > - 交换链 (IDXGISwapChain): 用来暂存要显示到输出窗口/全屏幕的 1 到多个 Surface 的对象
 >   - `g_pSwapChain->GetBuffer` 可以拿到表示 Back Buffer 的 `ID3D11Texture`
 >   - 从 `g_pd3dDevice->CreateRenderTargetView` 来创建一个封装该 Texture 的 `ID3D11RenderTargetView`
->   - `g_pd3dDeviceContext->OMSetRenderTargets` 来设置 Pipeline 的 RenderTarget
->   - `g_pd3dDeviceContext->RSSetViewports` 来设置 Pipeline 的 Viewport
+>   - `g_pd3dDeviceContext->OMSetRenderTargets` 来设置管线的 RenderTarget
+>   - `g_pd3dDeviceContext->RSSetViewports` 来设置管线的 Viewport
 
 <!--
 
@@ -75,7 +75,7 @@ date: 2022-10-19
       - `D3D11SetDebugObjectName` 来设置 Back Buffer 的调试名称 
       - `ID3D11Device::CreateTexture2D()` 来创建深度模板缓冲 (Depth Stencil Buffer)，类型 `ID3D11Texture2D`，包含大小，MipLevel，采样描述等
       - `ID3D11Device::CreateDepthStencilView()` 来创建前面缓冲对应的深度模板视图
-      - `ID3D11DeviceContext::OMSetRenderTargets()` 来将渲染目标视图和深度木板视图绑定到 Pipeline
+      - `ID3D11DeviceContext::OMSetRenderTargets()` 来将渲染目标视图和深度木板视图绑定到管线
       - `ID3D11DeviceConetxt::RSSetViewports()` 绑定 Viewport 信息到光栅器状态
       - `D3D11SetDebugObjectName()` 设置调试前面各种视图对象的对象名
 - `InitEffect()`
@@ -99,7 +99,7 @@ date: 2022-10-19
   - `ID3D11DeviceContext::IASetVertexBuffers()` 设置顶点缓冲区，stride 和 offset
   - `ID3D11DeviceContext::IASetPrimitiveTopology()` 设置图元类型
   - `ID3D11DeviceContext::IASetInputLayout()` 设置输入布局
-  - `ID3D11DeviceContext::VSSetShader()` 绑定顶点着色器到 Pipeline
+  - `ID3D11DeviceContext::VSSetShader()` 绑定顶点着色器到管线
   - `ID3D11DeviceContext::VSSetConstantBuffers()` 设置常量缓冲区
     > 这里当然是拿着 ID3D11Buffer 去设置
   - `ID3D11DeviceContext::PSSetShader()` 设置像素着色器
@@ -109,6 +109,30 @@ date: 2022-10-19
 
 > 关于 Windows 消息机制的相关介绍可以参考 [About messages and message queues | MSDN](https://learn.microsoft.com/en-us/windows/win32/winmsg/about-messages-and-message-queues)。
 
+运行首先依赖 Windows 窗口程序本身的主事件循环（`PeekMessage()` => `TranslateMessage()` => `DispatchMessage()`)。
 
+主窗口的消息处理函数中，主要会处理：
+- `WM_SIZE`: 如果在 `WM_ENTERSIZEMOVE` 和 `WM_EXITSIZEMOVE` 中间，则忽略，否则调用 `OnResize()` 重新配置交换链并绑定到管线
+- `WM_ACTIVATE`: 窗口不活跃时暂停渲染
+- `WM_DESTROY`: 窗口退出消息
 
-3. 退出
+如果没有待处理的窗口消息，则会进入：
+- `CalculateFrameStats()`: 根据定时器计算时长并更新窗口标题
+- `UpdateScene()`: 更新场景 (主要是更新常量缓冲)
+  - 计算更新后的常量缓冲区值
+  - `ID3D11DeviceContext::Map` 传入 Constant Buffer 对象
+    > [MSDN](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-map): Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+    > 
+    > 这里要指定映射类型 (CPU 可读，CPU 可写，CPU 可写且原内容可放弃)；不过，这里还有一种类型，叫做 `D3D11_MAP_WRITE_NO_OVERWRITE`，这块 [MSDN 的文档](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_map)有比较详细的解释。
+    > 
+    > 也可以看看[这篇](https://zhuanlan.zhihu.com/p/341476240)知乎专栏作为参考。
+
+    <!-- TODO: 调查一下这个问题 -->
+  - `memcpy(mappedData.pData, &cpuCBuffer, sizeof(cpuConstBuffer))` 将数据拷贝到 `D3D11_MAPPED_SUBRESOURCE::pData` 成员处
+  - `ID3D11DeviceContext::Unmap` 解除内存映射
+- `DrawScene()`: 绘制场景
+  - `ID3D11DeviceContext::ClearRenderTargetView()`: 用给定颜色清空渲染目标视图
+  - `ID3D11DeviceContext::ClearDepthStencilView()`: 用给定深度和模板值清空深度模板视图
+  - `ID3D11DeviceContext::DrawIndexed()`: 绘制给定的立方体
+  - `IDXGISwapChain::Present(SyncInterval=0, flags=0)`: 告知交换链已经完成绘制，可以呈现，并且要求立即呈现
+    > [IDXGISwapChain::Present](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present): Presents a rendered image to the user.
