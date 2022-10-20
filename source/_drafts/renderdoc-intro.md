@@ -100,4 +100,10 @@ Direct3D 11 主要通过[两种类型设备上下文](https://learn.microsoft.co
 
 通过 `ID3D11Device::GetImmediateContext` 可以获取用于即时绘制的设备上下文。在 RenderDoc 中，真实设备的即时绘制上下文在 `WrappedID3D11Device` 创建时，就从真实的设备中拿到，并且用 `WrappedID3D11DeviceContext` 来包装好了。
 
-为了仔细观察和理解 Wrapped 的 D3D11 上下文，首先应该简单的回顾一下 D3D11 图形程序的行为。在笔者的 [一个示例的 D3D11 程序行为记录](TODO) 中有对一个渲染 Cube 的简单图形程序的全流程记录。
+为了仔细观察和理解 Wrapped 的 D3D11 上下文，首先应该简单的回顾一下 D3D11 图形程序的行为。在笔者的 [一个示例的 D3D11 程序行为记录](/example-d3d11-app-flow) 中有对一个渲染 Cube 的简单图形程序的全流程记录。
+
+#### 对 `ID3D11Device` 包装类的分析
+
+`WrappedID3D11Device` 负责 `ID3D11Device` 的包装。
+
+<!-- TODO: serializer -->
