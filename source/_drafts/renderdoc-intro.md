@@ -102,8 +102,38 @@ Direct3D 11 主要通过[两种类型设备上下文](https://learn.microsoft.co
 
 为了仔细观察和理解 Wrapped 的 D3D11 上下文，首先应该简单的回顾一下 D3D11 图形程序的行为。在笔者的 [一个示例的 D3D11 程序行为记录](/example-d3d11-app-flow) 中有对一个渲染 Cube 的简单图形程序的全流程记录。
 
-#### 对 `ID3D11Device` 包装类的分析
-
 `WrappedID3D11Device` 负责 `ID3D11Device` 的包装。
 
 <!-- TODO: serializer -->
+
+下面以几个典型类型的资源来进行包装和捕捉的分析。
+
+#### 资源
+
+TODO: View
+
+#### 渲染管线状态
+
+#### 绘制
+
+- `WrappedID3D11DeviceContext::DrawIndexed`
+  - `SCOPED_LOCK_OPTIONAL(m_pDevice->D3DLock(), m_pDevice->D3DThreadSafe());`
+  - `DrainAnnotationQueue()`
+  - `MarkAPIActive();`
+  - `m_EmptyCommandList = false;`
+  - `SERIALISE_TIME_CALL(m_pRealContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation));`
+  - `LatchSOProperties();`
+  - `if(IsActiveCapturing(m_State))`
+    - `USE_SCRATCH_SERIALISER();`
+      - 展开为 `WriteSerialiser &ser = m_ScratchSerialiser;`
+    - `GET_SERIALISER.SetActionChunk();`
+      - 展开为 `(ser)`
+    - `SCOPED_SERIALISE_CHUNK(D3D11Chunk::DrawIndexed);`
+      - 展开为 `ScopedChunk scope((ser), D3D11Chunk::DrawIndexed);`
+      - 
+    - `SERIALISE_ELEMENT(m_ResourceID).Named("Context"_lit).TypedAs("ID3D11DeviceContext *"_lit);`
+    - `Serialise_DrawIndexed(GET_SERIALISER, IndexCount, StartIndexLocation, BaseVertexLocation);`
+    - `m_ContextRecord->AddChunk(scope.Get());`
+    - `m_CurrentPipelineState->MarkReferenced(this, false);`
+
+  
