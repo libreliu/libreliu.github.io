@@ -127,7 +127,6 @@ $$
 &= \int_\Omega \frac{f(x)}{p(x)} p(x) dx \\
 &= \int_\Omega f(x) dx \\
 &= I
-
 \end{aligned}
 $$
 
@@ -138,14 +137,12 @@ $$
 方差：
 $$
 \begin{aligned}
-
 \operatorname{Var}[\bar I]
 &= \frac{1}{N^2} \operatorname{Var}\left[ \sum_{i=1}^n \frac{f(x_i)}{p(x_i)} \right] \\
 &= \frac{1}{N} \operatorname{Var}\left[ \frac{f(x)}{p(x)} \right] \\
 &= \frac{1}{N} \left( \operatorname{E}\left[\left[\frac{f(x)}{p(x)}\right]^2\right] - \operatorname{E}\left[\frac{f(x)}{p(x)}\right]^2  \right) \\
 &= \frac{1}{N} \left[ \int_\Omega \left(\frac{f(x)}{p(x)}\right)^2 p(x) dx - \left( \int_\Omega \frac{f(x)}{p(x)} p(x) dx \right)^2 \right] \\
 &= \frac{1}{N} \left[ \int_\Omega \frac{f(x)^2}{p(x)} dx - \left( \int_\Omega f(x) dx \right)^2 \right] \\
-
 \end{aligned}
 $$
 
