@@ -51,6 +51,14 @@ date: 2022-09-27
   - `renderdocui_stub`
   - `version`
 
+## 调试环境搭建
+
+采用 [DirectX11-With-Windows-SDK 中的 Cube 渲染例程]((/example-d3d11-app-flow)) 作为测试程序。
+
+如果直接用 Visual Studio 编译并打开例程，然后再使用编译的 Debug 版本 RenderDoc 来进行 `./renderdoccmd.exe inject --PID=1234` 方式的注入的话，VS 的断点下在应用程序侧是正常的，下在注入 DLL 侧则不正常，不明白这个问题的原因。
+
+<!-- 另一个想法是直接把 RenderDoc 的 DLL 和示例程序链接在一起？ 感觉符号会撞-->
+
 ## `renderdocshim`
 
 `renderdocshim` 是一个只使用 WinAPI，不用 C 运行时库的中间层。
@@ -130,10 +138,23 @@ TODO: View
       - 展开为 `(ser)`
     - `SCOPED_SERIALISE_CHUNK(D3D11Chunk::DrawIndexed);`
       - 展开为 `ScopedChunk scope((ser), D3D11Chunk::DrawIndexed);`
-      - 
+        - 构造会调用 `WriteSerialiser::WriteTrunk(uint16_t(D3D11Chunk::DrawIndexed), byteLength=0)`
+        - 析构会调用 `WriteSerializer.EndChunk()`
     - `SERIALISE_ELEMENT(m_ResourceID).Named("Context"_lit).TypedAs("ID3D11DeviceContext *"_lit);`
+      - 展开为
+        ```cpp
+        ScopedDeserialise<
+          decltype((ser)),
+          decltype(m_ResourceID)
+        > deserialise_4041( (ser), m_ResourceID);
+        (ser).Serialise("m_ResourceID"_lit, m_ResourceID)
+             .Named("Context"_lit)
+             .TypedAs("ID3D11DeviceContext *"_lit);
+        ```
+      - `ScopedDeserialise` 会在析构时调用 `m_Ser.IsReading() ? Deserialise(m_El) : true`
     - `Serialise_DrawIndexed(GET_SERIALISER, IndexCount, StartIndexLocation, BaseVertexLocation);`
     - `m_ContextRecord->AddChunk(scope.Get());`
     - `m_CurrentPipelineState->MarkReferenced(this, false);`
 
-  
+#### 运行时线程
+
