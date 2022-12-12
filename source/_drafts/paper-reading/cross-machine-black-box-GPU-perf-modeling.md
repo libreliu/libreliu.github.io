@@ -225,4 +225,40 @@ Work Removal 变换会把 on-chip 工作从 kernel 中去掉，达成两方面�
   - AFR > 1:
     - Use **Work Removal Tranformation** to generate dedicated measurement kernel.
 - Arithmetic operations
+  - First, have each work-item initialize 32 private variables of the specified data type
+  - Then, perform a loop in which each iteration updates each variable using the target arithmetic operation on values from other variables
+    - This is to create structural dependency
+  - We **unroll the loop by a factor of 64** and **arrange the variable assignment order** to achieve high throughput using the approach found in the Scalable HeterOgeneous Computing (SHOC) OpenCL MaxFlops.cpp benchmark (Danalis et al. 2010).
+    - the 32 variable updates are ordered so that **no assignment depends on the most recent four statements**
+      - 32 is used because it permits maximum SIMD lane utilization & prevent from spilling too many registers
+    - we **sum** the 32 variable values and **store the result in a global array** according to a **user-specified memory access pattern**
+      - (NOTE: The actual cost can be deduced by change the runcount of arithmetic ops)
+      - include the global store to avoid being optimized away
+- Local memory access
+  - Tags: data type, global memory array size, iteration count, and workgroup dimensions
+    - Data type determines the local data stride
+  1. each workitem **initializes one element of a local array** to the data type specified
+  2. Then we have it perform a loop, at each iteration moving a different element from one location in the array to another. 
+     - We avoid write-races and simultaneous reads from a single memory location, and use an lid(0) stride of 1, avoiding bank conflicts.
+  3. After the loop completes, **each work-item writes one value from the shared array to global memory**
+- Other features
+  - executes a variable number of local barriers, to measure operation overlapping behaviour (**Section 7.4**)
+  - Empty kernel launch, to measure kernel launching overhead
+
+文章提出，*Using a sufficiently high-fidelity model, we expect that users will be able to differentiate between latency-based costs of a single kernel launch and throughput-related costs that would be incurred in pipelined launches.*
+
+> 怎么做？
+
+### 计算模型参数
+
+采用最小二乘法来进行拟合，得到 feature 向量中给定 feature 的出现次数和总的运行时间的关系。
+
+### Operation Overlap 建模
+
+Global memory 和 On-chip 的延迟之间是有可能互相隐藏的。
+
+本文的建模基于简单的想法，即 $ \max (c_{onchip}, c_{gmem}) $，两类操作的时间求 $ \max $ 操作。
+
+不过 $ \max $ 不是很可导，所以采用一个可微的近似函数来做，详情可以看论文。
+
 
