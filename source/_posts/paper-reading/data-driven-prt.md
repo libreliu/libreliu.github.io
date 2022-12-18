@@ -1,7 +1,7 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | 数据驱动的 PRT'
-date: 2022-12-13
+date: 2022-12-18
 papertitle: 'A Data-Driven Paradigm for Precomputed Radiance Transfer'
 paperauthors: Laurent Belcour, Thomas Deliot, Wilhem Barbier, Cyril Soler
 papersource: 'PACMCGIT 2022'
