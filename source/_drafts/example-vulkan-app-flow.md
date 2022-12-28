@@ -178,7 +178,7 @@ date: 2022-12-20
           ```
           See also: https://vkguide.dev/docs/chapter-4/descriptors/
     - vkCreatePipelineLayout
-      - VkPipelineLayoutCreateInfo
+      - VkPipelineLayoutCreateInfo: `demo->pipeline_layout`
         - 指定了到 Descriptor Set Layouts 的数量和数组指针
   - demo_prepare_render_pass
     - vkCreateRenderPass
@@ -214,13 +214,109 @@ date: 2022-12-20
         - `.pDependencies`: VkSubpassDependency 有多个 subpass 时指定 subpass 间的读写依赖关系
           > 和 vkCmdPipelineBarrier + VkMemoryBarrier 差不多，区别只是同步作用域限于指定的 subpass 间，而非所有在前在后的操作 ([Vulkan Spec](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap8.html#VkSubpassDependency))
   - demo_prepare_pipeline
-    - vkCreatePipelineCache
+    - vkCreatePipelineCache: (*optional* for pipeline creation)
+      > 主要用来供实现缓存编译好的 Pipeline; 可以使用 allocator 限制其缓存数据的大小; 可以创建时导入之前 (应用程序) 的 Cache 等
     - vkCreateGraphicsPipelines
+      - VkGraphicsPipelineCreateInfo
+        - `.layout = demo->pipeline_layout`
+        - `.pVertexInputState`: VkPipelineVertexInputStateCreateInfo
+          - 已经在 `demo_prepare_vertices` 中准备好
+        - `.pInputAssemblyState`: VkPipelineInputAssemblyStateCreateInfo
+          - `.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST`
+        - `.pRasterizationState`: VkPipelineRasterizationStateCreateInfo
+          - `.polygonMode = VK_POLYGON_MODE_FILL`
+          - `.cullMode = VK_CULL_MODE_BACK_BIT`
+          - `.frontFace = VK_FRONT_FACE_CLOCKWISE`
+            - front-facing triangle orientation to be used for culling
+          - `.depthClampEnable = VK_FALSE`
+            - 不启用深度截断
+          - `.rasterizerDiscardEnable = VK_FALSE`
+            - 是否在光栅化阶段前立即丢弃片元
+          - `.depthBiasEnable = VK_FALSE`
+          - `.lineWidth = 1.0f`
+            - 光栅化线段宽度
+        - `.pColorBlendState`: VkPipelineColorBlendStateCreateInfo
+          - `.pAttachments`: VkPipelineColorBlendAttachmentState，对每个 color attachment 定义 blend state
+            - `[0]`
+              - `.colorWriteMask = 0xf`
+                - 写入 RGBA 全部四个通道 ([Vulkan Spec](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap29.html#framebuffer-color-write-mask))
+              - `.blendEnable = VK_FALSE`
+                - 不启用 Blending，直接写入
+        - `.pMultisampleState`: VkPipelineMultisampleStateCreateInfo
+          - `.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT`
+          - `.pSampleMask = NULL`
+        - `.pViewportState`: VkPipelineViewportStateCreateInfo
+          - `.viewportCount = 1`
+          - `.scissorCount = 1`
+          - 不过这里用的 **Dynamic State**，也就是 Viewport 和 Scissor 的信息是在录制 Command Buffer 时提供的，创建 Pipeline 时不提供
+            - 详情看 `.pDynamicState`
+        - `.pDepthStencilState`: VkPipelineDepthStencilStateCreateInfo
+          - `.depthTestEnable = VK_TRUE`
+          - `.depthWriteEnable = VK_TRUE`
+          - `.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL`
+          - `.depthBoundsTestEnable = VK_FALSE`
+            - Samples coverage = 0 if outside the bound predetermined
+            - [28.8. Depth Bounds Test](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap28.html#fragops-dbt)
+          - `.stencilTestEnable = VK_FALSE` 下面都是 Stencil test 的参数
+          - `.back.failOp = VK_STENCIL_OP_KEEP`
+          - `.back.passOp = VK_STENCIL_OP_KEEP`
+          - `.back.compareOp = VK_COMPARE_OP_ALWAYS`
+          - `.front = ds.back`
+        - `.pStages`: VkPipelineShaderStageCreateInfo
+          - `[0]`
+            - `.stage = VK_SHADER_STAGE_VERTEX_BIT`
+            - `.pName = "main"`
+            - `.module = demo_prepare_vs(demo)`
+              - Call demo_prepare_shader_module with vert SPIR-V code
+                - vkCreateShaderModule with `size_t codeSize` & `uint32_t *pCode`
+          - `[1]`
+            - `.stage = VK_SHADER_STAGE_FRAGMENT_BIT`
+            - `.pName = "main"`
+            - `.module = demo_prepare_fs(demo)`
+              - Similar with above
+        - `.pDynamicState`: VkPipelineDynamicStateCreateInfo
+          - `.pDynamicStates = dynamicStateEnables`
+            - 启用了 `VK_DYNAMIC_STATE_VIEWPORT` 和 `VK_DYNAMIC_STATE_SCISSOR`
+        - `.renderPass`: VkRenderPass
+          传入之前创建的 VkRenderPass
     - vkDestroyPipelineCache
-    - vkDestroyShaderModule
-    - vkDestroyShaderModule
+    - vkDestroyShaderModule * 2
+      - 删除 vs 和 fs 的两个刚才创建的 Shader Module (`demo_prepare_vs` / `demo_prepare_fs`)
   - demo_prepare_descriptor_pool
+    - vkCreateDescriptorPool
+      - VkDescriptorPoolCreateInfo
+        - `.pPoolSizes = &type_count`
+          - VkDescriptorPoolSize
+            - `.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`
+            - `.descriptorCount = DEMO_TEXTURE_COUNT`
   - demo_prepare_descriptor_set
+    - vkAllocateDescriptorSets：按 Descriptor Set Layouts 从 Descriptor Pool 中分配 Descriptor Sets
+      - `.pSetLayouts = &demo->desc_layout`
+      - `.descriptorPool = demo->desc_pool`
+    - vkUpdateDescriptorSets
+      支持 Write 和 Copy 两种形式的 Descriptor Set 更新请求
+      - VkWriteSescriptorSet
+        - `.dstSet = demo->desc_set` 刚分配的 Descriptor Set
+        - `.descriptorCount = DEMO_TEXTURE_COUNT`
+        - `.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`
+        - `.pImageInfo = tex_descs`
+          - VkDescriptorImageInfo: 具体的 Descriptor 内容
+            - `.sampler = demo->textures[i].sampler`
+            - `.imageView = demo->textures[i].view`
+            - `.imageLayout = VK_IMAGE_LAYOUT_GENERAL`
+              > 感觉这里应该是选对应的才对，不知道这样可以不可以
   - demo_prepare_framebuffers
+    - 创建 `demo->swapchainImageCount` 个 VkFramebuffer
+      - vkCreateFramebuffer
+        - VkFramebufferCreateInfo
+          - `.renderPass = demo->renderpass`
+          - `.pAttachments`: VkImageView[]
+            - `[0]`: Color Attachment, `demo->buffers[i].view`
+              - That is, the swapchain image view
+            - `[1]`: Depth Attachment
+              - `demo->depth.view`
+          - `.width`, `.height`
+          - `.layers = 1`
+            - TODO: check this
 - demo_run
 - demo_cleanup
