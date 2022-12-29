@@ -1,6 +1,6 @@
 ---
 title: 一个示例 Vulkan 程序的全流程记录
-date: 2022-12-20
+date: 2022-12-29
 ---
 
 ## 简介
@@ -332,25 +332,30 @@ date: 2022-12-20
       > 
       > 那么，什么情况下这里会 block？
       > 也可以参考 [Let's get swapchain's image count straight - StackOverflow](https://stackoverflow.com/questions/64150186/lets-get-swapchains-image-count-straight)
-      - VK_ERROR_OUT_OF_DATE_KHR
-        - demo_resize: 处理 resize 情况：**Destroy everything**
-          - vkDestroyFramebuffer
-          - vkDestroyDescriptorPool
-          - vkFreeCommandBuffers
-          - vkDestroyCommandPool
-          - vkDestroyPipeline
-          - vkDestroyRenderPass
-          - vkDestroyPipelineLayout
-          - vkDestroyDescriptorSetLayout
-          - vkDestroyBuffer (vertex buffer)
-          - vkFreeMemory (vertex buffer memory)
-          - vkDestroyImageView
-          - vkDestroyImage
-          - vkDestroySampler
-          - ...
-          - call `demo_prepare`
-        - demo_draw: 重复调用一下自己
-      - VK_SUBOPTIMAL_KHR: 不是最优，但是也能 present，所以不管
+      - `timeout = UINT64_MAX`
+      - `semaphore = imageAcquiredSemaphore`
+      - `pImageIndex = &demo->current_buffer`: index of the next image to use
+        - 完成后会 signal 该 semaphore
+      - 返回值
+        - VK_ERROR_OUT_OF_DATE_KHR
+          - demo_resize: 处理 resize 情况：**Destroy everything**
+            - vkDestroyFramebuffer
+            - vkDestroyDescriptorPool
+            - vkFreeCommandBuffers
+            - vkDestroyCommandPool
+            - vkDestroyPipeline
+            - vkDestroyRenderPass
+            - vkDestroyPipelineLayout
+            - vkDestroyDescriptorSetLayout
+            - vkDestroyBuffer (vertex buffer)
+            - vkFreeMemory (vertex buffer memory)
+            - vkDestroyImageView
+            - vkDestroyImage
+            - vkDestroySampler
+            - ...
+            - call `demo_prepare`
+          - demo_draw: 重复调用一下自己
+        - VK_SUBOPTIMAL_KHR: 不是最优，但是也能 present，所以不管
     - demo_flush_init_cmd: 同步方式 flush setup cmd
       - vkEndCommandBuffer
       - vkQueueSubmit
@@ -417,17 +422,24 @@ date: 2022-12-20
           - `.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR`
       - vkEndCommandBuffer: `demo->draw_cmd`
     - vkQueueSubmit
+      - `.pCommandBuffers = &demo->draw_cmd`
       - `.pWaitSemaphores = &imageAcquiredSemaphore`
       - `.pWaitDstStageMask = &pipe_stage_flags`
-        - That is, `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT`
-        - TODO: why this
+        - `pWaitDstStageMask` is a pointer to an array of pipeline stages at which each corresponding semaphore wait will occur.
+        - 这里设置成了 `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT`
+        - 所以，相当于啥也没等
       - `.pSignalSemaphores = &drawCompleteSemaphore`
-      - `.pCommandBuffers = &demo->draw_cmd`
     - vkQueuePresentKHR
-      - VK_ERROR_OUT_OF_DATE_KHR
-        - demo_resize
-      - VK_SUBOPTIMAL_KHR
-        - 啥事不干
+      - VkPresentInfoKHR
+        - `.pWaitSemaphores = &drawCompleteSemaphore`
+        - `.pSwapchains = &demo->swapchain`
+          - 可以多个，用来支持多个 swapchain 用一个 queue present 操作进行 present
+        - `.pImageIndices = &demo->current_buffer`
+      - 返回值
+        - VK_ERROR_OUT_OF_DATE_KHR
+          - demo_resize
+        - VK_SUBOPTIMAL_KHR
+          - 啥事不干
     - vkQueueWaitIdle
     - vkDestroySemaphore: `imageAcquiredSemaphore`
     - vkDestroySemaphore: `drawCompleteSemaphore`
