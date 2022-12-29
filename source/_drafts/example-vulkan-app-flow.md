@@ -74,6 +74,7 @@ date: 2022-12-20
         > Componet Swizzle: TODO check spec
   - demo_prepare_depth
     - vkCreateImage 创建 depth image
+      - `.arrayLayers` 可以指定 texture array 的 dimension
     - vkGetImageMemoryRequirements 获得 image 的内存要求
     - 选择内存大小和内存类型
       - memory_type_from_properties : todo check this
@@ -134,7 +135,7 @@ date: 2022-12-20
         - vkCmdCopyImage
         - 将 device local texture 的 layout 改回来
           - demo_set_image_layout
-        - demo_flush_init_cmd
+        - demo_flush_init_cmd: 同步方式 flush setup cmd
           - vkEndCommandBuffer
           - vkQueueSubmit
             - no wait / signal semaphores
@@ -317,6 +318,123 @@ date: 2022-12-20
               - `demo->depth.view`
           - `.width`, `.height`
           - `.layers = 1`
-            - TODO: check this
+            > 正如 VkImage 创建时也可以选择多 layer 一样，这里也可以；不过 Shader 默认写入第一层，除了 Geometry Shader
+            > 
+            > 多 layer 的 Image / Framebuffer 在 Shader 里面是用的 texture array 的语法来访问的
 - demo_run
+  - glfwWindowShouldClose: 检测窗口的 closing 标志
+  - glfwPollEvent
+  - demo_draw
+    - vkCreateSemaphore: `imageAcquiredSemaphore`
+    - vkCreateSemaphore: `drawCompleteSemaphore`
+    - vkAcquireNextImageKHR
+      > 这里有一个问题，这里返回并不意味着 Present 完成 (推荐做法是 Present 设置 Semaphore，然后等 Semaphore)
+      > 
+      > 那么，什么情况下这里会 block？
+      > 也可以参考 [Let's get swapchain's image count straight - StackOverflow](https://stackoverflow.com/questions/64150186/lets-get-swapchains-image-count-straight)
+      - VK_ERROR_OUT_OF_DATE_KHR
+        - demo_resize: 处理 resize 情况：**Destroy everything**
+          - vkDestroyFramebuffer
+          - vkDestroyDescriptorPool
+          - vkFreeCommandBuffers
+          - vkDestroyCommandPool
+          - vkDestroyPipeline
+          - vkDestroyRenderPass
+          - vkDestroyPipelineLayout
+          - vkDestroyDescriptorSetLayout
+          - vkDestroyBuffer (vertex buffer)
+          - vkFreeMemory (vertex buffer memory)
+          - vkDestroyImageView
+          - vkDestroyImage
+          - vkDestroySampler
+          - ...
+          - call `demo_prepare`
+        - demo_draw: 重复调用一下自己
+      - VK_SUBOPTIMAL_KHR: 不是最优，但是也能 present，所以不管
+    - demo_flush_init_cmd: 同步方式 flush setup cmd
+      - vkEndCommandBuffer
+      - vkQueueSubmit
+        - no wait / signal semaphores
+      - vkQueueWaitIdle
+      - vkFreeCommandBuffers
+      - `demo->setup_cmd = VK_NULL_HANDLE`
+    - demo_draw_build_cmd
+      - vkBeginCommandBuffer: `demo->draw_cmd`
+      - vkCmdPipelineBarrier
+        - Execution barrier 部分
+          - `srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`，也就是 wait for everything
+          - `dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT` (Specifies no stage of execution)
+            > `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT` is equivalent to `VK_PIPELINE_STAGE_ALL_COMMANDS_BIT` with VkAccessFlags set to 0 when specified in the first synchronization scope, but specifies no stage of execution when specified in the second scope.
+        - Memory barrier 部分: 对 color attachment 做 layout transition
+          - 从 `VK_IMAGE_LAYOUT_UNDEFINED` -> `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL`
+          - `.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT`
+      - vkCmdBeginRenderPass with `VK_SUBPASS_CONTENTS_INLINE`
+        > `VK_SUBPASS_CONTENTS_INLINE` specifies that the contents of the subpass will be recorded inline in the primary command buffer, and secondary command buffers must not be executed within the subpass.
+        - VkRenderPassBeginInfo
+          - `.renderPass`
+          - `.framebuffer` - 选择**当前**的 framebuffer，我们有 `swapchainImageCount` 个
+          - `.renderArea`
+            - `.offset.{x, y}`
+            - `.extent.{width, height}`
+          - `.pClearValues = clear_values` (VkClearValue)
+            > 这里是和 RenderPassCreateInfo 指定的 attachments 相对应的
+            > 
+            > `pClearValues` is a pointer to an array of `clearValueCount` VkClearValue structures containing clear values for each attachment, if the attachment uses a `loadOp` value of `VK_ATTACHMENT_LOAD_OP_CLEAR` or if the attachment has a depth/stencil format and uses a `stencilLoadOp` value of `VK_ATTACHMENT_LOAD_OP_CLEAR`. The array is indexed by attachment number. Only elements corresponding to cleared attachments are used. Other elements of pClearValues are ignored.
+            - `[0] = {.color.float32 = {0.2f, 0.2f, 0.2f, 0.2f}}`
+            - `[1] = {.depthStencil = {demo->depthStencil, 0}}`
+              - `demo->depthStencil` 用来加一个“无形的墙”
+      - vkCmdBindPipeline
+        - `pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS`
+      - vkCmdBindDescriptorSets
+        - `layout = demo->pipeline_layout`
+          Recall: Pipeline layout <= Descriptor Set Layouts
+        - Descriptor Sets
+      - vkCmdSetViewport
+        - VkViewport
+          - `.height`, `.width`, `.minDepth`, `.maxDepth`
+      - vkCmdSetScissor
+        - VkRect2D
+          - `.extent.{width, height}`
+          - `.offset.{x, y}`
+      - vkCmdBindVertexBuffers
+        > 看 https://github.com/SaschaWillems/Vulkan/blob/master/examples/instancing/instancing.cpp 可能会印象更深刻
+        - firstBinding 参数用于 (CPU 端) 指定绑定到哪里
+      - vkCmdDraw
+        - `vertexCount = 3`
+        - `instanceCount = 1`
+        - `firstVertex = 0`
+        - `firstInstance = 0`
+      - vkCmdEndRenderPass
+      - vkCmdPipelineBarrier
+        - Execution barrier:
+          - `srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`，也就是 wait for everything
+          - `dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT` (Specifies no stage of execution)
+        - Memory barrier:
+          > 正如 transfer，present 也需要 layout 改变
+          - `.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT`
+          - `.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT`
+          - `.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL`
+          - `.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR`
+      - vkEndCommandBuffer: `demo->draw_cmd`
+    - vkQueueSubmit
+      - `.pWaitSemaphores = &imageAcquiredSemaphore`
+      - `.pWaitDstStageMask = &pipe_stage_flags`
+        - That is, `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT`
+        - TODO: why this
+      - `.pSignalSemaphores = &drawCompleteSemaphore`
+      - `.pCommandBuffers = &demo->draw_cmd`
+    - vkQueuePresentKHR
+      - VK_ERROR_OUT_OF_DATE_KHR
+        - demo_resize
+      - VK_SUBOPTIMAL_KHR
+        - 啥事不干
+    - vkQueueWaitIdle
+    - vkDestroySemaphore: `imageAcquiredSemaphore`
+    - vkDestroySemaphore: `drawCompleteSemaphore`
+  - demo->depthStencil 周期改变
+  - vkDeviceWaitIdle
+  - 如果到了指定的帧数，则 glfwSetWindowShouldClose
 - demo_cleanup
+  - 删除一万个东西 (literally)
+  - glfwDestroyWindow
+  - glfwTerminate
