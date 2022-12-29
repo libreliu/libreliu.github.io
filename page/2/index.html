@@ -55,6 +55,70 @@
 
     <br>
     <section id="main" class="outer">
+      <article id="paper-reading-paper-reading/ears" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/ears/"><strong>论文阅读 | EARS</strong></a>
+      <small class=article-date-index>&nbsp; 2022-07-03</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/ears/" class="article-date">
+  <time datetime="2022-07-02T16:00:00.000Z" itemprop="datePublished">2022-07-03</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p>
+<p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p>
+<p>作为例子，考虑如下的场景（图源论文）：</p>
+<img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene">
+
+<p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p>
+<p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p>
+<ul>
+<li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li>
+<li>(Splitting) 是否需要将这条光线分裂成多份？如果需要的话，分裂成多少份？</li>
+</ul>
+<p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p>
+<h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="paper-reading-paper-reading/gris" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
