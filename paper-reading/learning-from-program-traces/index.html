@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>论文阅读 | Learning from Shader Program Traces - libreliu&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="简介 Program trace In software engineering, a trace refers to the record of all states that a program visits during its execution, including all instructions and data. 本文提到的 Shader program trace，只包括中间结果">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文阅读 | Learning from Shader Program Traces">
+<meta property="og:url" content="https://blog.libreliu.info/paper-reading/learning-from-program-traces/">
+<meta property="og:site_name" content="libreliu&#39;s blog">
+<meta property="og:description" content="简介 Program trace In software engineering, a trace refers to the record of all states that a program visits during its execution, including all instructions and data. 本文提到的 Shader program trace，只包括中间结果">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-01-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-01-02T16:00:00.000Z">
+<meta property="article:author" content="Libre Liu">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="icon" href="/css/images/logo.png">
+  
+  <link href="/webfonts/ptserif/main.css" rel='stylesheet' type='text/css'>
+  <link href="/webfonts/source-code-pro/main.css" rel="stylesheet" type="text/css">
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="libreliu's blog" type="application/atom+xml">
+</head>
+
+<body>
+  <div id="container">
+    <header id="header">
+  <div id="header-outer" class="outer">
+    <div id="header-inner" class="inner">
+      <a id="main-nav-toggle" class="nav-icon" href="javascript:;"></a>
+      <a id="logo" class="logo" href="/"></a>
+      <nav id="main-nav">
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/paper-summary">Paper Reading</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://blog.libreliu.info"></form>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <br>
+    <section id="main" class="outer"><article id="paper-reading-paper-reading/learning-from-program-traces" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      论文阅读 | Learning from Shader Program Traces
+      <small class=article-detail-date-index>&nbsp; 2023-01-03</small>
+    </h1>
+  
+
+
+        <div class=page-title></div>
+        <br>
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/learning-from-program-traces/" class="article-date">
+  <time datetime="2023-01-02T16:00:00.000Z" itemprop="datePublished">2023-01-03</time>
+</a>-->
+      <!-- 
+--><!-- by blair 160724 -->
+      <!-- by blair
+      
+      -->
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+          <p>论文标题：Learning from Shader Program Traces</p>
+          <p>论文来源：Eurographics 2022</p>
+          <p>论文作者：Yuting Yang, Connelly Barnes, Adam Finkelstein</p>
+          <p><a target="_blank" rel="noopener" href='https://arxiv.org/abs/2102.04533v2'>论文链接</a></p>
+        </blockquote>
+      
+      
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ul>
+<li>Program trace<ul>
+<li>In software engineering, a trace refers to the record of all states that a program visits during its execution, including all instructions and data.</li>
+<li>本文提到的 Shader program trace，只包括中间结果 (<strong>data</strong>)，而不包括程序序列 (<strong>instruction</strong>)。</li>
+</ul>
+</li>
+</ul>
+<p>Since the fragment shader program operates independently per pixel, we can consider the full program trace as a vector of values computed at each pixel – a generalization from simple RGB.</p>
+<h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><ul>
+<li>输入是用（嵌入到 Python 的） DSL 写的 fragment procedural shader program，翻译成 Tensorflow 程序<ul>
+<li>可以同时输出渲染好的图片和生成的 program trace</li>
+<li>分支展开、循环 unroll</li>
+<li>These policies permit us to express the trace of any shader as a fixed-length vector of the computed scalar values, regardless of the pixel location</li>
+</ul>
+</li>
+</ul>
+<h3 id="输入特征化简"><a href="#输入特征化简" class="headerlink" title="输入特征化简"></a>输入特征化简</h3><ul>
+<li>编译器优化<ul>
+<li>忽略常量值、计算图上重复的节点，因为其在不同 pixel 位置的运行结果应该高度统一</li>
+</ul>
+</li>
+<li>不生成内建函数的 trace</li>
+<li>检测并筛除迭代改进模式的循环中的中间 trace 结果<ul>
+<li>比如，raymarching 找 closest intersection 的迭代</li>
+</ul>
+</li>
+<li>均匀的特征下采样<ul>
+<li>The most straightforward strategy is to subsample the vector by some factor n, retaining only every nth trace feature as ordered in a depth first traversal of the compute graph</li>
+</ul>
+</li>
+<li>其它采样方案 (都不太好用)<ul>
+<li>clustering</li>
+<li>loop subsampling</li>
+<li>first or last</li>
+<li>mean and variance</li>
+</ul>
+</li>
+</ul>
+<p>We <strong>first apply compiler optimizations</strong>, then <strong>subsample the features with a subsampling rate that makes the trace length be most similar to a fixed target length</strong>.</p>
+<p>For all experiments, we target a length of 200, except where specifically noted such as in the simulation example. </p>
+<p>After compiling and executing the shader, we have <strong>for every pixel: a vector of dimension N</strong>: the number of recorded intermediate values in the trace</p>
+<h3 id="特征白化"><a href="#特征白化" class="headerlink" title="特征白化"></a>特征白化</h3><p>主要是为了解决 shader trace 里面的异常值，防止干扰训练和推理。用的是 Scaling + clamping。</p>
+<ul>
+<li>Check if the distribution merits clamping<ul>
+<li>If N &lt;&#x3D; 10, no need to clamp</li>
+<li>Else, do clamp<ul>
+<li>Discard NaN, Inf, -Inf</li>
+<li>let $P_0$ &#x3D; Lowest p’th percentile, $P_1$ &#x3D; highest p’th percentile, superparam $ \gamma $</li>
+<li>Clamp to $ [P_0 − \gamma(P_1− P_0), P_1 + \gamma(P_1 − P_0)] $</li>
+</ul>
+</li>
+<li>Do rescale<ul>
+<li>for each intermediate feature, rescale the clamped values to the fixed range $ [-1,1] $</li>
+<li>Record the bias and scale used (in rescaling)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The scale and bias is recorded and used in both training and testing, but the values will be clamped to range<br>[-2, 2] to allow data extrapolation.</p>
+<blockquote>
+<p>感觉有点乱…</p>
+</blockquote>
+<h3 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h3><h4 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h4><ul>
+<li>1x1 Conv + Feature Reduction (N &#x3D; 200 -&gt; K &#x3D; 48) </li>
+<li>1x1 Conv * 3</li>
+<li>Dilated Convolution (1, 2, 4, 8, 1)</li>
+<li>1x1 Conv * 3 </li>
+<li>1x1 Conv + Feature Reduction (K &#x3D; 48 -&gt; 3, that is, RGB color output)</li>
+</ul>
+<h4 id="损失函数"><a href="#损失函数" class="headerlink" title="损失函数"></a>损失函数</h4><p>$ L_b = L_c + \alpha L_p $</p>
+<ul>
+<li>$ L_c $ 是 RGB 图像上的标准 $ L_2 $ loss</li>
+<li>$ L_p $ 是 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1801.03924">The Unreasonable Effectiveness of Deep Features as a Perceptual Metric</a> 这篇文章中给出的损失函数度量 LPIPS<ul>
+<li>大概就是，做了一个图像相似数据集，弄了很多 distortions 和 CNN 常见任务输出的图片，做 2AFC 和 JND，随后学习这个 metric</li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/162070277">深度特征度量图像相似度的有效性——LPIPS</a> 这篇知乎文章比较不错</li>
+</ul>
+</li>
+</ul>
+<p>下面还有个 Appendix D，里面有实验的 GAN 的 loss</p>
+<h4 id="训练策略"><a href="#训练策略" class="headerlink" title="训练策略"></a>训练策略</h4><h2 id="结果展示"><a href="#结果展示" class="headerlink" title="结果展示"></a>结果展示</h2><p>和一个 Baseline 方法 RGBx 对比，这个 Baseline 用的手挑特征 normal, depth, diffuse, specular color (<em>where applicable</em>) 来作为输入进行学习。</p>
+<h3 id="Denoising-fragment-shaders"><a href="#Denoising-fragment-shaders" class="headerlink" title="Denoising fragment shaders"></a>Denoising fragment shaders</h3><p>目标是用 1spp 图像来学习 1000spp 的 reference image。</p>
+<h3 id="Reconstructing-simplified-shaders"><a href="#Reconstructing-simplified-shaders" class="headerlink" title="Reconstructing simplified shaders"></a>Reconstructing simplified shaders</h3><p>这个任务是，从简化后的 Shader 的运行结果中，重建原来 Shader 的运行结果。</p>
+<p>简化 Shader 采用的是 Loop perforation 和 Genetic Programming Simplification。</p>
+<p>用两个 Conditional GAN，分别称为 Spatial GAN 和 Temporal GAN，一个用来从 1spp 的图 $ c_x $ 生成 Ground Truth (原来的 Shader 运行结果) $ c_y $，另一个用来从前面三帧的 1spp 输出 + 前面两帧的 Spatial GAN 的生成器的输出来生成下一帧，也就是用序列 $ \tilde {c_x} $ 生成序列 $ \tilde {c_y} $。</p>
+<blockquote>
+<p>GAN related:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/301309418">四天搞懂生成对抗网络（一）——通俗理解经典GAN</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/302720602">四天搞懂生成对抗网络（二）——风格迁移的“精神始祖”Conditional GAN</a></li>
+</ul>
+</blockquote>
+<h3 id="Postprocessing-filters"><a href="#Postprocessing-filters" class="headerlink" title="Postprocessing filters"></a>Postprocessing filters</h3><p>学习一些后处理效果的 Shader，如 edge-aware sharpening filter 和 defocus blur 效果。</p>
+<h3 id="Learning-to-approximate-simulation"><a href="#Learning-to-approximate-simulation" class="headerlink" title="Learning to approximate simulation"></a>Learning to approximate simulation</h3><p>学习一些进行模拟的 Shader 将来的运行结果。</p>
+<h2 id="Trace-有效性分析"><a href="#Trace-有效性分析" class="headerlink" title="Trace 有效性分析"></a>Trace 有效性分析</h2><p>这里主要做了两件事：</p>
+<ol>
+<li>哪些 Input feature 比较重要？<ul>
+<li>这里作者采用求 Loss 关于 input trace feature 的一阶导数来评价重要性</li>
+</ul>
+</li>
+<li>挑一个 Subset 来做训练？<ul>
+<li>给定 m 个 feature 的训练 budget，如果要评价任意的 subset，即从 N 个里面抽 m 个来做训练的话，开销太大<ul>
+<li>Oracle: 按 1 中所述重要性评分的前 m 个 input trace feature</li>
+<li>Opponent: 按 1 中所述重要性评分的后 m 个 input trace feature</li>
+<li>Uniform: 随便挑 m 个</li>
+</ul>
+</li>
+<li>发现 Oracle &gt; Opponent &gt; Uniform</li>
+</ul>
+</li>
+<li>多个 Shader 一起学习<ul>
+<li>多个 Shader 一起学习降噪任务，感觉就像训练一个真·denoiser</li>
+</ul>
+</li>
+</ol>
+
+      
+     <!-- by blair add this if sentence at 20160725 -->
+      <br>
+      
+<!-- <div id="bottom-donation-section"> -->
+<!-- <span style="font-size: 1.0em; padding:0em 1em 0.5em 1em; margin: 0 auto;">
+  <strong style="vertical-align: top;">分享到:</strong>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_facebook_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.facebook.com/sharer/sharer.php?u=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_twitter_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://twitter.com/intent/tweet?url=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_line_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.addtoany.com/add_to/line?linkurl=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_wechat_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://api.addthis.com/oexchange/0.8/forward/wechat/offer?url=" target="_blank">
+    </div>
+  <br>  
+  <br>  
+  &nbsp;&nbsp;如果您觉得这篇文章对您的学习很有帮助, 请您也分享它, 让它能再次帮助到更多的需要学习的人.
+您的<a href="/support/"><strong>支持</strong></a>将鼓励我继续创作 !
+  <br>  
+
+</span> -->
+<!--
+<h3 id="bottom-donation-title">支持 让文章变得更优质</h3>
+<div>
+<a id="bottom-donation-button" href="/support">点我 赞助 作者</a>
+</div>
+-->
+<!-- </div> -->
+<!-- <div class="well"> -->
+  <!--
+  原创文章，转载请注明： 转载自<a target="_blank" rel="noopener" href="http://52binge.github.io"> Blair Chan's Blog</a>，作者：
+  <a href="/about">Blair Chan</a> <br>
+  -->
+  <!-- 本文基于<a target="_blank" title="Creative Commons Attribution 4.0 international License" href="https://creativecommons.org/licenses/by-nc/4.0/">署名4.0国际许可协议</a>发布，转载请保留本文署名和文章链接。 如您有任何授权方面的协商，请邮件联系我。 -->
+<!-- </div> -->
+ <!-- by blair add 160724-->
+    
+    </div>
+    
+      <div class="article-toc">
+        <h3>Contents</h3>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95"><span class="toc-text">方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E7%89%B9%E5%BE%81%E5%8C%96%E7%AE%80"><span class="toc-text">输入特征化简</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E5%BE%81%E7%99%BD%E5%8C%96"><span class="toc-text">特征白化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C"><span class="toc-text">网络</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%93%E6%9E%84"><span class="toc-text">结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="toc-text">损失函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83%E7%AD%96%E7%95%A5"><span class="toc-text">训练策略</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E5%B1%95%E7%A4%BA"><span class="toc-text">结果展示</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Denoising-fragment-shaders"><span class="toc-text">Denoising fragment shaders</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Reconstructing-simplified-shaders"><span class="toc-text">Reconstructing simplified shaders</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Postprocessing-filters"><span class="toc-text">Postprocessing filters</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Learning-to-approximate-simulation"><span class="toc-text">Learning to approximate simulation</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Trace-%E6%9C%89%E6%95%88%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-text">Trace 有效性分析</span></a></li></ol>
+      </div>
+    
+    
+      <footer class="article-footer">
+        <!-- <div class="well" style="width:100px; height:30px;"></div>  by blair-->
+        
+ <!-- by blair add 160724-->
+        <!--
+        <div style="width:100px; height:30px;"></div> by blair add 160724
+        -->
+        
+
+      </footer>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/example-vulkan-app-flow/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">一个示例 Vulkan 程序的全流程记录&nbsp;<span>&gt;</span></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+    <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 Libre Liu&nbsp;
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>, theme by <a target="_blank" rel="noopener" href="http://github.com/52binge/hexo-theme-blairos">blairos</a>
+    </div>
+  </div>
+</footer>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true
+    }
+  });
+</script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true,
+    },
+    options: {
+    renderActions: {
+      findScript: [10, function (doc) {
+        for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+          const display = !!node.type.match(/; *mode=display/);
+          const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+          const text = document.createTextNode('');
+          node.parentNode.replaceChild(text, node);
+          math.start = {node: text, delim: '', n: 0};
+          math.end = {node: text, delim: '', n: 0};
+          doc.math.push(math);
+        }
+      }, '']
+    }
+  }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-chtml.js">
+</script>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
