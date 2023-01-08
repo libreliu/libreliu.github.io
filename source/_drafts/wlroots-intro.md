@@ -21,8 +21,9 @@ libwayland 提供了对 Wayland 协议的抽象（让你不用关心怎么构造
 > [hello-wayland](https://github.com/emersion/hello-wayland)
 
 <!--
-wayland protocal and programming 
+wayland protocal and programming & egl stuff
 https://blog.csdn.net/u012839187/article/details/97135985
+display: mesa: eglapi接口:getdisplay&initialize: https://blog.csdn.net/u012839187/article/details/120797488
 -->
 
 ## wlroots
@@ -38,6 +39,11 @@ wlroots 本身提供一个参考实现 tinywl，可以在数千行代码内实�
 - https://drewdevault.com/2018/02/28/Writing-a-wayland-compositor-part-3.html 
 - https://drewdevault.com/2018/07/29/Wayland-shells.html 
 - https://drewdevault.com/2018/07/17/Input-handling-in-wlroots.html 
+
+> 知乎的中文翻译文章 (部分):
+> - [【译】从零开始的 Wayland 合成器 —— 1. Hello wlroots](https://zhuanlan.zhihu.com/p/411213507)
+> - [【译】从零开始的 Wayland 合成器 —— 2. 装配服务器](https://zhuanlan.zhihu.com/p/412289576)
+> - [【译】从零开始的 Wayland 合成器 —— 3. 渲染一个窗口](https://zhuanlan.zhihu.com/p/412289780)
 
 本文的分析基于 2022 年 12 月 21 日的 master 分支，commit 869af1c。
 
