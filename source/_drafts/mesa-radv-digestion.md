@@ -87,6 +87,8 @@ debug 包的主要获取方法有两种，详情可以参考 [Debugging/Getting 
 
 Vulkan Loader 是垫在各个 Vulkan 驱动和用户程序中间的层，主要用来解决多设备枚举使用的问题。
 
+### 驱动枚举
+
 Vulkan Loader 有默认的 ICD (Installable Client Driver) 的[搜索路径](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-discovery-on-linux)，向系统中安装的驱动程序会通过在给定的 ICD 路径（可能是文件夹，也可能是 Windows 注册表）中写入信息的方式来向 Vulkan Loader 报告自己的信息。
 
 例如，`/usr/share/vulkan/icd.d/radeon_icd.x86_64.json` 中的信息如下：
@@ -106,6 +108,8 @@ Vulkan Loader 有默认的 ICD (Installable Client Driver) 的[搜索路径](htt
 另一种传入 ICD 信息的方法是 `VK_DRIVER_FILES` 环境变量（[不过在 root 权限下无效](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderInterfaceArchitecture.md#elevated-privilege-caveats)），可以通过指定这个变量的方式，强制 Vulkan Loader 只考虑某些路径。
 
 比如 `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json vulkaninfo` 可以只启用 mesa radv 实现。
+
+### 驱动入口发现
 
 每个驱动要实现 `vk_icdGetInstanceProcAddr` 这个调用，和 (>= Version 4) `vk_icdGetPhysicalDeviceProcAddr` 这个调用：
 ```c
@@ -142,6 +146,34 @@ Loader 的 `vkGetInstanceProcAddr` 的行为在[官方文档](https://github.com
 
 简单来说，就是用 `vk_icdGetInstanceProcAddr` 一路往下找，找到的会记录在跳转表中，之后在 terminator 那边可以直接跳转过去，不用再获取。
 
-https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-dispatchable-object-creation
+### 驱动 Vulkan 对象句柄要求
 
-https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#handling-khr-surface-objects-in-wsi-extensions
+> Ref: https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-dispatchable-object-creation
+
+另一个值得了解的是 Vulkan 对象模型。[3.3 Object Model @ Vulkan Spec](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#fundamentals-objectmodel-overview) 中提到，Vulkan API 层面提供的 `VkXXXXX` 等类型均为 Vulkan 对象的句柄，句柄分为可分派的 (dispatchable) 和不可分派的 (non-dispatchable) 两种。
+- 可分派句柄 `VK_DEFINE_HANDLE()`: 指向某对用户不可见的具体实现类型的指针
+  - 截至 Vulkan SDK 1.3.236 有 `VkInstance`, `VkPhysicalDevice`, `VkDevice`, `VkQueue`, `VkCommandBuffer`
+- 不可分派句柄 `VK_DEFINE_NON_DISPATCHABLE_HANDLE()`：64-bit 整数类型，具体意义由实现决定
+  - 如果开启了 [Private Data](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#private-data) 扩展的话，显然也得是指向内部实现类型的某指针（类似可分派句柄）
+  - 否则，实现可以决定在这 64-bit 里面直接编码好信息，不用指针
+
+在此基础上，Vulkan Loader 要求驱动程序返回可分派句柄时：
+1. 句柄作为指针指向的内部实现的前 `sizeof(uintptr)` 个字节要空出来，留待 Vulkan Loader 将这一位置的值替换成跳转表地址
+   - 这也要求，指向的内部实现需要是 POD 的，否则可能会有虚表等结构加在实例前面，和这一要求冲突
+2. 这个空出来的位置，需要调用 `include/vulkan/vk_icd.h` 中的 `set_loader_magic_value` 设置成 `ICD_LOADER_MAGIC` (目前是 `0x01CDC0DE`)，Vulkan Loader 拿到之后会用 `valid_loader_magic_value` 来检测驱动程序是否正确实现了这一要求
+
+### 特例: WSI 扩展
+
+> Ref: https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#handling-khr-surface-objects-in-wsi-extensions
+
+在下面的平台上，`VkSurfaceKHR` 可以由 Vulkan Loader 负责创建和销毁：
+- Wayland, XCB, Xlib
+- Windows
+- Android, MacOS, QNX
+
+对相应的 `vkCreateXXXSurfaceKHR` 调用，Loader 创建 VkIcdSurfaceXXX 结构，驱动程序拿到 `VkSurfaceKHR` 后可以将其视为到 `VkIcdSurfaceXXX` 的指针。
+
+不过，如果驱动想自己接管，暴露所有 WSI KHR 要求的接口给驱动就可以了 (创建销毁，枚举 Surface 相关属性、呈现模式，创建交换链)。
+
+## Mesa Vulkan 派发
+
