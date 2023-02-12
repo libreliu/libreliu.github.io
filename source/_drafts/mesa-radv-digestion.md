@@ -1,16 +1,20 @@
 ---
-title: Mesa Vulkan radv 驱动流程整理
+title: "Mesa radv 源码阅读（一）: 如何跟踪图形栈、Vulkan Loader、Mesa 派发机制"
 date: 2023-02-11
 ---
 
-本文的主要目的是，记录笔者调试和跟踪代码过程中的发现。
+Mesa radv 全称 Mesa Vulkan Radeon 驱动，用于 Linux 桌面平台下 AMD Radeon 独立和集成显示卡的 Vulkan 用户态驱动支持。本文主要为备忘性质，记录笔者调试和跟踪代码过程中的发现。
 
 笔者本人接触 Linux 图形栈的时间并不很长，其中很多地方还不甚明了，如有缺漏之处，请批评指正。
 
 您可以在博客对应的[仓库](https://github.com/libreliu/libreliu.github.io) 的 Issue 区和我取得联系。
 
 > 本文的实验均开展于截至写作时最新版本的 Arch Linux。
-
+> 使用的主要软件版本如下：
+> - mesa 22.3.3
+>   - https://gitlab.freedesktop.org/mesa/mesa/
+> - vulkan-icd-loader 1.3.240
+>   - https://github.com/KhronosGroup/Vulkan-Loader
 ## 前言：如何跟踪 Linux 图形栈？
 
 截至目前，笔者认为图形栈的跟踪和开发，较常规的 Linux 服务端开发等工作要更为复杂。
@@ -52,6 +56,8 @@ date: 2023-02-11
 在没有加载调试符号的情况下，GDB 的 `step` 似乎会直接越过外部函数，这种时候可以考虑 `layout asm` 看汇编，用 `stepi` 进到 call 指令里面去，GDB 此时的 backtrace 会打印出该函数所在地址对应的动态链接库 (当然，应该是从进程地址空间信息 `/proc/<PID>/maps` 反查的)，但具体的函数则不详。动态链接库信息可以用来让你想想到底是什么东西缺符号。
 
 正确配置的 debuginfod 可以完成自动拉取加载的动态链接库的符号的工作，不过要看到源码本身还是需要安装 debug 包。
+
+> 安装好 -debug 包后，对应的源码会在 `/usr/src/debug/` 下。
 
 debug 包的主要获取方法有两种，详情可以参考 [Debugging/Getting traces - ArchWiki](https://wiki.archlinux.org/title/Debugging/Getting_traces)：
 1. 特定的 Archlinux mirror
@@ -175,5 +181,59 @@ Loader 的 `vkGetInstanceProcAddr` 的行为在[官方文档](https://github.com
 
 不过，如果驱动想自己接管，暴露所有 WSI KHR 要求的接口给驱动就可以了 (创建销毁，枚举 Surface 相关属性、呈现模式，创建交换链)。
 
-## Mesa Vulkan 派发
+## Mesa Vulkan radv
 
+Mesa 是一个相对比较庞大的项目。
+
+本次要看的 Mesa Vulkan radv 驱动的代码主要分布在：
+- `src/amd/vulkan/`: radv_ 开头的主要代码
+- `src/vulkan`: 驱动公共设施
+
+Mesa 的构建系统使用 Meson，`src/amd/vulkan/meson.build` 中的 `libvulkan_radeon` 就是构建出的 radv 驱动动态链接库了。
+
+### 函数派发
+
+> Ref: https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/docs/vulkan/dispatch.rst
+
+我们先看 `vk_icdGetInstanceProcAddr` 的派发流程：
+- `vk_icdGetInstanceProcAddr` (src/amd/vulkan/radv_device.c)
+- `radv_GetInstanceProcAddr`  (src/amd/vulkan/radv_device.c)
+- `vk_instance_get_proc_addr` (src/vulkan/runtime/vk_instance.c)
+
+传入的 `radv_instance_entrypoints` 是一个全局变量，给出了 Instance Level 的驱动实现的函数指针。其**内容**是在构建过程中生成的 `src/amd/vulkan/radv_entrypoints.c` 中赋值的，而**类型**则是在构建过程中生成的 `src/vulkan/util/vk_dispatch_table.h` 中定义的 `vk_instance_entrypoint_table` 类型的结构体。
+
+`radv_entrypoints.c` 定义了很多 `radv_XXXX` 形式的弱符号，并且将这些符号凑成了
+- `radv_instance_entrypoints`
+- `radv_physical_device_entrypoints`
+- `radv_device_entrypoints`
+- `sqtt_device_entrypoints`
+- `metro_exodus_device_entrypoints`
+- `rra_device_entrypoints`
+
+几张表，表中填写了全部弱符号的值。根据弱符号的性质，如果程序中的其他地方没有定义相应的函数，对应的值就会为空。
+
+`vk_dispatch_table.h` 和 `vk_dispatch_table.c` 本身是用 `vk_disbatch_table_gen.py` 和 Vulkan Registry XML 生成出来的。
+
+而常用的这几个派发用的函数都是在生成的 `vk_dispatch_table.c` 中定义的：
+- `vk_instance_dispatch_table_get_if_supported`
+- `vk_physical_device_dispatch_table_get_if_supported`
+- `vk_device_dispatch_table_get_if_supported`
+
+如果对应的函数实际上没有实现 (比如 `radv_GetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI` 这个华为公司的扩展显然就没有)，那么前面几个派发表查询函数查询的结果就会为 NULL。
+
+至于 CreateDevice 等处出现的 `vk_instance_dispatch_table`，则是多个 entrypoint table “综合”的结果，这样就可以实现比如 `radv_xxx` 没有就回退到 `vk_common_xxx` 的效果。
+
+### `vk_common_xxx`
+
+一些公共入口点，里面包含了：
+- 用 `VkFoo2()` 实现 `VkFoo()` 的一些替代逻辑，这样驱动就可以把老的接口删掉，由中间层来做兼容
+- VkFence，VkSemaphore 和 VkQueueSubmit2 的默认实现
+  - 当然，也需要驱动提供一些东西，比如 `vk_sync_type` 的实现
+
+### 杂记
+
+- `radv_physical_device`: ~~万物之始~~
+  - `radv_CreateDevice`
+- 句柄操作：
+  - `VK_DEFINE_HANDLE_CASTS`: 定义（带自己搓的类型检查的）转换函数
+  - `VK_FROM_HANDLE`：从 `VkXXX` 转到 Mesa 驱动自己的结构体的句柄
