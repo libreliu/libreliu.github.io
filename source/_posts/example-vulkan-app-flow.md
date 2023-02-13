@@ -13,6 +13,8 @@ date: 2022-12-29
 
 ## 流程
 
+> Update 2023-02-13: 补上了漏掉的创建逻辑设备的一步 vkCreateDevice
+
 - demo_init
   - demo_init_connection
     - glfwSerErrorCallback
@@ -46,6 +48,16 @@ date: 2022-12-29
   - 查找支持 Present 和 Graphics 的 Queue，需要是同一个 Queue
     - vkGetPhysicalDeviceSurfaceSupportKHR
     - `queueFlags & VK_QUEUE_GRAPHICS_BIT`
+  - demo_init_device
+    - vkCreateDevice: 创建 logical device
+      - VkDeviceCreateInfo
+        - `.pQueueCreateInfos`
+          - `.queueFamilyIndex`
+          - `.queueCount`
+          - `.pQueuePriorities`
+        - `.ppEnabledLayerNames`
+        - `.ppEnabledExtensionNames`: 要启用的设备扩展
+          > 似乎把 Instance 扩展的名字扔进去也行？
   - vkGetDeviceQueue
   - 选择一个最优的 Surface format
     - vkGetPhysicalDeviceSurfaceFormatsKHR
