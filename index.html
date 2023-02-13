@@ -263,7 +263,10 @@
 </ul>
 </blockquote>
 <p>本文主要分析 <a target="_blank" rel="noopener" href="https://github.com/glfw/glfw">glfw</a> 库的 <a target="_blank" rel="noopener" href="https://github.com/glfw/glfw/blob/57cbded0760a50b9039ee0cb3f3c14f60145567c/tests/triangle-vulkan.c">tests&#x2F;triangle-vulkan.c</a> 文件。</p>
-<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><ul>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><blockquote>
+<p>Update 2023-02-13: 补上了漏掉的创建逻辑设备的一步 vkCreateDevice</p>
+</blockquote>
+<ul>
 <li>demo_init<ul>
 <li>demo_init_connection<ul>
 <li>glfwSerErrorCallback</li>
@@ -313,6 +316,26 @@
 <li>查找支持 Present 和 Graphics 的 Queue，需要是同一个 Queue<ul>
 <li>vkGetPhysicalDeviceSurfaceSupportKHR</li>
 <li><code>queueFlags &amp; VK_QUEUE_GRAPHICS_BIT</code></li>
+</ul>
+</li>
+<li>demo_init_device<ul>
+<li>vkCreateDevice: 创建 logical device<ul>
+<li>VkDeviceCreateInfo<ul>
+<li><code>.pQueueCreateInfos</code><ul>
+<li><code>.queueFamilyIndex</code></li>
+<li><code>.queueCount</code></li>
+<li><code>.pQueuePriorities</code></li>
+</ul>
+</li>
+<li><code>.ppEnabledLayerNames</code></li>
+<li><code>.ppEnabledExtensionNames</code>: 要启用的设备扩展<blockquote>
+<p>似乎把 Instance 扩展的名字扔进去也行？</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li>vkGetDeviceQueue</li>
