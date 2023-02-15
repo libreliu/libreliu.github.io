@@ -212,7 +212,7 @@ Mesa 的构建系统使用 Meson，`src/amd/vulkan/meson.build` 中的 `libvulka
 
 几张表，表中填写了全部弱符号的值。根据弱符号的性质，如果程序中的其他地方没有定义相应的函数，对应的值就会为空。
 
-`vk_dispatch_table.h` 和 `vk_dispatch_table.c` 本身是用 `vk_disbatch_table_gen.py` 和 Vulkan Registry XML 生成出来的。
+`vk_dispatch_table.h` 和 `vk_dispatch_table.c` 本身是用 `vk_dispatch_table_gen.py` 和 Vulkan Registry XML 生成出来的。
 
 而常用的这几个派发用的函数都是在生成的 `vk_dispatch_table.c` 中定义的：
 - `vk_instance_dispatch_table_get_if_supported`
