@@ -1,12 +1,12 @@
 ---
 layout: 'paper-reading'
 title: '论文阅读 | 平衡精确度和预测范围的黑盒 GPU 性能建模'
-date: 2022-11-30
+date: 2023-02-16
 papertitle: 'A mechanism for balancing accuracy and scope in cross-machine black-box GPU performance modeling'
 paperauthors: James D. Stevens, Andreas Klockner
 papersource: 'The International Journal of High Performance Computing Applications (April 2019)'
 paperurl: 'https://arxiv.org/pdf/1904.09538.pdf'
-status: Working
+status: Complete
 ---
 
 ## 简介
