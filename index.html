@@ -55,6 +55,315 @@
 
     <br>
     <section id="main" class="outer">
+      <article id="paper-reading-paper-reading/cross-machine-black-box-GPU-perf-modeling" class="article article-type-paper-reading" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/paper-reading/cross-machine-black-box-GPU-perf-modeling/"><strong>论文阅读 | 平衡精确度和预测范围的黑盒 GPU 性能建模</strong></a>
+      <small class=article-date-index>&nbsp; 2023-02-16</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/paper-reading/cross-machine-black-box-GPU-perf-modeling/" class="article-date">
+  <time datetime="2023-02-15T16:00:00.000Z" itemprop="datePublished">2023-02-16</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章提出了一种跨机器，黑盒，基于微测试 (microbenchmark) 的方法来解析的对不同实现变体的 OpenCL kernel 的执行时间进行预测和最优 kernel 选择。</p>
+<p>简单来说，本文大的思路是，收集一些 kernel 中出现的<strong>特征</strong>和对应特征在运行时会出现的<strong>频率</strong>，利用 microbenchmark 在目标平台上测量这些<strong>特征</strong>每次出现会花费的运行时间，再用一个（多重）线性模型来拟合最后的运行时间。</p>
+<p>由于文章比较长，此处将文章的大概结构列举如下：</p>
+<ul>
+<li>Section 1: 简介</li>
+<li>Section 2: 解释性的例子</li>
+<li>Section 3: 本文贡献概况</li>
+<li>Section 4: 本文采用的假设和局限性</li>
+<li>Section 5: <strong>收集 kernel 统计信息</strong></li>
+<li>Section 6: <strong>建模 kernel 执行时间</strong></li>
+<li>Section 7: <strong>校准模型参数</strong></li>
+<li>Section 8: 结果展示</li>
+<li>Section 9: 作者调研到的、其它相关的性能建模方法</li>
+</ul>
+<h2 id="本文的假设和局限性"><a href="#本文的假设和局限性" class="headerlink" title="本文的假设和局限性"></a>本文的假设和局限性</h2><p>本文提到的一些 assumptions：</p>
+<ul>
+<li>(usefulness) 可以帮助用户理解给定机器的性能特性，并且给优化器提供变体性能数据预测参考，同时降低需要在目标系统实际测量的数据数量</li>
+<li>(accuracy) 根据检索到的相关文献显示，在本文提及的 GPU kernel 性能预测问题上，没有方法可以一致的获得小于个位数的预测误差，所以本文也设定这样的目标</li>
+<li>(cost-explanatory): 和其它基于排名的方法不同 (Chen et al. (2018))，虽然本文优化的目标是在各种变体中进行选择，但是本文中模型的主要输出为运行时间，且采用比较可解释的线性模型进行建模</li>
+</ul>
+<p>本文提到的一些局限：</p>
+<ul>
+<li>硬件资源的利用率：<ul>
+<li>硬件资源的利用率会影响最终的性能。比如，峰值浮点性能受 SIMD lane 使用率影响，片上状态存储器 (VGPR, Scratchpad Memory) 会影响调度槽位的利用率，进而影响延迟隐藏的能力</li>
+<li>不过，采用本文的方法，基本的性能损失系数是比较容易解释和估计的。比如，实际的内存带宽利用率，以及峰值 FLOP&#x2F;s</li>
+<li>即使无法达到硬件资源的全部利用，对于硬件资源利用率随参数变化相对稳定的场合，本文的模型仍然可以适用。不过对于变化的情况，让本文提出的模型适用的唯一可行方法，就是将模型的粒度调低到类似 SIMD lane 的水平，这样利用率的变化就不再相关了。ECM 系列模型就是这样考虑这个问题的。<blockquote>
+<p>?</p>
+</blockquote>
+</li>
+<li>为了简化的处理这个问题，本文采用 workgroup size 恒定为 256 的参数设定。</li>
+</ul>
+</li>
+<li>程序建模上的简化：<ul>
+<li>本文的模型中，主要检测的是基于某种特殊类别的操作 (e.g. 浮点操作，特殊类型的访存) 和检测到该特征出现的次数，其中次数被建模为 non-data-dependent 的一个特征。<ul>
+<li>Polyhedrally-given loop domain?</li>
+</ul>
+</li>
+<li>所有分支指令都假设两个分支均会执行，即假设 GPU 采用 masking 的方式进行执行。<blockquote>
+<p>文章认为这和 GPU 的行为是匹配的，不过显然不完全是。较新的 GPU 是同时支持 branching 和 masking 的。masking 存在的意义是对于短分支来说，可以不打断流水线。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>内存访问开销评估：<ul>
+<li>内存访问的开销受到程序访问的局部性，以及对于 banked memory 来说的 bank 竞争问题的影响。</li>
+<li>本文将内存访问切分成了两种：<ul>
+<li>对于各个程序都常见的，比较简单的访存模式，用 Section 6.1.1 的办法按 interlane stride, utilization radio 和 data width 进行分类<blockquote>
+<p>quasi-affine? </p>
+</blockquote>
+</li>
+<li>对于更复杂的访存模式，在 Section 7.1.1 中提供一种单独抽出来在循环里面按该模式进行访存，并且进行测量的机制</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>平台无关：<ul>
+<li>本文提出的系统作用于 OpenCL 上，但是相似的系统在 CUDA 上也可以比较轻松的实现。</li>
+</ul>
+</li>
+</ul>
+<h2 id="收集-kernel-统计信息"><a href="#收集-kernel-统计信息" class="headerlink" title="收集 kernel 统计信息"></a>收集 kernel 统计信息</h2><h3 id="计算每个特征的预期出现次数"><a href="#计算每个特征的预期出现次数" class="headerlink" title="计算每个特征的预期出现次数"></a>计算每个特征的预期出现次数</h3><p>前面提到，本文假设程序中出现的所有循环，其循环次数和本次运行所使用的数据无关，即 non-data-dependent。</p>
+<p>这种情况下，如果要求解循环体中每个语句的运行次数，简单的做法是将所有循环展开，不过这样效率会比较低。事实上，此处可以把问题看作：在 $ d $ 维的整数空间 $ \mathrm{Z}^d $ 中，可行区域是由一些约束条件构成的超平面截出来的一个子区域，某个语句的循环次数就是在该子区域中整数格点的数目。</p>
+<p>文章汇总提到，用 <code>barvinok</code> 和 <code>isl</code> 库一起，可以解决前面这个数循环体内语句执行次数的问题，其中 <code>barvinok</code> 是基于 Barvinok 算法的，这是一个比较高效的、计算有理凸多胞形中的格点数目的算法。</p>
+<p>当然，还要分析好一条语句内真正进行计算或数据搬运的相应特征和次数。</p>
+<blockquote>
+<p>为什么要抽象成有理凸多胞形？ 这是因为真正循环的次数和 Kernel 本身的一些参数，以及 Kernel 的 Launch parameters 也有关系，这里希望带着这些参数做符号计算，让模型更有用一些（比如说，优化这些参数会变得容易）</p>
+</blockquote>
+<h3 id="计数粒度-count-granularity"><a href="#计数粒度-count-granularity" class="headerlink" title="计数粒度 (count granularity)"></a>计数粒度 (count granularity)</h3><p>计数粒度设计的思路是，计数出来的次数尽可能贴近真实 GPU 硬件中所执行操作的次数。</p>
+<p>比如，我们知道，在 OpenCL 的调度模型中，每个 <code>sub-group</code> 会尽可能匹配 GPU 调度的最小单位，并且视硬件能力 <code>sub-group</code> 内部会支持一些 reduce 和 scatter 等原语，并且算数指令一般也是以 <code>sub-group</code> 为粒度进行调度和实现的。这样，算术指令就应该以 <code>sub-group</code> 为粒度计数。</p>
+<p>当然，具体 <code>sub-group</code> 的数目是依赖具体的 Kernel launch parameters 的，不过这里对前面参数的依赖是多项式形式的 (比如 <code>work-group count / 32</code>），所以可以作为一个含参的量，让前面的循环次数计算也成为一个含参的值。</p>
+<!-- TOOD: check this paragraph -->
+
+<p>粒度有如下三种：</p>
+<ul>
+<li>per work-item<ul>
+<li>同步障操作 (barrier synchronization)</li>
+</ul>
+</li>
+<li>per sub-group （subgroup size 需要用户提供）<ul>
+<li>片上操作：算数指令和 local memory 访问</li>
+<li>uniform 访问：global memory 访问，但是 <code>lid(0)</code> stride 0，即多个线程访问同一块内存区域</li>
+</ul>
+</li>
+<li>per work-group （没有给出例子）</li>
+</ul>
+<blockquote>
+<p>这里的讨论很不详细，需要和下面一起看</p>
+</blockquote>
+<h2 id="建模-kernel-执行时间"><a href="#建模-kernel-执行时间" class="headerlink" title="建模 kernel 执行时间"></a>建模 kernel 执行时间</h2>$$
+T_\text{wall}({\bf n}) = \text{feat}^\text{out}({\bf n}) \approx g(\text{feat}^\text{in}_0({\bf n}), ..., \text{feat}^\text{in}_j({\bf n}), p_0, ..., p_k)
+$$
+
+<p>其中：</p>
+<ul>
+<li>$ {\bf n} $ 是整个计算过程中为常数的、仅与各种变体相关的整数向量</li>
+<li>$ \text{feat}^\text{in}_j({\bf n}) $ 是某种单元特征的出现次数（比如单精度 FP32 乘法数）</li>
+<li>$ p_i $ 是硬件相关的校正参数</li>
+<li>$ g $ 是用户提供的可微函数</li>
+</ul>
+<h3 id="kernel-特征"><a href="#kernel-特征" class="headerlink" title="kernel 特征"></a>kernel 特征</h3><h4 id="数据移动特征"><a href="#数据移动特征" class="headerlink" title="数据移动特征"></a>数据移动特征</h4><p>对于大多数计算 kernel 来说，数据搬运所占的开销是大头。</p>
+<p>内存访问模式：</p>
+<ul>
+<li>内存类别：global &#x2F; local</li>
+<li>访问类型：load &#x2F; store</li>
+<li>the local and global strides along each thread axis in the array index<ul>
+<li>也就是说，每次 <code>gid(0)</code>, <code>gid(1)</code>, <code>lid(0)</code>, <code>lid(1)</code> 自增一的时候，对 array 数组访问的偏移要分别增加多少</li>
+</ul>
+</li>
+<li>the ratio of the number of element accesses to the number of elements accessed (access-to-footprint ratio, or AFR)<ul>
+<li><code>AFR = 1</code>: every element in the footprint is accessed one time</li>
+<li><code>AFR &gt; 1</code>: some elements are accessed more than once<ul>
+<li>这样 Cache 就可能会对速度有加成了</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>文章中提到，解析形式的模型需要建模很多机器细节，比如 workgroup 调度，内存系统架构等，来达到和黑盒模型相似的精度。一个例子是</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> k_out = <span class="number">0</span>; k_out &lt;= ((<span class="number">-16</span> + n) / <span class="number">16</span>); ++k_out)</span><br><span class="line">  ...</span><br><span class="line">  a_fetch[...] = a[n*(<span class="number">16</span>*gid(<span class="number">1</span>) + lid(<span class="number">1</span>)) + <span class="number">16</span>*k_out + lid(<span class="number">0</span>)];</span><br><span class="line">  b_fetch[...] = b[n*(<span class="number">16</span>*k_out + lid(<span class="number">1</span>)) + <span class="number">16</span>*gid(<span class="number">0</span>) + lid(<span class="number">0</span>)];</span><br></pre></td></tr></table></figure>
+
+<p>这个例子里面的内存访问模式如下：</p>
+<table>
+<thead>
+<tr>
+<th>Array</th>
+<th>Ratio</th>
+<th>Local strides</th>
+<th>Global strides</th>
+<th>Loop stride</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>a</td>
+<td>n&#x2F;16</td>
+<td>{0:1, 1:n}</td>
+<td>{0:0, 1:n*16}</td>
+<td>16</td>
+</tr>
+<tr>
+<td>b</td>
+<td>n&#x2F;16</td>
+<td>{0:1, 1:n}</td>
+<td>{0:16, 1:0}</td>
+<td>16*n</td>
+</tr>
+</tbody></table>
+<p>这两个例子的性能差距在 5 倍左右。</p>
+</blockquote>
+<p>With this approach, a universal model for all kernels on all hardware based on kernel-level features like ours  could need a prohibitively large number of global memory access features and corresponding measurement kernels. This motivates our decision to allow proxies of “in-situ” memory accesses to be included as features, which in turn motivates our ‘work removal’ code transformation, discussed in Section 7.1.1. This transformation facilitates generation of microbenchmarks exercising memory accesses which match the access patterns found in specific computations by stripping away unrelated portions of the computation in an automated fashion.</p>
+<p>Specifying Data Motion Features in the Model: 弄个 aLD, bLD, f_mem_access_tag</p>
+<p>也可以手动指定，不用运行时测量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">model = Model(</span><br><span class="line">  <span class="string">&quot;f_cl_wall_time_nvidia_geforce&quot;</span>,</span><br><span class="line">  <span class="string">&quot;p_f32madd * f_op_float32_madd + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32l * f_mem_access_local_float32 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32ga * f_mem_access_global_float32_load_lstrides:&#123;0:1;1:&gt;15&#125;_gstrides:&#123;0:0&#125;_afr:&gt;1 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32gb * f_mem_access_global_float32_load_lstrides:&#123;0:1;1:&gt;15&#125;_gstrides:&#123;0:16&#125;_afr:&gt;1 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32gc * f_mem_access_global_float32_store&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>显式语法格式如下：<code>&quot;f_mem_access_tag:&lt;mem access tag&gt;_&lt;mem type&gt;_&lt;data type&gt;_&lt;direction&gt;_lstrides:&#123;&lt;local stride constraints&gt;&#125;_gstrides:&#123;&lt;global stride constraints&gt;&#125;_afr:&lt;AFR constraint&gt;&quot;</code></p>
+<h4 id="算术操作特征"><a href="#算术操作特征" class="headerlink" title="算术操作特征"></a>算术操作特征</h4><p>特征：</p>
+<ul>
+<li>操作类型：加法、乘法、指数</li>
+<li>数据类型：float32, float64</li>
+</ul>
+<p>本文中的工作不考虑整数算术特征，因为在模型考虑的 kernel 变体中，整数算术只用在了数组下标计算中。</p>
+<h4 id="同步特征"><a href="#同步特征" class="headerlink" title="同步特征"></a>同步特征</h4><p>特征：</p>
+<ul>
+<li>局部同步障 (local barriers)</li>
+<li>kernel 启动</li>
+</ul>
+<p>这里 Local barriers 是 per work-item 的，然后根据实际程序同步的需要，可能需要进行乘以同时进行同步的 work item 数量。</p>
+<p>简单来说就是，认为参与同步的 thread 越多越耗时。</p>
+<blockquote>
+<p>Recall that the statistics gathering module counts the number of synchronizations encountered by a single work-item, so depending on how a user intends to model execution, they may need to multiply a synchronization feature like local barriers by, e.g., the number of work-groups, a feature discussed in the next section.</p>
+<p>A user might incorporate synchronization features into this model as follows:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">model = Model(<span class="string">&quot;f_cl_wall_time_nvidia_geforce&quot;</span>,</span><br><span class="line">  <span class="string">&quot;p_f32madd * f_op_float32_madd + &quot;</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="string">&quot;p_barrier * f_sync_barrier_local * f_thread_groups + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_launch * f_sync_kernel_launch&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+</blockquote>
+<h3 id="其他特征"><a href="#其他特征" class="headerlink" title="其他特征"></a>其他特征</h3><ul>
+<li>Thread groups feature<ul>
+<li>给定 workgroup count，进行不同 workgroup count 间启动时间补偿</li>
+</ul>
+</li>
+<li>OpenCL wall time feature<ul>
+<li>给定 platform 和 device 下，执行 60 遍获得平均 walltime，作为输出特征</li>
+<li>“We measure kernel execution time excluding any host-device transfer of data.”</li>
+</ul>
+</li>
+</ul>
+<p>一个完整的模型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">model = Model(<span class="string">&quot;f_cl_wall_time_nvidia_geforce&quot;</span>,</span><br><span class="line">  <span class="string">&quot;p_f32madd * f_op_float32_madd + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32l * f_mem_access_local_float32 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32ga * f_mem_access_global_float32_load_lstrides :&#123;0:1;1:&gt;15&#125;_gstrides:&#123;0:0&#125;_afr:&gt;1 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32gb * f_mem_access_global_float32_load_lstrides :&#123;0:1;1:&gt;15&#125;_gstrides:&#123;0:16&#125;_afr:&gt;1 + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_f32gc * f_mem_access_global_float32_store + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_barrier * f_sync_barrier_local * f_thread_groups + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_group * f_thread_groups + &quot;</span></span><br><span class="line">  <span class="string">&quot;p_launch * f_sync_kernel_launch&quot;</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h2 id="校准模型参数"><a href="#校准模型参数" class="headerlink" title="校准模型参数"></a>校准模型参数</h2><p>Work Removal Transformation: a code transformation that can extract a set of desired operations from a given computation, while maintaining overall loop structure and sufficient data flow to avoid elimination of further parts of the computation by optimizing compilers</p>
+<p>Work Removal 变换会把 on-chip 工作从 kernel 中去掉，达成两方面目的：</p>
+<ol>
+<li>测试 on-chip work 和 global memory access 各自占用时间，决定是否要进行 latency hiding</li>
+<li>测试某种特殊访存模型的时间占用</li>
+</ol>
+<h3 id="Measurement-kernel-设计"><a href="#Measurement-kernel-设计" class="headerlink" title="Measurement kernel 设计"></a>Measurement kernel 设计</h3><ul>
+<li>Global memory access<ul>
+<li>AFR &#x3D; 1: Fully specified by local strides, global strides, data size<ul>
+<li>That is, patterns that do not produce a write race and not nested inside sequential loops</li>
+<li>Performs global load from each of <em>a variable number of input arrays</em> using the specified access pattern</li>
+<li>Each work-item then stores the sum of the input array values it fetched in a single result array</li>
+<li>Params: data type, global memory array size, work-group dimensions, number of input arrays, thread index strides</li>
+</ul>
+</li>
+<li>AFR &gt; 1:<ul>
+<li>Use <strong>Work Removal Tranformation</strong> to generate dedicated measurement kernel.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Arithmetic operations<ul>
+<li>First, have each work-item initialize 32 private variables of the specified data type</li>
+<li>Then, perform a loop in which each iteration updates each variable using the target arithmetic operation on values from other variables<ul>
+<li>This is to create structural dependency</li>
+</ul>
+</li>
+<li>We <strong>unroll the loop by a factor of 64</strong> and <strong>arrange the variable assignment order</strong> to achieve high throughput using the approach found in the Scalable HeterOgeneous Computing (SHOC) OpenCL MaxFlops.cpp benchmark (Danalis et al. 2010).<ul>
+<li>the 32 variable updates are ordered so that <strong>no assignment depends on the most recent four statements</strong><ul>
+<li>32 is used because it permits maximum SIMD lane utilization &amp; prevent from spilling too many registers</li>
+</ul>
+</li>
+<li>we <strong>sum</strong> the 32 variable values and <strong>store the result in a global array</strong> according to a <strong>user-specified memory access pattern</strong><ul>
+<li>(NOTE: The actual cost can be deduced by change the runcount of arithmetic ops)</li>
+<li>include the global store to avoid being optimized away</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Local memory access<ul>
+<li>Tags: data type, global memory array size, iteration count, and workgroup dimensions<ul>
+<li>Data type determines the local data stride</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>each workitem <strong>initializes one element of a local array</strong> to the data type specified</li>
+<li>Then we have it perform a loop, at each iteration moving a different element from one location in the array to another. <ul>
+<li>We avoid write-races and simultaneous reads from a single memory location, and use an lid(0) stride of 1, avoiding bank conflicts.</li>
+</ul>
+</li>
+<li>After the loop completes, <strong>each work-item writes one value from the shared array to global memory</strong></li>
+</ol>
+</li>
+<li>Other features<ul>
+<li>executes a variable number of local barriers, to measure operation overlapping behaviour (<strong>Section 7.4</strong>)</li>
+<li>Empty kernel launch, to measure kernel launching overhead</li>
+</ul>
+</li>
+</ul>
+<p>文章提出，<em>Using a sufficiently high-fidelity model, we expect that users will be able to differentiate between latency-based costs of a single kernel launch and throughput-related costs that would be incurred in pipelined launches.</em></p>
+<blockquote>
+<p>怎么做？</p>
+</blockquote>
+<h3 id="计算模型参数"><a href="#计算模型参数" class="headerlink" title="计算模型参数"></a>计算模型参数</h3><p>采用最小二乘法来进行拟合，得到 feature 向量中给定 feature 的出现次数和总的运行时间的关系。</p>
+<h3 id="Operation-Overlap-建模"><a href="#Operation-Overlap-建模" class="headerlink" title="Operation Overlap 建模"></a>Operation Overlap 建模</h3><p>Global memory 和 On-chip 的延迟之间是有可能互相隐藏的。</p>
+<p>本文的建模基于简单的想法，即 $ \max (c_{onchip}, c_{gmem}) $，两类操作的时间求 $ \max $ 操作。</p>
+<p>不过 $ \max $ 不是很可导，所以采用一个可微的近似函数来做，详情可以看论文。</p>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="paper-reading-paper-reading/learning-from-program-traces" class="article article-type-paper-reading" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -2185,156 +2494,6 @@ $$
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><blockquote>
 <p>We believe that all real-time graphics programmers could benefit from<br>a new generation of shader compilation tools informed by these<br>ideas. —— <em>Slang: language mechanisms for extensible real-time shading systems</em></p>
 </blockquote>
-
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
-      <article id="paper-reading-paper-reading/ddgi" class="article article-type-paper-reading" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/paper-reading/ddgi/"><strong>论文阅读 | Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields</strong></a>
-      <small class=article-date-index>&nbsp; 2022-07-23</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/paper-reading/ddgi/" class="article-date">
-  <time datetime="2022-07-22T16:00:00.000Z" itemprop="datePublished">2022-07-23</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章提供了一种高效的计算动态物体和动态光源情形下的全局光照的方法。</p>
-<h2 id="框架"><a href="#框架" class="headerlink" title="框架"></a>框架</h2><h3 id="DDGI-light-probe"><a href="#DDGI-light-probe" class="headerlink" title="DDGI light probe"></a>DDGI light probe</h3><p>DDGI 是一种利用 light probe（光照探针）进行动态全局光计算的方法。</p>
-<p>对于位于 $\mathrm{x’}$ 位置的 light probe，所有的出射方向可以视为从 probe 所在位置到以 probe 所在位置为中心的单位球面上点构成的向量的集合。此时，构造一个 $S^2 \to R^2$ 的映射，使得球面的八个扇区分别映射到八面体的八个面上，这个映射被称为八面体映射 (octahedron mapping)。</p>
-<blockquote>
-<p>文章中描述到，八面体映射的好处，在于可以将球面以比较均匀的参数化映射到正方形上去，方便之后将每个方向相对应的量储存到 2D 纹理上面去。</p>
-</blockquote>
-<p>通过八面体映射，就可以将 probe 每个方向的信息存储在正方形的纹理贴图上了。</p>
-<p>不过，在这篇文章中，出于性能考虑，作者采用了类似 Variance Shadow Mapping 的方法，极大压缩了纹理贴图的分辨率，同时对于每个 probe 的贴图的每个方向，分别存放</p>
-<ol>
-<li>$E_i(\mathrm{x'}, w)$: probe 以 $\omega$ 方向为天顶的半球的入射 irradiance</li>
-<li>$r(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离在半球面的均值<ul>
-<li>也就是 $\int d(x’, \omega) d \omega$，其中 $d(x, \omega): R^3 \times \Omega \to R$ 为在 $x$ 处沿 $\omega$ 方向到最近邻图元的距离</li>
-</ul>
-</li>
-<li>$r^2(\omega)$: probe 在 $\omega$ 方向对应的最近邻图元的距离的平方在半球面的均值</li>
-</ol>
-<p>三组信息。</p>
-<blockquote>
-<p>Recall: radiance 和 irradiance</p>
-<ul>
-<li>Radiance (辐射率): 单位面积单位立体角辐射功率，$ d\Phi &#x2F; (dS d\Omega) $</li>
-<li>Irradiance (辐照度): 单位面积辐射功率 $ d\Phi &#x2F; dS $</li>
-</ul>
-</blockquote>
-<h3 id="利用-probe-进行间接光计算"><a href="#利用-probe-进行间接光计算" class="headerlink" title="利用 probe 进行间接光计算"></a>利用 probe 进行间接光计算</h3><p>前面提到 probe 中存储的信息为 probe 所在位置中各个方向的入射 irradiance。如果把场景中各处的 irradiance 看成一个 irradiance 场，那么现在要处理的问题就是给定场在某些位置的值，插值出其他位置的值的过程。</p>
-<p>对于漫反射，只需要关心入射 irradiance 而不需要具体的 radiance，所以只需要待着色图元的全局光入射 irradiance 信息。</p>
-<p>irradiance 场大概可以这样描述：$R^3 \times S^2 \to Spectrum$</p>
-<p>输入是 (位置, 方向)，输出是 Spectrum (e.g. RGBSpectrum)</p>
-<p>可以想象到，如果场本身的变化相对于 probe 间距离来说变化比较缓慢，那么方法就会工作的比较好。</p>
-<p>不过，也有一些会导致变化较快的情况：</p>
-<ol>
-<li>图元本身与 probe 所成夹角</li>
-<li>图元被某些物体遮挡</li>
-</ol>
-<p>所以，DDGI 提出了这样的框架来进行着色：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// float3 n = shading normal, X = shading point, P = probe location</span></span><br><span class="line">float4 irradiance = float4(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">for</span> (each of <span class="number">8</span> probes around X) &#123;</span><br><span class="line">    float3 dir = P – X;</span><br><span class="line">    <span class="type">float</span> r = <span class="built_in">length</span>(dir);</span><br><span class="line">    dir *= <span class="number">1.0</span> / r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// smooth backface</span></span><br><span class="line">    <span class="type">float</span> weight = (<span class="built_in">dot</span>(dir, n) + <span class="number">1</span>) * <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// adjacency</span></span><br><span class="line">    weight *= trilinear(P, X);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// visibility (Chebyshev)</span></span><br><span class="line">    float2 temp = <span class="built_in">texelFetch</span>(depthTex, probeCoord).rg;</span><br><span class="line">    <span class="type">float</span> mean = temp.r, mean2 = temp.g;</span><br><span class="line">    <span class="keyword">if</span> (r &gt; mean) &#123;</span><br><span class="line">        <span class="type">float</span> variance = <span class="built_in">abs</span>(square(mean) – mean2);</span><br><span class="line">        weight *= variance / (variance + square(r – mean));</span><br><span class="line">    &#125;</span><br><span class="line">    irradiance += <span class="built_in">sqrt</span>(<span class="built_in">texelFetch</span>(colorTex, probeCoord) * weight;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> square(irradiance.rgb * (<span class="number">1.0</span> / irradiance.a));</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><code>irradiance.a</code> 的作用是什么..？</p>
-<p>很多权重我理解是为了视觉效果，应该和物理正确没什么太大关系…</p>
-<p>这里的也不是最终的版本（还要加上 normal bias），slides 里面提供了更加魔改的版本，不知道 RTXGI 里面是不是有更进一步的魔改</p>
-</blockquote>
-<h4 id="Chebyshev-项分析"><a href="#Chebyshev-项分析" class="headerlink" title="Chebyshev 项分析"></a>Chebyshev 项分析</h4><p>Chebyshev 不等式 (one-tailed version)：</p>
-$$
-P(x > t) \le \frac{\sigma^2}{\sigma^2 + (t-\mu)^2}
-$$
-
-<blockquote>
-<p>可以参考 GAMES202 中<a target="_blank" rel="noopener" href="https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES202_Lecture_04.pdf">关于 Variance Soft Shadow Mapping 的部分</a></p>
-</blockquote>
-<p>相当于小于平均值时认为没有遮挡，大于平均值时按 Chebyshev 不等式的上界来估算被遮挡概率。</p>
-<blockquote>
-<p>有没有更好的估计方法？为什么这样估计是最好的？</p>
-</blockquote>
-<h3 id="各个项效果对比"><a href="#各个项效果对比" class="headerlink" title="各个项效果对比"></a>各个项效果对比</h3><p>原论文中有各项的作用展示：</p>
-<img src="/paper-reading/ddgi/ddgi_term_comparation.png" class="" title="DDGI Term Comparation">
-
-<p>其中 classic irradiance probe 应该就是只有三线性插值的结果。</p>
-<h3 id="动态更新-probe-信息"><a href="#动态更新-probe-信息" class="headerlink" title="动态更新 probe 信息"></a>动态更新 probe 信息</h3><p>每一帧，DDGI 会进行如下的操作：</p>
-<ol>
-<li>从 $m$ 个活跃 probe 中，每个 probe 发射 $n$ 条光线，然后存储 $n \times m$ 个交点处的表面元信息（位置，法线）到一个类似 G-buffer 的结构中<ul>
-<li>发射光线时采用每帧不同的 pattern，最大限度避免锯齿<ul>
-<li>作者采用 “stochastically-rotated Fibonacci spiral pattern”<blockquote>
-<p>不过作者 2017 年的文章中并没有详细说明此处的具体实现，需要阅读作者的代码</p>
-</blockquote>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>对表面元信息进行直接光和间接光计算<ul>
-<li>直接光：<ul>
-<li>点光源和方向光光源：利用该 G-buffer 进行普通的 deferred rendering + variance shadow mapping</li>
-<li>面积光光源：使用下面间接光方法，第一跳时考虑面积光</li>
-</ul>
-</li>
-<li>间接光：采用周围的 probe 信息进行计算<ul>
-<li>和前面一节描述的方法一致</li>
-</ul>
-</li>
-<li>(多跳)间接光：通过 3 中每次用 Moving Average 方法来更新，实现多跳的信息传播</li>
-</ul>
-</li>
-<li>更新这 $m$ 个活跃 probe 对应的纹理贴图<ul>
-<li>利用 alpha-blending, $\alpha$ 取 0.85 到 0.98</li>
-<li><code>newIrradiance[texelDir] = lerp(oldIrradiance[texelDir], Sum(ProbeRays(max(0,texelDir · rayDir) ∗ rayRadiance)...), alpha)</code></li>
-</ul>
-</li>
-</ol>
-<blockquote>
-<p>符号说明: <code>lerp(a, b, alpha) = a * alpha + b * (1-alpha)</code></p>
-</blockquote>
-<h3 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h3><ul>
-<li><a target="_blank" rel="noopener" href="https://research.nvidia.com/sites/default/files/pubs/2017-02_Real-Time-Global-Illumination/light-field-probes-final.pdf">Real-Time Global Illumination using Precomputed Light Field Probes</a><ul>
-<li>McGuire 这篇 2017 年的工作中关于 GI 的部分和这篇文章很像，只是当时他在 light probe 中存储比较高分辨率的最近邻图元到 probe 距离，并且用这个距离来进行基于 probe 阵列的 ray trace，而不是采用硬件 ray trace。</li>
-<li>并且他在这篇工作中提到，可以采用将 BSDF 分解成 diffuse + glossy (所有不 diffuse 的项)，对 glossy 用其它方法来处理 (比如 raytrace + post filter) 来实现整个场景的 GI。</li>
-</ul>
-</li>
-</ul>
 
       
     </div>
