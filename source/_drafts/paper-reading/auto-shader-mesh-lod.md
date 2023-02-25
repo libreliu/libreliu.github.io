@@ -110,4 +110,27 @@ To simplify a mesh, we adapt the established mesh simplification framework [4] b
 
 ### 分别优化
 
-TODO: write me
+#### 生成网格变体
+
+因为没有任何关于简化后 Shader 的信息，所以作者此处采用原 Shader 进行着色后 supersampled / filtered 的图片作为 loss 环节进行网格简化。
+
+因为某些边简化之后对视觉表现没有什么影响，所以这里只选取 K (实现中 K = 500) 个有较大 error 变化的简化网格作为候选变体。
+
+#### 生成 Shader 变体
+
+理论上，对于不同的场景配置 (简化网格 & 距离配置)，最优的 Shader 变体是不同的。
+
+但是，因为
+1. First, as has been proven in prior work [3], the performance and error of shader variants can be predicted instead of being actually evaluated. In this way, we do not need to actually render every shader variant under all scene configurations.
+   > 在 [3] 中，性能的预测是通过一种简单的启发函数，即 `scalar fp ops + 100 * texture ops` 来预测的（不同 Shader stage 有不同权重，parameter 数量有额外惩罚）
+   >
+   > error 的评价是通过 error cache 和偶尔的重新 evaluate 来实现的
+2. Second, we noted that for one shader variant with one simplified mesh, the shading errors at distances could be approximated by filtering the rendered image at the closest distance.
+   > 通过在最近距离生成着色结果，再进行 filter 来模拟在远处的结果
+4. Finally, we further observed that although these Pareto frontiers may change with scene configurations, the shader variants on Pareto frontiers are similar at similar distances and with similarly simplified meshes. 
+   > Pareto 面上的 shader 变体基本上是比较稳定的，随着场景配置的变化不是很多
+
+所以，作者最后只选择**有代表性的距离**和**有代表性的简化网格**来计算最优 Shader 变体，而不是穷举所有场景配置。
+
+作者选择均匀的从 N 组距离组里面选择 4 组，然后每个距离组里面选择 10 个前面的简化网格（即 Pareto 面左右的十个），就得到了 40 个组合。然后用 genetic programming 的优化方法来得到每个 (距离, 网格) 组上的最优简化 Shader。这些优化好的 Shader 变体都放到一个数组里面。
+
