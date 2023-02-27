@@ -99,6 +99,18 @@ Computer graphics and interactive techniques. ACM Press/AddisonWesley Publishing
 
 To simplify a mesh, we adapt the established mesh simplification framework [4] by replacing the original geometric metric with an image error metric, which is computed using the supersampled/filtered images of the original shader as the reference. In particular, we iteratively apply edge collapse operations on edges. However, the placement policy that contracts one edge into a single vertex consumes many computations, so we choose a simpler place-to-endpoints policy that places the vertex to the endpoint with lower image error on the edge. To preserve the topology of the simplified mesh, edges with screen-space lengths larger than D (D = 1 in our implementation) screen pixels would not collapse [31] during our mesh simplification.
 
+> QEM
+> 
+> https://www.cs.cmu.edu/~./garland/Papers/quadrics.pdf
+> http://mgarland.org/research/quadrics.html
+> https://blog.csdn.net/lafengxiaoyu/article/details/72812681
+>
+> QEM 是 SIGGRAPH'97 提出的经典算法，截至现在已经有大约 5000 次引用。
+>
+> 其基本操作在于不断选择并且收缩点对 $ (v_1, v_2) $，且点对需要满足下面的条件之一：
+> 1. $ (v_1, v_2) $ 是边，或者
+> 2. $ \| v_1 - v_2 \| < t $，其中 $ t $ 是阈值参数
+
 #### 交替优化
 
 给定网格 $ M $ 和 Shader $ S $，
@@ -134,3 +146,6 @@ To simplify a mesh, we adapt the established mesh simplification framework [4] b
 
 作者选择均匀的从 N 组距离组里面选择 4 组，然后每个距离组里面选择 10 个前面的简化网格（即 Pareto 面左右的十个），就得到了 40 个组合。然后用 genetic programming 的优化方法来得到每个 (距离, 网格) 组上的最优简化 Shader。这些优化好的 Shader 变体都放到一个数组里面。
 
+然后，作者近似的认为整个问题是一个凸区域上找可行域边界的问题，所以只需要 1D search，而不需要遍历 2D 区域。
+
+最后，再用 find smooth path 的那些技术来获得比较连续的 LOD transition。
