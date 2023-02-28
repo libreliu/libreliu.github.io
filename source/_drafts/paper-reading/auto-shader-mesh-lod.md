@@ -6,7 +6,7 @@ papertitle: 'Automatic Mesh and Shader Level of Detail'
 paperauthors: Yuzhi Liang, Qi Song, Rui Wang, Yuchi Huo, Hujun Bao
 papersource: 'IEEE TVCG 2022'
 paperurl: 'https://ieeexplore.ieee.org/document/9815871'
-status: Working
+status: Complete
 ---
 
 本篇文章给出了在自适应划分的距离组下同时优化网格和 Shader 的 LOD 的优化算法。
@@ -84,9 +84,9 @@ ACM Trans. Graph., vol. 24, no. 3, pp. 445–452, 2005
 2. 应用不同的化简规则来生成简化 Shader
    - Operation Removal: 将 $ op(a, b) $ 省略为 $ a $ 或 $ b $
    - Code Transformation: 将 per-pixel 的 pixel shader 操作移动到 per-vertex 或 per-tessellated-vertex 的操作来减少计算量
-   - Moving to parameter: 将参数用其均值替换（$ n \to average(n) $），并且替换到 CPU 的某个 parameter stage 中进行计算，并将均值作为结果送入 GPU Shader 中
+   - Moving to parameter: 将参数用其均值替换（$ n \to average(n) $），并且替换到 "parameter stage" 中进行计算（详见 [3]），并将均值作为结果送入 GPU Shader 中
 
-> TODO: check 前面的工作
+> 本文并没有对 Shader 本身的优化方面做出额外的创新。这些方法主要来源于 [3] 这篇文章。
 
 #### Mesh 简化
 
@@ -94,12 +94,12 @@ ACM Trans. Graph., vol. 24, no. 3, pp. 445–452, 2005
 > - [4] M. Garland and P. S. Heckbert, “Surface simplification using
 quadric error metrics,” in Proceedings of the 24th annual conference on
 Computer graphics and interactive techniques. ACM Press/AddisonWesley Publishing Co., 1997, pp. 209–216.
+> - [7] P. Lindstrom and G. Turk, “Image-driven simplification,” ACM
+Transactions on Graphics (ToG), vol. 19, no. 3, pp. 204–241, 2000
 
-主要用了 [4] 那篇简化工作
+主要用了 [7] 中的 Image-driven simplification 的方法。这个方法是基于顶点对折叠的，每次折叠选择使 image error 升高最低的一对顶点。
 
-To simplify a mesh, we adapt the established mesh simplification framework [4] by replacing the original geometric metric with an image error metric, which is computed using the supersampled/filtered images of the original shader as the reference. In particular, we iteratively apply edge collapse operations on edges. However, the placement policy that contracts one edge into a single vertex consumes many computations, so we choose a simpler place-to-endpoints policy that places the vertex to the endpoint with lower image error on the edge. To preserve the topology of the simplified mesh, edges with screen-space lengths larger than D (D = 1 in our implementation) screen pixels would not collapse [31] during our mesh simplification.
-
-> QEM
+> **QEM**
 > 
 > https://www.cs.cmu.edu/~./garland/Papers/quadrics.pdf
 > http://mgarland.org/research/quadrics.html
@@ -107,16 +107,15 @@ To simplify a mesh, we adapt the established mesh simplification framework [4] b
 >
 > QEM 是 SIGGRAPH'97 提出的经典算法，截至现在已经有大约 5000 次引用。
 >
-> 其基本操作在于不断选择并且收缩点对 $ (v_1, v_2) $，且点对需要满足下面的条件之一：
-> 1. $ (v_1, v_2) $ 是边，或者
-> 2. $ \| v_1 - v_2 \| < t $，其中 $ t $ 是阈值参数
 
 #### 交替优化
 
 给定网格 $ M $ 和 Shader $ S $，
 1. 搞 Shader 优化 (然后生成一堆变体 $ S_i $)
-2. 对于每个在帕累托面上的 $ S_i $，利用该 Shader 进行相应的 Mesh 简化，使得新的 $ M_j $ 在满足质量要求 (也就是 error <= absolute error bound) 的情况下为最简
-   > 哪些？
+2. 对于每个在 Pareto frontier 上的 $ S_i $，利用该 Shader 进行相应的 Mesh 简化，使得新的 $ M_j $ 在满足质量要求 (也就是 error <= absolute error bound) 的情况下为最简
+   > Pareto frontier 上的 $ S_i $ 满足
+   > - 不存在另一个 Shader，他的性能一样，质量更好
+   > - 不存在另一个 Shader，他的质量一样，性能更好
 3. 将这些 $ (M_j, S_i) $ 按渲染性能排序，取前 20% 作为种子进入下一轮迭代
 
 
@@ -148,4 +147,8 @@ To simplify a mesh, we adapt the established mesh simplification framework [4] b
 
 然后，作者近似的认为整个问题是一个凸区域上找可行域边界的问题，所以只需要 1D search，而不需要遍历 2D 区域。
 
-最后，再用 find smooth path 的那些技术来获得比较连续的 LOD transition。
+然后，再用 find smooth path 的技术来获得比较连续的 LOD transition。
+
+> 具体来说，就是每个边的权重是在边界处的图像损失，这样图像损失小的转换会更容易被选中。
+
+最后，合并区别不大的 LOD 组。
