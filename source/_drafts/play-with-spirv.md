@@ -7,6 +7,8 @@ date: 2023-03-29
 
 本文主要关注 SPIR-V 1.6。
 
+前面分支 / 循环 / 函数等测试主要是在 Fragment 这种 OpEntrypoint 下调用的子函数内部进行测试的。
+
 ### See Also
 
 - https://en.wikipedia.org/wiki/Structured_program_theorem
@@ -25,6 +27,10 @@ date: 2023-03-29
 > 同时推荐用 [Shader Playground](https://shader-playground.timjones.io/) 来方便直接看到 SPIR-V Disassembly。
 >
 > 据博主本人测试，OpenAI 的 GPT-4 有**不错**的 SPIR-V 到 GLSL 反汇编能力。
+
+### Layout
+
+从反汇编结果可以看到，SPIR-V Module 有比较整齐的形式，事实上这些形式是规定好的：[Logical Layout of a Module - SPIR-V Specification](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_logical_layout_of_a_module)。
 
 ### 简单的函数
 
@@ -349,4 +355,146 @@ SPIR-V 反汇编：
 
 总结：
 - Continuation Block 处现在 emit 了循环后维护操作
+
+### 其它 Scope 的变量
+
+> `OpSource`, `OpName`, `OpMemberName` 属于调试信息。
+
+```c
+#version 310 es
+precision highp float;
+precision highp int;
+precision mediump sampler3D;
+
+// Anonymous uniform block - Import member names to shader directly
+layout(binding=0) uniform uniBlock {
+    uniform vec3 lightPos;
+    uniform float someOtherFloat;
+};
+
+layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec4 vertColor;
+
+// This will not work:
+// layout(binding = 0) uniform vec3 lightPos;
+//  'non-opaque uniforms outside a block' : not allowed when using GLSL for Vulkan 
+
+void mainImage(out vec4 c, in vec2 f, in vec3 lightPos) {}
+void main() {mainImage(outColor, gl_FragCoord.xy, lightPos);}
+```
+
+#### Input / Output
+
+> 所有可选 Decoration 可以参考 https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Decoration
+
+对于 gl_FragCoord：
+```
+                      OpName %gl_FragCoord "gl_FragCoord"
+                      OpDecorate %gl_FragCoord BuiltIn FragCoord
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+      %gl_FragCoord = OpVariable %_ptr_Input_v4float Input
+```
+
+对于 Input Variable：
+```
+                      OpName %vertColor "vertColor"
+                      OpDecorate %vertColor Location 0
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+                      %vertColor = OpVariable %_ptr_Input_v4float Input
+```
+
+对于 Output Variable：
+```
+                       OpName %outColor "outColor"
+                       OpDecorate %outColor Location 0
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+           %outColor = OpVariable %_ptr_Output_v4float Output
+```
+
+使用时直接 `OpLoad` 就可以。
+
+#### Uniform Block (Anonymous)
+
+> 匿名的 Uniform Block，其成员是被引入了 Global Scope 的。
+> 
+> 可以作为 OpenGL 的 uniforms outside a block 的平替。
+
+```
+               OpName %uniBlock "uniBlock"
+               OpMemberName %uniBlock 0 "lightPos"
+               OpMemberName %uniBlock 1 "someOtherFloat"
+               OpName %_ ""
+               OpMemberDecorate %uniBlock 0 Offset 0             ; Structure type = %uniBlock
+                                                                 ; Member = 0
+                                                                 ; Decoration = Offset
+                                                                 ; Byte Offset = 0
+               OpMemberDecorate %uniBlock 1 Offset 12
+               OpDecorate %uniBlock Block                        ; Apply only to a structure type to establish
+                                                                 ; it is a memory interface block
+               OpDecorate %_ DescriptorSet 0                     ; Apply only to a variable. 
+                                                                 ; Descriptor Set is an unsigned 32-bit integer 
+                                                                 ; forming part of the linkage between the client
+                                                                 ; API and SPIR-V memory buffers, images, etc. 
+                                                                 ; See the client API specification for more detail.
+               OpDecorate %_ Binding 0                           ; Apply only to a variable.
+                                                                 ; Binding Point is an unsigned 32-bit integer
+                                                                 ; forming part of the linkage between the client
+                                                                 ; API and SPIR-V memory buffers, images, etc.
+                                                                 ; See the client API specification for more detail.
+   %uniBlock = OpTypeStruct %v3float %float                      ; 后面指定所有成员的类型，这里是 {vec3, float}
+%_ptr_Uniform_uniBlock = OpTypePointer Uniform %uniBlock         ; Storage Class = Uniform
+          %_ = OpVariable %_ptr_Uniform_uniBlock Uniform
+%_ptr_Uniform_v3float = OpTypePointer Uniform %v3float
+
+         %34 = OpAccessChain %_ptr_Uniform_v3float %_ %int_0     ; Create a pointer into a composite object.
+                                                                 ; Base = %_, Indexes = {%int_0}
+                                                                 ; Each index in Indexes
+                                                                 ; - must have a scalar integer type
+                                                                 ; - is treated as signed
+                                                                 ; - if indexing into a structure, must be an 
+                                                                 ;   OpConstant whose value is in bounds for selecting a member
+                                                                 ; - if indexing into a vector, array, or matrix, 
+                                                                 ;   with the result type being a logical pointer type,
+                                                                 ;   causes undefined behavior if not in bounds.
+         %35 = OpLoad %v3float %34
+```
+
+#### Uniform Block (Named)
+
+把上面的示例程序里面的 `uniform uniBlock` 类型的不具名 Uniform Block 加一个实例名字：
+
+```c
+layout(binding=0) uniform uniBlock {
+    uniform vec3 lightPos;
+    uniform float someOtherFloat;
+} uniInst;
+
+// ..skip some lines..
+void main() {mainImage(outColor, gl_FragCoord.xy, uniInst.lightPos);}
+```
+
+下面是相关的 SPIR-V：
+
+```
+               OpName %uniInst "uniInst"
+               OpDecorate %gl_FragCoord BuiltIn FragCoord
+               OpMemberDecorate %uniBlock 0 Offset 0
+               OpMemberDecorate %uniBlock 1 Offset 12
+               OpDecorate %uniBlock Block
+               OpDecorate %uniInst DescriptorSet 0
+               OpDecorate %uniInst Binding 0
+   %uniBlock = OpTypeStruct %v3float %float
+%_ptr_Uniform_uniBlock = OpTypePointer Uniform %uniBlock
+    %uniInst = OpVariable %_ptr_Uniform_uniBlock Uniform
+%_ptr_Uniform_uniBlock = OpTypePointer Uniform %uniBlock
+    %uniInst = OpVariable %_ptr_Uniform_uniBlock Uniform
+         %34 = OpAccessChain %_ptr_Uniform_v3float %uniInst %int_0
+         %35 = OpLoad %v3float %34
+```
+
+可以看到，主要区别是 `%_` 变成了 `%uniInst`，其实就是 OpName 从 `""` 变成了 `"uniInst"`，这样 SPIR-V 反汇编工具生成的反汇编能更好看一些而已。真正的 Result ID 等的逻辑关系都是没有变化的。
+
+> 当然，不知道反射库依赖不依赖 `OpName`，当然去掉了也不是没法反射就是了，只要 layout 一样，怼上去就得了。
+
+### Sampler
 
