@@ -7,6 +7,11 @@ date: 2023-03-29
 
 本文主要关注 SPIR-V 1.6。
 
+### See Also
+
+- https://en.wikipedia.org/wiki/Structured_program_theorem
+- https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
+
 ## 例子
 
 > 通过例子来学习 SPIR-V 会比较快捷，也比较容易理解。
@@ -114,6 +119,7 @@ SPIR-V 反汇编：
                OpSelectionMerge %73 None                  ; Declare a structured selection
                                                           ; This instruction must immediately precede either an OpBranchConditional or OpSwitch instruction. That is, it must be the second-to-last instruction in its block.
                                                           ; Selection Control = None; 这里可以给 Hint 提示此分支是否应该 remove
+                                                          ; 并且指定 Merge Block 为 %73，也就是分支结束的地方
                OpBranchConditional %71 %72 %75            ; 如果 %71 为 true, 则跳到 %72 标号，否则跳到 %75 标号 - 标志基本块结束
          %72 = OpLabel                                    ; 
                OpStore %c_0 %int_1
@@ -266,23 +272,81 @@ SPIR-V 反汇编：
                OpStore %count %95
          %96 = OpLoad %int %count
          %97 = OpIEqual %bool %96 %int_2
-               OpSelectionMerge %99 None              ; 
+               OpSelectionMerge %99 None              ; If 的 Merge Block = %99
                OpBranchConditional %97 %98 %99
 
          %98 = OpLabel
-               OpBranch %87
+               OpBranch %87                           ; => break out of the loop => emit instruction
+                                                      ;    to branch to while's merge block
 
-         %99 = OpLabel
-               OpBranch %88
+         %99 = OpLabel                                ; 正常走 => 到达 while 末尾 => emit 到 while
+               OpBranch %88                           ; 的 Continue Block
 
-         %88 = OpLabel
+         %88 = OpLabel                                ; Continue Block 
                OpBranch %85
 
-         %87 = OpLabel
+         %87 = OpLabel                                ; Merge Block
         %101 = OpLoad %int %sum
                OpReturnValue %101
                OpFunctionEnd
 ```
 
+总结：
+- break 作为一个基本块末尾，直接 emit 无条件 branch 来跳到 while 循环的 merge block。
 
 #### for 循环
+
+GLSL 代码：
+```c
+int testFor(int count) {
+    int sum = 0;
+    for (int i = 0; i < count; i++) {
+        sum += 1;
+    }
+    return sum;
+}
+```
+
+SPIR-V 反汇编：
+```
+%testFor_i1_ = OpFunction %int None %27
+    %count_0 = OpFunctionParameter %_ptr_Function_int
+
+         %33 = OpLabel
+      %sum_0 = OpVariable %_ptr_Function_int Function
+          %i = OpVariable %_ptr_Function_int Function
+               OpStore %sum_0 %int_0
+               OpStore %i %int_0
+               OpBranch %109
+
+        %109 = OpLabel
+               OpLoopMerge %111 %112 None
+               OpBranch %113
+
+        %113 = OpLabel
+        %114 = OpLoad %int %i
+        %115 = OpLoad %int %count_0
+        %116 = OpSLessThan %bool %114 %115
+               OpBranchConditional %116 %110 %111
+
+        %110 = OpLabel
+        %117 = OpLoad %int %sum_0
+        %118 = OpIAdd %int %117 %int_1
+               OpStore %sum_0 %118
+               OpBranch %112
+
+        %112 = OpLabel                              ; Continuation Block
+        %119 = OpLoad %int %i                       ; for 循环的循环结束操作放到了这里
+        %120 = OpIAdd %int %119 %int_1
+               OpStore %i %120
+               OpBranch %109
+
+        %111 = OpLabel                              ; Merge Block
+        %121 = OpLoad %int %sum_0
+               OpReturnValue %121
+               OpFunctionEnd
+```
+
+总结：
+- Continuation Block 处现在 emit 了循环后维护操作
+
