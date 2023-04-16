@@ -1,5 +1,5 @@
 ---
-title: SPIR-V 初探
+title: SPIR-V 初探 - Fragment Shader
 date: 2023-03-29
 ---
 
@@ -8,6 +8,11 @@ date: 2023-03-29
 本文主要关注 SPIR-V 1.6。
 
 前面分支 / 循环 / 函数等测试主要是在 Fragment 这种 OpEntrypoint 下调用的子函数内部进行测试的。
+
+下面的实验基本使用 [Shader Playground](https://shader-playground.timjones.io/) 的 glslang trunk (上面写使用的 2022-09-19 的版本)，其中：
+- Shader stage 选择 **frag**
+- Target 选择 Vulkan 1.3
+- Output format 选择 SPIR-V
 
 ### See Also
 
@@ -31,6 +36,48 @@ date: 2023-03-29
 ### Layout
 
 从反汇编结果可以看到，SPIR-V Module 有比较整齐的形式，事实上这些形式是规定好的：[Logical Layout of a Module - SPIR-V Specification](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_logical_layout_of_a_module)。
+
+### 概观
+
+```c
+#version 310 es
+precision highp float;
+precision highp int;
+precision mediump sampler3D;
+
+void main() {}
+```
+
+```
+; SPIR-V
+; Version: 1.6
+; Generator: Khronos Glslang Reference Front End; 10
+; Bound: 6
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450                ; Addressing model = Logical
+                                                            ; Logical 模式下面，指针只能从已有的对象中创建，指针的地址也都是假的
+                                                            ;   （也就是说，不能把指针的值拷贝到别的变量中去）
+                                                            ; 也有一些带有物理指针的 Addressing Model 和相应的 Memory Model
+                                                            ;   => 留待后文探索
+                                                            ; Memory Model = GLSL450
+               OpEntryPoint Fragment %main "main"           ; Execution Model = Fragment
+                                                            ; Entrypoint = %main (用 OpFunction 定义的某个 Result ID)
+                                                            ; Name = "main" (Entrypoint 要有一个字符串名字)
+               OpExecutionMode %main OriginUpperLeft        ; The coordinates decorated by FragCoord
+                                                            ; appear to originate in the upper left,
+                                                            ; and increase toward the right and downward.
+                                                            ; Only valid with the Fragment Execution Model.
+               OpSource ESSL 310                            ; 标记源语言; ESSL = OpenGL ES Shader Language
+               OpName %main "main"
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+```
 
 ### 简单的函数
 
@@ -89,6 +136,10 @@ SPIR-V 反汇编：
                OpReturnValue %50                           ; 不返回值的话使用 OpReturn
                OpFunctionEnd
 ```
+
+### 函数的 in / out 参数
+
+
 
 ### 分支
 
@@ -367,7 +418,7 @@ precision highp int;
 precision mediump sampler3D;
 
 // Anonymous uniform block - Import member names to shader directly
-layout(binding=0) uniform uniBlock {
+layout(binding = 0) uniform uniBlock {
     uniform vec3 lightPos;
     uniform float someOtherFloat;
 };
@@ -497,4 +548,14 @@ void main() {mainImage(outColor, gl_FragCoord.xy, uniInst.lightPos);}
 > 当然，不知道反射库依赖不依赖 `OpName`，当然去掉了也不是没法反射就是了，只要 layout 一样，怼上去就得了。
 
 ### Sampler
+
+### Matrix 类型
+
+### 导数 `dFdx` / `dFdy` & `discard`
+
+https://github.com/gpuweb/gpuweb/issues/361
+
+http://www.xionggf.com/post/opengl/an_introduction_to_shader_derivative_functions/
+
+### Group Ops
 
