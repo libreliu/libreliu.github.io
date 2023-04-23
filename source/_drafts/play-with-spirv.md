@@ -139,7 +139,51 @@ SPIR-V 反汇编：
 
 ### 函数的 in / out 参数
 
+函数定义：
+```c
+void inoutTest(in vec2 uv, out float o1, in float i2, out vec2 o2) {
+    o2 = uv;
+    o1 = i2;
+}
+```
 
+```
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+         %v1 = OpVariable %_ptr_Function_v2float Function
+         %t1 = OpVariable %_ptr_Function_float Function
+         %t2 = OpVariable %_ptr_Function_float Function
+         %v2 = OpVariable %_ptr_Function_v2float Function
+      %param = OpVariable %_ptr_Function_v2float Function
+    %param_0 = OpVariable %_ptr_Function_float Function
+    %param_1 = OpVariable %_ptr_Function_float Function
+    %param_2 = OpVariable %_ptr_Function_v2float Function
+         %24 = OpLoad %v2float %v1
+               OpStore %param %24
+         %27 = OpLoad %float %t2
+               OpStore %param_1 %27
+         %29 = OpFunctionCall %void %inoutTest_vf2_f1_f1_vf2_ %param %param_0 %param_1 %param_2
+         %30 = OpLoad %float %param_0   ; 可以看到，就是实现了 %param_0 变量内值的变化
+               OpStore %t1 %30
+         %31 = OpLoad %v2float %param_2
+               OpStore %v2 %31
+               OpStore %fragColor %38
+               OpReturn
+               OpFunctionEnd
+%inoutTest_vf2_f1_f1_vf2_ = OpFunction %void None %10
+         %uv = OpFunctionParameter %_ptr_Function_v2float
+         %o1 = OpFunctionParameter %_ptr_Function_float
+         %i2 = OpFunctionParameter %_ptr_Function_float
+         %o2 = OpFunctionParameter %_ptr_Function_v2float
+
+         %16 = OpLabel
+         %17 = OpLoad %v2float %uv
+               OpStore %o2 %17
+         %18 = OpLoad %float %i2
+               OpStore %o1 %18
+               OpReturn
+               OpFunctionEnd
+```
 
 ### 分支
 
@@ -407,7 +451,7 @@ SPIR-V 反汇编：
 总结：
 - Continuation Block 处现在 emit 了循环后维护操作
 
-### 其它 Scope 的变量
+### Uniform、BuiltIn 等其它 Scope 的变量
 
 > `OpSource`, `OpName`, `OpMemberName` 属于调试信息。
 
@@ -548,6 +592,149 @@ void main() {mainImage(outColor, gl_FragCoord.xy, uniInst.lightPos);}
 > 当然，不知道反射库依赖不依赖 `OpName`，当然去掉了也不是没法反射就是了，只要 layout 一样，怼上去就得了。
 
 ### Sampler
+
+GLSL 源码：
+```c
+#version 450
+
+layout (binding = 1) uniform sampler2D samplerColor;
+layout (binding = 2) uniform texture2D tex;
+layout (binding = 3) uniform sampler samp;
+layout (location = 0) in vec2 inUV;
+layout (location = 1) in float inLodBias;
+layout (location = 0) out vec4 outFragColor;
+
+void main() 
+{
+	vec4 color = texture(samplerColor, inUV, inLodBias);
+      vec4 color2 = texture(sampler2D(tex, samp), inUV, inLodBias);
+	outFragColor = color + color2;
+}
+```
+
+SPIR-V 反汇编：
+```
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos Glslang Reference Front End; 10
+; Bound: 40
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %inUV %inLodBias %outFragColor
+               OpExecutionMode %main OriginUpperLeft
+               OpSource GLSL 450
+               OpName %main "main"
+               OpName %color "color"
+               OpName %samplerColor "samplerColor"
+               OpName %inUV "inUV"
+               OpName %inLodBias "inLodBias"
+               OpName %color2 "color2"
+               OpName %tex "tex"
+               OpName %samp "samp"
+               OpName %outFragColor "outFragColor"
+               OpDecorate %samplerColor DescriptorSet 0
+               OpDecorate %samplerColor Binding 1
+               OpDecorate %inUV Location 0
+               OpDecorate %inLodBias Location 1
+               OpDecorate %tex DescriptorSet 0
+               OpDecorate %tex Binding 2
+               OpDecorate %samp DescriptorSet 0
+               OpDecorate %samp Binding 3
+               OpDecorate %outFragColor Location 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+         %10 = OpTypeImage %float 2D 0 0 0 1 Unknown
+         %11 = OpTypeSampledImage %10
+%_ptr_UniformConstant_11 = OpTypePointer UniformConstant %11
+%samplerColor = OpVariable %_ptr_UniformConstant_11 UniformConstant
+    %v2float = OpTypeVector %float 2
+%_ptr_Input_v2float = OpTypePointer Input %v2float
+       %inUV = OpVariable %_ptr_Input_v2float Input
+%_ptr_Input_float = OpTypePointer Input %float
+  %inLodBias = OpVariable %_ptr_Input_float Input
+%_ptr_UniformConstant_10 = OpTypePointer UniformConstant %10
+        %tex = OpVariable %_ptr_UniformConstant_10 UniformConstant
+         %27 = OpTypeSampler
+%_ptr_UniformConstant_27 = OpTypePointer UniformConstant %27
+       %samp = OpVariable %_ptr_UniformConstant_27 UniformConstant
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%outFragColor = OpVariable %_ptr_Output_v4float Output
+
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+      %color = OpVariable %_ptr_Function_v4float Function
+     %color2 = OpVariable %_ptr_Function_v4float Function
+         %14 = OpLoad %11 %samplerColor
+         %18 = OpLoad %v2float %inUV
+         %21 = OpLoad %float %inLodBias
+         %22 = OpImageSampleImplicitLod %v4float %14 %18 Bias %21
+               OpStore %color %22
+         %26 = OpLoad %10 %tex
+         %30 = OpLoad %27 %samp
+         %31 = OpSampledImage %11 %26 %30
+         %32 = OpLoad %v2float %inUV
+         %33 = OpLoad %float %inLodBias
+         %34 = OpImageSampleImplicitLod %v4float %31 %32 Bias %33
+               OpStore %color2 %34
+         %37 = OpLoad %v4float %color
+         %38 = OpLoad %v4float %color2
+         %39 = OpFAdd %v4float %37 %38
+               OpStore %outFragColor %39
+               OpReturn
+               OpFunctionEnd
+```
+
+总结如下：
+- Sampler (`VK_DESCRIPTOR_TYPE_SAMPLER`)
+  ```
+  OpName %samp "samp"
+  OpDecorate %samp DescriptorSet 0
+  OpDecorate %samp Binding 3
+
+  %27 = OpTypeSampler
+  %_ptr_UniformConstant_27 = OpTypePointer UniformConstant %27
+  %samp = OpVariable %_ptr_UniformConstant_27 UniformConstant
+  ```
+- Sampled Image (`VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE`)
+  ```
+  OpName %tex "tex"
+  OpDecorate %tex DescriptorSet 0
+  OpDecorate %tex Binding 2
+
+  %10 = OpTypeImage %float 2D 0 0 0 1 Unknown
+  %_ptr_UniformConstant_10 = OpTypePointer UniformConstant %10
+  %tex = OpVariable %_ptr_UniformConstant_10 UniformConstant
+
+  ; 使用
+  %26 = OpLoad %10 %tex
+  %30 = OpLoad %27 %samp
+  %31 = OpSampledImage %11 %26 %30
+  %32 = OpLoad %v2float %inUV
+  %33 = OpLoad %float %inLodBias
+  %34 = OpImageSampleImplicitLod %v4float %31 %32 Bias %33
+  ```
+- Combined Image Sampler (`VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`)
+  ```
+  OpName %samplerColor "samplerColor"
+  OpDecorate %samplerColor DescriptorSet 0
+  OpDecorate %samplerColor Binding 1
+
+  %10 = OpTypeImage %float 2D 0 0 0 1 Unknown
+  %11 = OpTypeSampledImage %10
+  %_ptr_UniformConstant_11 = OpTypePointer UniformConstant %11
+  %samplerColor = OpVariable %_ptr_UniformConstant_11 UniformConstant
+
+  ; 使用
+  %14 = OpLoad %11 %samplerColor
+  %18 = OpLoad %v2float %inUV
+  %21 = OpLoad %float %inLodBias
+  %22 = OpImageSampleImplicitLod %v4float %14 %18 Bias %21
+  ```
 
 ### Matrix 类型
 
