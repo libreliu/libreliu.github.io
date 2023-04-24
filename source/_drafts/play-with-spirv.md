@@ -606,9 +606,9 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-	vec4 color = texture(samplerColor, inUV, inLodBias);
+    vec4 color = texture(samplerColor, inUV, inLodBias);
       vec4 color2 = texture(sampler2D(tex, samp), inUV, inLodBias);
-	outFragColor = color + color2;
+    outFragColor = color + color2;
 }
 ```
 
@@ -736,6 +736,200 @@ SPIR-V 反汇编：
   %22 = OpImageSampleImplicitLod %v4float %14 %18 Bias %21
   ```
 
+### Storage Buffer 
+
+> [14.1.7. Storage Buffer](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html#descriptorsets-storagebuffer)
+
+> 我的一个疑惑：
+> 
+> ```c
+> // 不可以编译通过
+> layout(std430, set = 1, binding = 0) readonly buffer objectBufferType {
+>     float someBeginningVar;
+>     ObjectData objects[]; 
+>     float someEndingVar;
+> } objectBuffer;
+> ```
+>
+> ```c
+> // 可以，参考 https://github.com/KhronosGroup/SPIRV-Guide/blob/master/chapters/access_chains.md
+> // 的例子
+> layout(std430, set = 1, binding = 0) readonly buffer objectBufferType {
+>     float someBeginningVar;
+>     ObjectData objects[];
+> } objectBuffer;
+> ```
+>
+> ```c
+> // （应该）可以编译通过
+> layout(std430, set = 1, binding = 0) readonly buffer objectBufferType {
+>     float someBeginningVar;
+> } objectBuffer;
+> ```
+
+GLSL 源码：
+
+```c
+#version 450
+
+layout (location = 0) out vec4 outFragColor;
+
+struct ObjectData {
+    vec4 model;
+    float moreData;
+    vec4 padThis;
+};
+
+struct WritableData {
+    float testData;
+};
+
+// std430 vs std140: https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)
+layout(std430, set = 1, binding = 0) readonly buffer objectBufferType {
+    ObjectData objects[];
+} objectBuffer;
+
+layout(std430, set = 1, binding = 1) buffer myWritableBufferType {
+    WritableData datas[];
+} writableBuffer;
+
+void main() 
+{
+    int index = int(gl_FragCoord.x * 1000);
+    outFragColor = objectBuffer.objects[index].model;
+    writableBuffer.datas[index].testData = 123;
+}
+```
+
+SPIR-V 反汇编：
+```
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos Glslang Reference Front End; 10
+; Bound: 42
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %gl_FragCoord %outFragColor
+               OpExecutionMode %main OriginUpperLeft
+               OpSource GLSL 450
+               OpName %main "main"
+               OpName %index "index"
+               OpName %gl_FragCoord "gl_FragCoord"
+               OpName %outFragColor "outFragColor"
+               OpName %ObjectData "ObjectData"
+               OpMemberName %ObjectData 0 "model"
+               OpMemberName %ObjectData 1 "moreData"
+               OpMemberName %ObjectData 2 "padThis"
+               OpName %objectBufferType "objectBufferType"
+               OpMemberName %objectBufferType 0 "objects"
+               OpName %objectBuffer "objectBuffer"
+               OpName %WritableData "WritableData"
+               OpMemberName %WritableData 0 "testData"
+               OpName %myWritableBufferType "myWritableBufferType"
+               OpMemberName %myWritableBufferType 0 "datas"
+               OpName %writableBuffer "writableBuffer"
+               OpDecorate %gl_FragCoord BuiltIn FragCoord
+               OpDecorate %outFragColor Location 0
+               OpMemberDecorate %ObjectData 0 Offset 0
+               OpMemberDecorate %ObjectData 1 Offset 16
+               OpMemberDecorate %ObjectData 2 Offset 32
+               OpDecorate %_runtimearr_ObjectData ArrayStride 48
+               OpMemberDecorate %objectBufferType 0 NonWritable
+               OpMemberDecorate %objectBufferType 0 Offset 0
+               OpDecorate %objectBufferType BufferBlock
+               OpDecorate %objectBuffer DescriptorSet 1
+               OpDecorate %objectBuffer Binding 0
+               OpMemberDecorate %WritableData 0 Offset 0
+               OpDecorate %_runtimearr_WritableData ArrayStride 4
+               OpMemberDecorate %myWritableBufferType 0 Offset 0
+               OpDecorate %myWritableBufferType BufferBlock
+               OpDecorate %writableBuffer DescriptorSet 1
+               OpDecorate %writableBuffer Binding 1
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%gl_FragCoord = OpVariable %_ptr_Input_v4float Input
+       %uint = OpTypeInt 32 0
+     %uint_0 = OpConstant %uint 0
+%_ptr_Input_float = OpTypePointer Input %float
+ %float_1000 = OpConstant %float 1000
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%outFragColor = OpVariable %_ptr_Output_v4float Output
+ %ObjectData = OpTypeStruct %v4float %float %v4float
+%_runtimearr_ObjectData = OpTypeRuntimeArray %ObjectData
+%objectBufferType = OpTypeStruct %_runtimearr_ObjectData
+%_ptr_Uniform_objectBufferType = OpTypePointer Uniform %objectBufferType
+%objectBuffer = OpVariable %_ptr_Uniform_objectBufferType Uniform
+      %int_0 = OpConstant %int 0
+%_ptr_Uniform_v4float = OpTypePointer Uniform %v4float
+%WritableData = OpTypeStruct %float
+%_runtimearr_WritableData = OpTypeRuntimeArray %WritableData
+%myWritableBufferType = OpTypeStruct %_runtimearr_WritableData
+%_ptr_Uniform_myWritableBufferType = OpTypePointer Uniform %myWritableBufferType
+%writableBuffer = OpVariable %_ptr_Uniform_myWritableBufferType Uniform
+  %float_123 = OpConstant %float 123
+%_ptr_Uniform_float = OpTypePointer Uniform %float
+
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+      %index = OpVariable %_ptr_Function_int Function
+         %16 = OpAccessChain %_ptr_Input_float %gl_FragCoord %uint_0
+         %17 = OpLoad %float %16
+         %19 = OpFMul %float %17 %float_1000
+         %20 = OpConvertFToS %int %19
+               OpStore %index %20
+         %29 = OpLoad %int %index
+         %31 = OpAccessChain %_ptr_Uniform_v4float %objectBuffer %int_0 %29 %int_0
+         %32 = OpLoad %v4float %31
+               OpStore %outFragColor %32
+         %38 = OpLoad %int %index
+         %41 = OpAccessChain %_ptr_Uniform_float %writableBuffer %int_0 %38 %int_0
+               OpStore %41 %float_123
+               OpReturn
+               OpFunctionEnd
+```
+
+总结：
+```
+               OpName %ObjectData "ObjectData"
+               OpMemberName %ObjectData 0 "model"
+               OpMemberName %ObjectData 1 "moreData"
+               OpMemberName %ObjectData 2 "padThis"
+
+               OpName %objectBufferType "objectBufferType"
+               OpMemberName %objectBufferType 0 "objects"
+               OpName %objectBuffer "objectBuffer"
+               OpMemberDecorate %ObjectData 0 Offset 0
+               OpMemberDecorate %ObjectData 1 Offset 16
+               OpMemberDecorate %ObjectData 2 Offset 32
+               OpDecorate %_runtimearr_ObjectData ArrayStride 48
+               OpMemberDecorate %objectBufferType 0 NonWritable    ; 如果可变则无此 decorate
+               OpMemberDecorate %objectBufferType 0 Offset 0
+               OpDecorate %objectBufferType BufferBlock
+               OpDecorate %objectBuffer DescriptorSet 1
+               OpDecorate %objectBuffer Binding 0
+ %ObjectData = OpTypeStruct %v4float %float %v4float
+%_runtimearr_ObjectData = OpTypeRuntimeArray %ObjectData           ; Declare a new run-time array type.
+                                                                   ; Its length is not known at compile time.
+                                                                   ; See OpArrayLength for getting the Length
+                                                                   ; of an array of this type.
+%objectBufferType = OpTypeStruct %_runtimearr_ObjectData
+%_ptr_Uniform_objectBufferType = OpTypePointer Uniform %objectBufferType
+%objectBuffer = OpVariable %_ptr_Uniform_objectBufferType Uniform
+
+; 访问
+; 使用 OpAccessChain 指令，该指令是 base, indices... 格式
+; 此例子： objectBuffer[0 th][index th][0 th] 来获得 model 的指针，该指针之后可以 load / store
+         %29 = OpLoad %int %index
+         %31 = OpAccessChain %_ptr_Uniform_v4float %objectBuffer %int_0 %29 %int_0
+```
+
 ### Matrix 类型
 
 ### 导数 `dFdx` / `dFdy` & `discard`
@@ -745,4 +939,85 @@ https://github.com/gpuweb/gpuweb/issues/361
 http://www.xionggf.com/post/opengl/an_introduction_to_shader_derivative_functions/
 
 ### Group Ops
+
+### Atomic 操作
+
+> https://github.com/KhronosGroup/Vulkan-Guide/blob/main/chapters/atomics.adoc
+
+GLSL 源码：
+```c
+#version 450
+
+layout (location = 0) out vec4 outFragColor;
+
+// std430 vs std140: https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)
+layout(std430, set = 1, binding = 0) buffer statsBufferType {
+    int totalInvocations;
+} statsBuffer;
+
+
+void main() 
+{
+    // returns the value before the add
+    int globalIdx = atomicAdd(statsBuffer.totalInvocations, 1);
+    outFragColor = vec4(1.0);
+}
+```
+
+SPIR-V 反汇编：
+```
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos Glslang Reference Front End; 10
+; Bound: 26
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %outFragColor
+               OpExecutionMode %main OriginUpperLeft
+               OpSource GLSL 450
+               OpName %main "main"
+               OpName %globalIdx "globalIdx"
+               OpName %statsBufferType "statsBufferType"
+               OpMemberName %statsBufferType 0 "totalInvocations"
+               OpName %statsBuffer "statsBuffer"
+               OpName %outFragColor "outFragColor"
+               OpMemberDecorate %statsBufferType 0 Offset 0
+               OpDecorate %statsBufferType BufferBlock
+               OpDecorate %statsBuffer DescriptorSet 1
+               OpDecorate %statsBuffer Binding 0
+               OpDecorate %outFragColor Location 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+%statsBufferType = OpTypeStruct %int
+%_ptr_Uniform_statsBufferType = OpTypePointer Uniform %statsBufferType
+%statsBuffer = OpVariable %_ptr_Uniform_statsBufferType Uniform
+      %int_0 = OpConstant %int 0
+%_ptr_Uniform_int = OpTypePointer Uniform %int
+      %int_1 = OpConstant %int 1
+       %uint = OpTypeInt 32 0
+     %uint_1 = OpConstant %uint 1
+     %uint_0 = OpConstant %uint 0
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%outFragColor = OpVariable %_ptr_Output_v4float Output
+    %float_1 = OpConstant %float 1
+         %25 = OpConstantComposite %v4float %float_1 %float_1 %float_1 %float_1
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+  %globalIdx = OpVariable %_ptr_Function_int Function
+         %14 = OpAccessChain %_ptr_Uniform_int %statsBuffer %int_0
+         %19 = OpAtomicIAdd %int %14 %uint_1 %uint_0 %int_1             ; Pointer = %14
+                                                                        ; Memory Scope = %uint_1 = 1
+                                                                        ; Semantics = %uint_0 = 0
+                                                                        ; Value = %uint_1 = 1
+               OpStore %globalIdx %19
+               OpStore %outFragColor %25
+               OpReturn
+               OpFunctionEnd
+```
 
