@@ -1013,7 +1013,9 @@ SPIR-V 反汇编：
          %14 = OpAccessChain %_ptr_Uniform_int %statsBuffer %int_0
          %19 = OpAtomicIAdd %int %14 %uint_1 %uint_0 %int_1             ; Pointer = %14
                                                                         ; Memory Scope = %uint_1 = 1
+                                                                        ; => Scope is the current device
                                                                         ; Semantics = %uint_0 = 0
+                                                                        ; => None (relaxed)
                                                                         ; Value = %uint_1 = 1
                OpStore %globalIdx %19
                OpStore %outFragColor %25
@@ -1021,3 +1023,4 @@ SPIR-V 反汇编：
                OpFunctionEnd
 ```
 
+> Memory Scope: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Scope_-id-
