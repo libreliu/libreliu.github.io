@@ -53,6 +53,25 @@ wlroots 本身提供一个参考实现 tinywl，可以在数千行代码内实�
 
 `wlr_` 开头的符号则是由 wlroots 实现并提供的。
 
+#### 测试
+
+```
+cd wlroots/tinywl
+sudo modprobe vkms
+udevadm settle
+export WLR_BACKENDS=drm
+export WLR_RENDERER=pixman
+export WLR_DRM_DEVICES=/dev/dri/by-path/platform-vkms-card
+sudo chmod ugo+rw /dev/dri/by-path/platform-vkms-card
+sudo -E seatd-launch -- ./tinywl -s 'kill $PPID' || [ $? = 143 ]
+```
+
+> Note: NVIDIA 的专有驱动的 Kernel Mode Setting 功能默认关闭，需要在内核启动参数中增加 `nvidia_drm.modeset=1` 来开启
+>
+> - 鉴于 N 家会自己提供 Xorg DDX 部分的动态链接库，开不开 KMS 对 X 支持没什么影响，但是绝大多数其它的混成器都依赖 KMS 来处理 Display 相关的内容
+> 
+> backend/session/session.c:383 中会通过 `drmIsKMS` 来筛选掉不支持 KMS 的 drm 设备节点
+
 ### `wlr_backend`
 
 实现下面的接口
