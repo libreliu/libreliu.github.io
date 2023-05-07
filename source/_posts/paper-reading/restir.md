@@ -23,7 +23,7 @@ $$
 \begin{aligned}
 L_o(x, \omega_o) &= \int_\Omega f(x, \omega_i, \omega_o) L_i(x, \omega_i) \cos \theta^x_i d \omega_i \\
 &= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \qquad \text{(with light from } x' \text{)} \\
-&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_o(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
+&= \int_\mathcal{A_i} f(x, \omega_i, \omega_o) V(x, x') L_i(x', \omega_i) \frac{\cos \theta^x_i \cos \theta^{x'}_{o} }{| x - x' |^2} dA \\
 \end{aligned}
 $$
 
@@ -239,16 +239,88 @@ $$
 p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)}
 $$
 
-(WRS) 假设对于序列 $ \{x_1, ..., x_m\} $，我们希望按上述概率抽样得到样本 $x_z$
-1. 维护一个当前总权重 $ w_\text{sum} $，当前总样本数 $ M $ 和最终样本 $ y $
-2. 初始化 $ y:=x_1; \, M:=1; \, w_\text{sum}:=w(x_1) $
-3. 对于每个新样本 $x_i$
-   - 以 $ w(x_i) / w_\text{sum} $ 概率：$ y:=x_i; \, M:=M+1; \, w_\text{sum} := w_\text{sum}+w(x_i) $
-   - 以 $ 1 - w(x_i) / w_\text{sum} $ 概率：$ M:=M+1; \, w_\text{sum} := w_\text{sum}+w(x_i) $
+(WRS) 假设对于序列 $ \{x_1, ..., x_m\} $，我们希望按上述概率抽样得到样本 $x_z$，则可以利用如下的伪代码
+
+```python
+class Reservoir:
+   def __init__(self):
+      self.y = 0
+      self.w_sum = 0
+      self.M = 0
+   
+   def update(self, x_i, w_i):
+      """
+      x_i: sample
+      w_i: weight of sample x_i
+      """
+      self.w_sum += w_i
+      self.M += 1
+      
+      with probability(w_i / w_sum):
+         self.y = x_i
+      
+      # keep the original otherwise
+```
 
 这样对于某个样本 $ x_k $，经过这个过程最后被选中的概率为 `P(第 k 次被选中) * P(第 k 次之后都没有被换掉)`，乘起来很容易证明正确性。
 
 WRS 方法的优势在于，不需要完成存储 $ \{x_i\} $ 序列本身，而是线性扫描一遍这个序列就可以得出结果，非常适合和前面的 RIS 方法搭配使用。
 ### 蓄水池合并 (Reservoir Merging)
 
-<!-- 假设我们要从 $ \{x_1, ..., x_m, y_1, ..., y_n\} $ 中抽样， -->
+假设我们已经有了若干个蓄水池 $ r_1, ... r_k $，构造一个等价于输入了所有 $ r_1, ..., r_k $ 输入过样本的蓄水池 $ s $ 的方法如下：
+
+```python
+def mergeReservoir(reservoirs: List['Reservoir']):
+   s = Reservoir()
+   total_w = 0
+   for i in range(0, len(reservoirs)):
+      s.update(reservoirs[i].y, reservoirs[i].w_sum)
+```
+
+利用此方法，我们有
+
+$$
+P(y_i 被抽到| 给定 r_1, ..., r_k) = \frac{\sum_{1 \le v \le n_i}{w(x_{iv})}}{\sum_{1 \le u \le k,1 \le v \le n_u}{w(x_{uv})}}
+$$
+
+则
+
+$$
+P(y_i 被抽到| 给定 x_{ij}) =  \frac{\sum_{1 \le v \le n_i}{w(x_{iv})}}{\sum_{1 \le u \le k,1 \le v \le n_u}{w(x_{uv})}} \frac{w(x_{st})}{\sum_{1 \le v \le n_i}{w(x_{iv})}} = \frac{w(x_{st})}{\sum_{1 \le u \le k,1 \le v \le n_u}{w(x_{uv})}}
+$$
+
+上面假设 $ x_{st} $ 是 $r_i$ 中被抽到的那个样本。可以看到，上面的方法可以通过合并蓄水池，得到一个等效于在更大的样本池中进行抽样的蓄水池。 
+
+## ReSTIR
+
+经过前面冗长的背景知识介绍，我们将现在得到的结论略记如下：
+
+*(1-sample RIS)* 假设我们要计算积分 $ I = \int f(x) dx $，我们可以找到一个分布 $p(x)$，其与 $\hat p(x)$ 比较接近，那么此时，我们可以采用如下方法，采样出符合 $ \hat p(x)$ 分布的样本
+1. 从 $p(x)$ 分布中抽样得到集合 $ X = \{x_1, ..., x_M \} $
+2. 按如下所给的条件概率抽样一个**索引** $ z \in \{1, ..., M\} $
+   $$
+   p(z \, | \, x_1, ..., x_M) = \frac{w(x_z)}{\sum_{i=1}^M w(x_i)} \quad \text{with} \quad w(x) = \frac{\hat p(x)}{p(x)}
+   $$
+3. 按下式计算估计量
+   $$
+   \begin{aligned}
+   \bar I^{1, M}_{ris}(z, x_1, ..., x_M) = \frac{f(x_z)}{\hat p(x_z)} \cdot \left( \frac{1}{M} \sum^M_{j=1} w(x_j) \right)
+   \end{aligned}
+   $$
+
+并且，上面的 RIS 方法可以以 O(k) 的时间来进行**蓄水池抽样**，蓄水池之间可以进行**合并**。
+
+但是，怎么用这里的抽样理论来实现**时间**与**空间**域的复用呢？
+
+考虑无遮挡的直接光，其中$ \rho(x)$ 为 BRDF 函数，$ G(x) $ 为几何项 $ {(\cos \theta^x_i \cos \theta^{x'}_{o})}/{| x - x' |^2} $，则
+
+$$
+\hat p(x) = \rho(x) L_e(x) G(x)
+$$
+
+
+
+![](restir/reservoir.png)
+
+> 其中 update 接受 $ x_i $ 和该样本对应权重 $ w_i $. 本例中使用了 $ w(x) = {\hat p(x)}/{p(x)} $
+
