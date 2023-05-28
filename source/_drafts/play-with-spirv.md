@@ -1,5 +1,5 @@
 ---
-title: SPIR-V 初探 - Fragment Shader
+title: SPIR-V 初探 (一) - Fragment Shader
 date: 2023-03-29
 ---
 
@@ -52,8 +52,9 @@ void main() {}
 ; SPIR-V
 ; Version: 1.6
 ; Generator: Khronos Glslang Reference Front End; 10
-; Bound: 6
-; Schema: 0
+; Bound: 6                                                  ; Bound; where all <id>s in this module are
+                                                            ; guaranteed to satisfy 0 < id < Bound
+; Schema: 0                                                 ; Instruction Schema; Reserved, not used for now
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450                ; Addressing model = Logical
@@ -78,6 +79,16 @@ void main() {}
                OpReturn
                OpFunctionEnd
 ```
+
+> 这里会发现 %main 这个 result id 是在后面定义的，但是前面却引用到了。
+>
+> 对于 `SPV_OPERAND_TYPE_ID`, `SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID`, `SPV_OPERAND_TYPE_SCOPE_ID` 来说，正常都需要先定义（是某个指令的 result id）再引用，但是可以前向定义的指令除外。
+> 
+> 可前向定义的指令可以参考 [source/val/validate_id.cpp:L122 @ SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools/blob/1021ec302f568cd83fee9f4eaa763dadb66e40b0/source/val/validate_id.cpp#L49)，其中包括：
+> - 全部的 `OpTypeXXX` 类指令
+> - 其它一大堆，主要是执行模式等 metadata、Decorate、分支、device side invoke 等
+>   - 可以参考 `spvOperandCanBeForwardDeclaredFunction (source/operand.cpp @ SPIRV-Tools)` 这个函数
+
 
 ### 简单的函数
 
@@ -930,16 +941,6 @@ SPIR-V 反汇编：
          %31 = OpAccessChain %_ptr_Uniform_v4float %objectBuffer %int_0 %29 %int_0
 ```
 
-### Matrix 类型
-
-### 导数 `dFdx` / `dFdy` & `discard`
-
-https://github.com/gpuweb/gpuweb/issues/361
-
-http://www.xionggf.com/post/opengl/an_introduction_to_shader_derivative_functions/
-
-### Group Ops
-
 ### Atomic 操作
 
 > https://github.com/KhronosGroup/Vulkan-Guide/blob/main/chapters/atomics.adoc
@@ -1024,3 +1025,11 @@ SPIR-V 反汇编：
 ```
 
 > Memory Scope: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Scope_-id-
+
+## Coming soon
+
+- Matrix 类型
+- 导数 `dFdx` / `dFdy` & `discard`
+  - https://github.com/gpuweb/gpuweb/issues/361
+  - http://www.xionggf.com/post/opengl/an_introduction_to_shader_derivative_functions/
+- Group Ops
