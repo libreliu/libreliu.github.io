@@ -747,6 +747,10 @@ SPIR-V 反汇编：
   %22 = OpImageSampleImplicitLod %v4float %14 %18 Bias %21
   ```
 
+> 注意关于 OpImage 和 OpSampledImage 的特殊规则：
+> - All `OpSampledImage` instructions must be in the same block in which their Result `<id>` are consumed. Result `<id>` from `OpSampledImage` instructions must not appear as operands to `OpPhi` instructions or `OpSelect` instructions, or any instructions other than the image lookup and query instructions specified to take an operand whose type is OpTypeSampledImage.
+> - 在 `spvtools::opt::InstrumentPass::MovePreludeCode @ source/opt/instrument_pass.cpp (SPIRV-Tools)` 中对该要求进行了处理。
+
 ### Storage Buffer 
 
 > [14.1.7. Storage Buffer](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap14.html#descriptorsets-storagebuffer)
