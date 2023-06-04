@@ -14,3 +14,4 @@ Below are my CV, feel free to read~
 | Friends     |                 Links                  |
 |-------------|----------------------------------------|
 | catoverflow | [Catoverflow's Blog](https://c-j.dev/) |
+| petergu     | [regymm](https://www.ustcpetergu.com/) |
