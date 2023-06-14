@@ -52,3 +52,8 @@ SPIR-V 的类型可以按如下方式进行分类：
     - **\<id\>** return type
     - **\<id\>**... Parameter(s) type
 
+除此之外，每个类型还可能有装饰 (Decorations)：
+
+类型系统的相关代码可以参考 SPIRV-Tools 的
+- `source/opt/types.h`
+- `source/opt/type_manager.h`
