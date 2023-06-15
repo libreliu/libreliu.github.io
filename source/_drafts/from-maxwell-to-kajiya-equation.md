@@ -11,3 +11,14 @@ Maxwell's -> Fourier optics (scalar wave phenomena) -> Eikonal equation (rays, b
 
 I think most modern optics textbooks (see, e.g., Fundamentals of Photonics) cover the reductions and the corresponding steps.
 -->
+
+## Maxwell 方程组
+
+$$
+\begin{aligned}
+\nabla \cdot \mathbf{E} &= \frac {\rho} {\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}} {\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0\left(\mathbf{J} + \varepsilon_0 \frac{\partial \mathbf{E}} {\partial t} \right) 
+\end{aligned}
+$$
