@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Mesa radv 源码阅读（一）: 如何跟踪图形栈、Vulkan Loader、Mesa 派发机制 - libreliu&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="变更记录:  2023-02-11: 开始写作本文 2023-02-16: 基本完成 2023-07-02: 移出草稿区   Mesa radv 全称 Mesa Vulkan Radeon 驱动，用于 Linux 桌面平台下 AMD Radeon 独立和集成显示卡的 Vulkan 用户态驱动支持。本文主要为备忘性质，记录笔者调试和跟踪代码过程中的发现。 笔者本人接触 Linux 图形栈的时间并不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mesa radv 源码阅读（一）: 如何跟踪图形栈、Vulkan Loader、Mesa 派发机制">
+<meta property="og:url" content="https://blog.libreliu.info/mesa-radv-digestion/">
+<meta property="og:site_name" content="libreliu&#39;s blog">
+<meta property="og:description" content="变更记录:  2023-02-11: 开始写作本文 2023-02-16: 基本完成 2023-07-02: 移出草稿区   Mesa radv 全称 Mesa Vulkan Radeon 驱动，用于 Linux 桌面平台下 AMD Radeon 独立和集成显示卡的 Vulkan 用户态驱动支持。本文主要为备忘性质，记录笔者调试和跟踪代码过程中的发现。 笔者本人接触 Linux 图形栈的时间并不">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-07-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-07-01T16:00:00.000Z">
+<meta property="article:author" content="Libre Liu">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="icon" href="/css/images/logo.png">
+  
+  <link href="/webfonts/ptserif/main.css" rel='stylesheet' type='text/css'>
+  <link href="/webfonts/source-code-pro/main.css" rel="stylesheet" type="text/css">
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="libreliu's blog" type="application/atom+xml">
+</head>
+
+<body>
+  <div id="container">
+    <header id="header">
+  <div id="header-outer" class="outer">
+    <div id="header-inner" class="inner">
+      <a id="main-nav-toggle" class="nav-icon" href="javascript:;"></a>
+      <a id="logo" class="logo" href="/"></a>
+      <nav id="main-nav">
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/paper-summary">Paper Reading</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://blog.libreliu.info"></form>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <br>
+    <section id="main" class="outer"><article id="post-mesa-radv-digestion" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Mesa radv 源码阅读（一）: 如何跟踪图形栈、Vulkan Loader、Mesa 派发机制
+      <small class=article-detail-date-index>&nbsp; 2023-07-02</small>
+    </h1>
+  
+
+
+        <div class=page-title></div>
+        <br>
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/mesa-radv-digestion/" class="article-date">
+  <time datetime="2023-07-01T16:00:00.000Z" itemprop="datePublished">2023-07-02</time>
+</a>-->
+      <!-- 
+--><!-- by blair 160724 -->
+      <!-- by blair
+      
+      -->
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+      
+        <blockquote>
+<p>变更记录:</p>
+<ul>
+<li>2023-02-11: 开始写作本文</li>
+<li>2023-02-16: 基本完成</li>
+<li>2023-07-02: 移出草稿区</li>
+</ul>
+</blockquote>
+<p>Mesa radv 全称 Mesa Vulkan Radeon 驱动，用于 Linux 桌面平台下 AMD Radeon 独立和集成显示卡的 Vulkan 用户态驱动支持。本文主要为备忘性质，记录笔者调试和跟踪代码过程中的发现。</p>
+<p>笔者本人接触 Linux 图形栈的时间并不很长，其中很多地方还不甚明了，如有缺漏之处，请批评指正。</p>
+<p>您可以在博客对应的<a target="_blank" rel="noopener" href="https://github.com/libreliu/libreliu.github.io">仓库</a> 的 Issue 区和我取得联系。</p>
+<blockquote>
+<p>本文的实验均开展于截至写作时最新版本的 Arch Linux。<br>使用的主要软件版本如下：</p>
+<ul>
+<li>mesa 22.3.3<ul>
+<li><a target="_blank" rel="noopener" href="https://gitlab.freedesktop.org/mesa/mesa/">https://gitlab.freedesktop.org/mesa/mesa/</a></li>
+</ul>
+</li>
+<li>vulkan-icd-loader 1.3.240<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader">https://github.com/KhronosGroup/Vulkan-Loader</a></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<h2 id="前言：如何跟踪-Linux-图形栈？"><a href="#前言：如何跟踪-Linux-图形栈？" class="headerlink" title="前言：如何跟踪 Linux 图形栈？"></a>前言：如何跟踪 Linux 图形栈？</h2><p>截至目前，笔者认为图形栈的跟踪和开发，较常规的 Linux 服务端开发等工作要更为复杂。</p>
+<p>这种复杂性主要来源于：</p>
+<ol>
+<li>厂商图形实现是高度定制化的，在通用图形 API (e.g. Vulkan, OpenGL) 下，厂商有很大的自由度来填补从用户程序图形 API 到真正向图形处理器发送命令的过程<ul>
+<li>e.g. AMD 的 mesa Vulkan 开源驱动 radv 会经过 vulkan-icd-loader 到 mesa 到 libdrm 到内核态 amdgpu</li>
+</ul>
+</li>
+<li>用户的图形应用程序还需要经过窗口系统和混成器 (compositor) 才能显示到屏幕上，图形实现需要和混成器紧密配合<ul>
+<li>X11 (DIX, DDX), GLX, DRI2, DRI3, Wayland, egl…</li>
+<li>历史包袱比较多</li>
+</ul>
+</li>
+</ol>
+<p>除此之外，上面的两个方面，其中各个环节的接口文档都不甚清晰，且接口演进也比较频繁，很多时候需要「一竿子捅到底」，将各个库和软件的源码连在一起阅读，才知道真正发生了什么。</p>
+<h3 id="源码阅读"><a href="#源码阅读" class="headerlink" title="源码阅读"></a>源码阅读</h3><p>针对这种情况，首先需要比较方便的 C&#x2F;C++ 源码阅读软件，笔者目前使用的是 OpenGrok。</p>
+<p>该软件对源码的语义理解并不很强，因为其仅仅是采用 ctags 的方法进行简单的解析，对于需要经过预处理器的一些嵌入的宏 （比如 <code>#define WSI_CB(cb) PFN_vk##cb cb</code> 这种样式的成员定义宏）支持并不好。其优势主要体现在跳转快速 (HTML 链接点击即跳转)，以及还算方便的 Full search 功能（比如要搜索某个函数指针成员 <code>wait</code> 在哪里被调用，可以搜 <code>&quot;-&gt;wait&quot;</code> 和 <code>&quot;.wait&quot;</code>）。某种意义上，笔者认为该软件可以认为是本地部署的、可以看不仅仅是内核的软件代码的增强版本 <a target="_blank" rel="noopener" href="https://elixir.bootlin.com/">elixir</a>。</p>
+<blockquote>
+<p>其实感觉可以做一个用 Arch Linux 的 makepkg 构建过程中生成 <code>compile_commands.json</code> 并且用这个信息来指导源码阅读的工作流，最好信息都可以离线 bake 然后静态的托管到某些网站上。目前我还没发现有这样的工具存在。</p>
+<p>TODO: 调研<a target="_blank" rel="noopener" href="https://github.com/KDAB/codebrowser">静态的 CodeBrowser</a>。</p>
+</blockquote>
+<p>另一个比较有用的准备工作是，把一个软件包的依赖的源码全部下载下来放在一起，统一放到 OpenGrok 里面，这样可以极大加速跨软件包的符号和定义的查找工作。</p>
+<blockquote>
+<p>这里我选择 Arch Linux 的 pacman 包作为起点进行依赖查找。</p>
+<p>值得注意的是，Arch 的包管理模型中有 “虚拟包” 的概念，比如 <code>opengl-driver</code> 可以被 depend 和 provide，但是并不对应一个具体的包；这样的依赖很多时候需要人工去 resolve。</p>
+<p>TODO: 等整套工具比较完善之后，写一篇博客介绍如何将系列包的源码全部拉下来。</p>
+</blockquote>
+<h3 id="动态跟踪"><a href="#动态跟踪" class="headerlink" title="动态跟踪"></a>动态跟踪</h3><p>另一个十分有用的步骤自然是运行时的行为跟踪了。</p>
+<p>行为跟踪主要是采用 GDB + debuginfod + (感兴趣的软件包的) <code>-debug</code> 软件包。</p>
+<p>在没有加载调试符号的情况下，GDB 的 <code>step</code> 似乎会直接越过外部函数，这种时候可以考虑 <code>layout asm</code> 看汇编，用 <code>stepi</code> 进到 call 指令里面去，GDB 此时的 backtrace 会打印出该函数所在地址对应的动态链接库 (当然，应该是从进程地址空间信息 <code>/proc/&lt;PID&gt;/maps</code> 反查的)，但具体的函数则不详。动态链接库信息可以用来让你想想到底是什么东西缺符号。</p>
+<p>正确配置的 debuginfod 可以完成自动拉取加载的动态链接库的符号的工作，不过要看到源码本身还是需要安装 debug 包。</p>
+<blockquote>
+<p>安装好 -debug 包后，对应的源码会在 <code>/usr/src/debug/</code> 下。</p>
+</blockquote>
+<p>debug 包的主要获取方法有两种，详情可以参考 <a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/Debugging/Getting_traces">Debugging&#x2F;Getting traces - ArchWiki</a>：</p>
+<ol>
+<li>特定的 Archlinux mirror<ul>
+<li><a target="_blank" rel="noopener" href="https://geo.mirror.pkgbuild.com/">https://geo.mirror.pkgbuild.com/</a></li>
+<li>但是个别包似乎会出现 debug 包内源码不全的情况，如 <code>vulkan-icd-loader</code>，不清楚具体原因；方法 2 无此问题</li>
+</ul>
+</li>
+<li>自己编译</li>
+</ol>
+<p>关于如何编译 debug 包，值得简单记两笔。</p>
+<p>打 debug 包需要 </p>
+<ol>
+<li>拉 PKGBUILD <ul>
+<li>可以考虑用 <code>asp</code> 这个工具自动从 GitHub (https 的话需要配合 <code>proxychains</code> 科学上网) 上面拉对应的 recipe </li>
+<li><a target="_blank" rel="noopener" href="https://xyne.dev/projects/pbget/">pbget</a> 这个工具不知道是否可以用于自动化的把依赖项目的 recipe 全部拉下来 (?)<ul>
+<li>我自己测试是不行，不过是用 Python 3 + pyalpm 写的，有一定的研究和修改价值</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>进行编译<ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot">ArchWiki</a> 推荐使用 clean chroot 编译，这样也方便设定单独的 makepkg 的设置 </li>
+<li>使用 Wiki 中描述的，方便的方法如下：<ol>
+<li>安装 devtools 包 </li>
+<li>更改 chroot 环境内的 makepkg 配置，启用 OPTIONS 中的 debug 和 strip<ul>
+<li><code>/usr/share/devtools/makepkg-$&#123;arch&#125;.conf</code> 这里 arch 选择 x86_64</li>
+<li>(optional) 把并行编译的 -j 也设置好，不过有些构建系统会自动检测并启用并行编译</li>
+</ul>
+</li>
+<li>在有 PKGBULID 的文件夹下面运行 <code>extra-x86_64-build</code>，然后装源码包和二进制包 （pacman -U)<ul>
+<li>包检查不过去没啥事；两个包都要装上，因为调试符号匹配的时候应该是有一个随机生成的 UUID 来做的</li>
+<li>如果想给 makepkg 传参需要加两个 –，比如 <code>extra-x86_64-build -- -- --skippgpcheck</code></li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<p>在看 elfutils 的时候同时看到了一个工具 <code>eu-stack</code>，可以用来截取某个进程当前时刻所有线程的栈信息，并且可以加选项 <code>-m</code> 来用 debuginfod 进行符号查找。</p>
+<p>感觉在分析 GUI 程序高 CPU 占用的性能分析的场合，<code>eu-stack</code> 可以作为一种采样手段使用。</p>
+<h2 id="Vulkan-Loader"><a href="#Vulkan-Loader" class="headerlink" title="Vulkan Loader"></a>Vulkan Loader</h2><p>Vulkan Loader 是垫在各个 Vulkan 驱动和用户程序中间的层，主要用来解决多设备枚举使用的问题。</p>
+<h3 id="驱动枚举"><a href="#驱动枚举" class="headerlink" title="驱动枚举"></a>驱动枚举</h3><p>Vulkan Loader 有默认的 ICD (Installable Client Driver) 的<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-discovery-on-linux">搜索路径</a>，向系统中安装的驱动程序会通过在给定的 ICD 路径（可能是文件夹，也可能是 Windows 注册表）中写入信息的方式来向 Vulkan Loader 报告自己的信息。</p>
+<p>例如，<code>/usr/share/vulkan/icd.d/radeon_icd.x86_64.json</code> 中的信息如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ICD&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;api_version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.3.230&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;library_path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;/usr/lib/libvulkan_radeon.so&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;file_format_version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0.0&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，核心的信息是 <code>library_path</code>。(Ref: <a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-manifest-file-format">LoaderDriverInterface.md @ Vulkan-Loader</a>)</p>
+<p>另一种传入 ICD 信息的方法是 <code>VK_DRIVER_FILES</code> 环境变量（<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderInterfaceArchitecture.md#elevated-privilege-caveats">不过在 root 权限下无效</a>），可以通过指定这个变量的方式，强制 Vulkan Loader 只考虑某些路径。</p>
+<p>比如 <code>VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json vulkaninfo</code> 可以只启用 mesa radv 实现。</p>
+<h3 id="驱动入口发现"><a href="#驱动入口发现" class="headerlink" title="驱动入口发现"></a>驱动入口发现</h3><p>每个驱动要实现 <code>vk_icdGetInstanceProcAddr</code> 这个调用，和 (&gt;&#x3D; Version 4) <code>vk_icdGetPhysicalDeviceProcAddr</code> 这个调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="title function_">void</span> <span class="params">(VKAPI_PTR *PFN_vkVoidFunction)</span><span class="params">(<span class="type">void</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局的调用，如 vkCreateInstance，会把第一个参数置为空</span></span><br><span class="line"><span class="comment">// 先用这个调用拿到 `vkGetDeviceProcAddr`，再进行 device level 的调用</span></span><br><span class="line">VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL <span class="title function_">vk_icdGetInstanceProcAddr</span><span class="params">(</span></span><br><span class="line"><span class="params">   VkInstance instance,</span></span><br><span class="line"><span class="params">   <span class="type">const</span> <span class="type">char</span>* pName</span></span><br><span class="line"><span class="params">)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 主要用于 VkPhysicalDevice 为第一个参数的 Vulkan API 派发</span></span><br><span class="line"><span class="comment">// - 否则 Vulkan Loader 会认为这个命令是 logical device command，</span></span><br><span class="line"><span class="comment">//   从而尝试传入 VkDevice 对象 </span></span><br><span class="line"><span class="comment">// 典型用途是一些 loader 不知道的物理设备扩展</span></span><br><span class="line"><span class="comment">// (&gt;= Version 7) 这个接口需要可以从 vk_icdGetInstanceProcAddr 获得</span></span><br><span class="line">PFN_vkVoidFunction <span class="title function_">vk_icdGetPhysicalDeviceProcAddr</span><span class="params">(</span></span><br><span class="line"><span class="params">   VkInstance instance,</span></span><br><span class="line"><span class="params">   <span class="type">const</span> <span class="type">char</span>* pName</span></span><br><span class="line"><span class="params">)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>有些厂商会在同一个库里面实现几套 API 的用户态实现 (e.g. <code>nvidia_icd.json</code> 中的 <code>libGLX_nvidia.so.0</code>)，但驱动程序不能把 Vulkan 官方的函数名占用掉。</p>
+<p>动态链接到 Vulkan Loader 的<strong>用户程序</strong>是通过系统例程 (<code>dlsym</code> 或者 <code>GetProcAddress</code>) 获得 <code>vkGetInstanceProcAddr</code> 和 <code>vkGetDeviceProcAddr</code> 两个函数的地址并且调用的方式来枚举其它 Vulkan API 调用的函数地址的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance instance, <span class="type">const</span> <span class="type">char</span>* pName)</span><br><span class="line">PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetDeviceProcAddr)(VkDevice device, <span class="type">const</span> <span class="type">char</span>* pName)</span><br></pre></td></tr></table></figure>
+
+<p>Loader 的 <code>vkGetInstanceProcAddr</code> 的行为在<a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-unknown-physical-device-extensions">官方文档</a>中有记录。</p>
+<p>简单来说，就是用 <code>vk_icdGetInstanceProcAddr</code> 一路往下找，找到的会记录在跳转表中，之后在 terminator 那边可以直接跳转过去，不用再获取。</p>
+<h3 id="驱动-Vulkan-对象句柄要求"><a href="#驱动-Vulkan-对象句柄要求" class="headerlink" title="驱动 Vulkan 对象句柄要求"></a>驱动 Vulkan 对象句柄要求</h3><blockquote>
+<p>Ref: <a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-dispatchable-object-creation">https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#driver-dispatchable-object-creation</a></p>
+</blockquote>
+<p>另一个值得了解的是 Vulkan 对象模型。<a target="_blank" rel="noopener" href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#fundamentals-objectmodel-overview">3.3 Object Model @ Vulkan Spec</a> 中提到，Vulkan API 层面提供的 <code>VkXXXXX</code> 等类型均为 Vulkan 对象的句柄，句柄分为可分派的 (dispatchable) 和不可分派的 (non-dispatchable) 两种。</p>
+<ul>
+<li>可分派句柄 <code>VK_DEFINE_HANDLE()</code>: 指向某对用户不可见的具体实现类型的指针<ul>
+<li>截至 Vulkan SDK 1.3.236 有 <code>VkInstance</code>, <code>VkPhysicalDevice</code>, <code>VkDevice</code>, <code>VkQueue</code>, <code>VkCommandBuffer</code></li>
+</ul>
+</li>
+<li>不可分派句柄 <code>VK_DEFINE_NON_DISPATCHABLE_HANDLE()</code>：64-bit 整数类型，具体意义由实现决定<ul>
+<li>如果开启了 <a target="_blank" rel="noopener" href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#private-data">Private Data</a> 扩展的话，显然也得是指向内部实现类型的某指针（类似可分派句柄）</li>
+<li>否则，实现可以决定在这 64-bit 里面直接编码好信息，不用指针</li>
+</ul>
+</li>
+</ul>
+<p>在此基础上，Vulkan Loader 要求驱动程序返回可分派句柄时：</p>
+<ol>
+<li>句柄作为指针指向的内部实现的前 <code>sizeof(uintptr)</code> 个字节要空出来，留待 Vulkan Loader 将这一位置的值替换成跳转表地址<ul>
+<li>这也要求，指向的内部实现需要是 POD 的，否则可能会有虚表等结构加在实例前面，和这一要求冲突</li>
+</ul>
+</li>
+<li>这个空出来的位置，需要调用 <code>include/vulkan/vk_icd.h</code> 中的 <code>set_loader_magic_value</code> 设置成 <code>ICD_LOADER_MAGIC</code> (目前是 <code>0x01CDC0DE</code>)，Vulkan Loader 拿到之后会用 <code>valid_loader_magic_value</code> 来检测驱动程序是否正确实现了这一要求</li>
+</ol>
+<h3 id="特例-WSI-扩展"><a href="#特例-WSI-扩展" class="headerlink" title="特例: WSI 扩展"></a>特例: WSI 扩展</h3><blockquote>
+<p>Ref: <a target="_blank" rel="noopener" href="https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#handling-khr-surface-objects-in-wsi-extensions">https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md#handling-khr-surface-objects-in-wsi-extensions</a></p>
+</blockquote>
+<p>在下面的平台上，<code>VkSurfaceKHR</code> 可以由 Vulkan Loader 负责创建和销毁：</p>
+<ul>
+<li>Wayland, XCB, Xlib</li>
+<li>Windows</li>
+<li>Android, MacOS, QNX</li>
+</ul>
+<p>对相应的 <code>vkCreateXXXSurfaceKHR</code> 调用，Loader 创建 VkIcdSurfaceXXX 结构，驱动程序拿到 <code>VkSurfaceKHR</code> 后可以将其视为到 <code>VkIcdSurfaceXXX</code> 的指针。</p>
+<p>不过，如果驱动想自己接管，暴露所有 WSI KHR 要求的接口给驱动就可以了 (创建销毁，枚举 Surface 相关属性、呈现模式，创建交换链)。</p>
+<h2 id="Mesa-Vulkan-radv"><a href="#Mesa-Vulkan-radv" class="headerlink" title="Mesa Vulkan radv"></a>Mesa Vulkan radv</h2><p>Mesa 是一个相对比较庞大的项目。</p>
+<p>本次要看的 Mesa Vulkan radv 驱动的代码主要分布在：</p>
+<ul>
+<li><code>src/amd/vulkan/</code>: radv_ 开头的主要代码</li>
+<li><code>src/vulkan</code>: 驱动公共设施</li>
+</ul>
+<p>Mesa 的构建系统使用 Meson，<code>src/amd/vulkan/meson.build</code> 中的 <code>libvulkan_radeon</code> 就是构建出的 radv 驱动动态链接库了。</p>
+<h3 id="函数派发"><a href="#函数派发" class="headerlink" title="函数派发"></a>函数派发</h3><blockquote>
+<p>Ref: <a target="_blank" rel="noopener" href="https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/docs/vulkan/dispatch.rst">https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/docs/vulkan/dispatch.rst</a></p>
+</blockquote>
+<p>我们先看 <code>vk_icdGetInstanceProcAddr</code> 的派发流程：</p>
+<ul>
+<li><code>vk_icdGetInstanceProcAddr</code> (src&#x2F;amd&#x2F;vulkan&#x2F;radv_device.c)</li>
+<li><code>radv_GetInstanceProcAddr</code>  (src&#x2F;amd&#x2F;vulkan&#x2F;radv_device.c)</li>
+<li><code>vk_instance_get_proc_addr</code> (src&#x2F;vulkan&#x2F;runtime&#x2F;vk_instance.c)</li>
+</ul>
+<p>传入的 <code>radv_instance_entrypoints</code> 是一个全局变量，给出了 Instance Level 的驱动实现的函数指针。其<strong>内容</strong>是在构建过程中生成的 <code>src/amd/vulkan/radv_entrypoints.c</code> 中赋值的，而<strong>类型</strong>则是在构建过程中生成的 <code>src/vulkan/util/vk_dispatch_table.h</code> 中定义的 <code>vk_instance_entrypoint_table</code> 类型的结构体。</p>
+<p><code>radv_entrypoints.c</code> 定义了很多 <code>radv_XXXX</code> 形式的弱符号，并且将这些符号凑成了</p>
+<ul>
+<li><code>radv_instance_entrypoints</code></li>
+<li><code>radv_physical_device_entrypoints</code></li>
+<li><code>radv_device_entrypoints</code></li>
+<li><code>sqtt_device_entrypoints</code></li>
+<li><code>metro_exodus_device_entrypoints</code></li>
+<li><code>rra_device_entrypoints</code></li>
+</ul>
+<p>几张表，表中填写了全部弱符号的值。根据弱符号的性质，如果程序中的其他地方没有定义相应的函数，对应的值就会为空。</p>
+<p><code>vk_dispatch_table.h</code> 和 <code>vk_dispatch_table.c</code> 本身是用 <code>vk_dispatch_table_gen.py</code> 和 Vulkan Registry XML 生成出来的。</p>
+<p>而常用的这几个派发用的函数都是在生成的 <code>vk_dispatch_table.c</code> 中定义的：</p>
+<ul>
+<li><code>vk_instance_dispatch_table_get_if_supported</code></li>
+<li><code>vk_physical_device_dispatch_table_get_if_supported</code></li>
+<li><code>vk_device_dispatch_table_get_if_supported</code></li>
+</ul>
+<p>如果对应的函数实际上没有实现 (比如 <code>radv_GetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI</code> 这个华为公司的扩展显然就没有)，那么前面几个派发表查询函数查询的结果就会为 NULL。</p>
+<p>至于 CreateDevice 等处出现的 <code>vk_instance_dispatch_table</code>，则是多个 entrypoint table “综合”的结果，这样就可以实现比如 <code>radv_xxx</code> 没有就回退到 <code>vk_common_xxx</code> 的效果。</p>
+<h3 id="vk-common-xxx"><a href="#vk-common-xxx" class="headerlink" title="vk_common_xxx"></a><code>vk_common_xxx</code></h3><p>一些公共入口点，里面包含了：</p>
+<ul>
+<li>用 <code>VkFoo2()</code> 实现 <code>VkFoo()</code> 的一些替代逻辑，这样驱动就可以把老的接口删掉，由中间层来做兼容</li>
+<li>VkFence，VkSemaphore 和 VkQueueSubmit2 的默认实现<ul>
+<li>当然，也需要驱动提供一些东西，比如 <code>vk_sync_type</code> 的实现</li>
+</ul>
+</li>
+</ul>
+<h3 id="杂记"><a href="#杂记" class="headerlink" title="杂记"></a>杂记</h3><ul>
+<li><code>radv_physical_device</code>: <del>万物之始</del><ul>
+<li><code>radv_CreateDevice</code></li>
+</ul>
+</li>
+<li>句柄操作：<ul>
+<li><code>VK_DEFINE_HANDLE_CASTS</code>: 定义（带自己搓的类型检查的）转换函数</li>
+<li><code>VK_FROM_HANDLE</code>：从 <code>VkXXX</code> 转到 Mesa 驱动自己的结构体的句柄</li>
+</ul>
+</li>
+</ul>
+
+      
+     <!-- by blair add this if sentence at 20160725 -->
+      <br>
+      
+<!-- <div id="bottom-donation-section"> -->
+<!-- <span style="font-size: 1.0em; padding:0em 1em 0.5em 1em; margin: 0 auto;">
+  <strong style="vertical-align: top;">分享到:</strong>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_facebook_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.facebook.com/sharer/sharer.php?u=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_twitter_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://twitter.com/intent/tweet?url=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_line_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://www.addtoany.com/add_to/line?linkurl=" target="_blank">
+    </div>
+    <div class="j_handlclick"  style="background: url(/images/logos/share_wechat_icon.jpg);background-size: contain;display: inline-block; width:50px; height:50px" href="https://api.addthis.com/oexchange/0.8/forward/wechat/offer?url=" target="_blank">
+    </div>
+  <br>  
+  <br>  
+  &nbsp;&nbsp;如果您觉得这篇文章对您的学习很有帮助, 请您也分享它, 让它能再次帮助到更多的需要学习的人.
+您的<a href="/support/"><strong>支持</strong></a>将鼓励我继续创作 !
+  <br>  
+
+</span> -->
+<!--
+<h3 id="bottom-donation-title">支持 让文章变得更优质</h3>
+<div>
+<a id="bottom-donation-button" href="/support">点我 赞助 作者</a>
+</div>
+-->
+<!-- </div> -->
+<!-- <div class="well"> -->
+  <!--
+  原创文章，转载请注明： 转载自<a target="_blank" rel="noopener" href="http://52binge.github.io"> Blair Chan's Blog</a>，作者：
+  <a href="/about">Blair Chan</a> <br>
+  -->
+  <!-- 本文基于<a target="_blank" title="Creative Commons Attribution 4.0 international License" href="https://creativecommons.org/licenses/by-nc/4.0/">署名4.0国际许可协议</a>发布，转载请保留本文署名和文章链接。 如您有任何授权方面的协商，请邮件联系我。 -->
+<!-- </div> -->
+ <!-- by blair add 160724-->
+    
+    </div>
+    
+      <div class="article-toc">
+        <h3>Contents</h3>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80%EF%BC%9A%E5%A6%82%E4%BD%95%E8%B7%9F%E8%B8%AA-Linux-%E5%9B%BE%E5%BD%A2%E6%A0%88%EF%BC%9F"><span class="toc-text">前言：如何跟踪 Linux 图形栈？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB"><span class="toc-text">源码阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E8%B7%9F%E8%B8%AA"><span class="toc-text">动态跟踪</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vulkan-Loader"><span class="toc-text">Vulkan Loader</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A9%B1%E5%8A%A8%E6%9E%9A%E4%B8%BE"><span class="toc-text">驱动枚举</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A9%B1%E5%8A%A8%E5%85%A5%E5%8F%A3%E5%8F%91%E7%8E%B0"><span class="toc-text">驱动入口发现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A9%B1%E5%8A%A8-Vulkan-%E5%AF%B9%E8%B1%A1%E5%8F%A5%E6%9F%84%E8%A6%81%E6%B1%82"><span class="toc-text">驱动 Vulkan 对象句柄要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E4%BE%8B-WSI-%E6%89%A9%E5%B1%95"><span class="toc-text">特例: WSI 扩展</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mesa-Vulkan-radv"><span class="toc-text">Mesa Vulkan radv</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E6%B4%BE%E5%8F%91"><span class="toc-text">函数派发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#vk-common-xxx"><span class="toc-text">vk_common_xxx</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%82%E8%AE%B0"><span class="toc-text">杂记</span></a></li></ol></li></ol>
+      </div>
+    
+    
+      <footer class="article-footer">
+        <!-- <div class="well" style="width:100px; height:30px;"></div>  by blair-->
+        
+ <!-- by blair add 160724-->
+        <!--
+        <div style="width:100px; height:30px;"></div> by blair add 160724
+        -->
+        
+
+      </footer>
+    
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/play-with-spirv/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">SPIR-V 初探 (一) - Fragment Shader&nbsp;<span>&gt;</span></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+    <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 Libre Liu&nbsp;
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>, theme by <a target="_blank" rel="noopener" href="http://github.com/52binge/hexo-theme-blairos">blairos</a>
+    </div>
+  </div>
+</footer>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true
+    }
+  });
+</script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ['\\(','\\)'] ],
+      displayMath: [ ['$$','$$']],
+      processEscapes: true,
+    },
+    options: {
+    renderActions: {
+      findScript: [10, function (doc) {
+        for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+          const display = !!node.type.match(/; *mode=display/);
+          const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+          const text = document.createTextNode('');
+          node.parentNode.replaceChild(text, node);
+          math.start = {node: text, delim: '', n: 0};
+          math.end = {node: text, delim: '', n: 0};
+          doc.math.push(math);
+        }
+      }, '']
+    }
+  }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" src="/js/mathjax/tex-chtml.js">
+</script>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
