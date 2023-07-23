@@ -17,6 +17,8 @@ I think most modern optics textbooks (see, e.g., Fundamentals of Photonics) cove
 本文假设读者学过**多变量微积分** + **数理方程** (一些解 PDE 的技术)。
 
 > 本文作者推荐 **费曼物理学讲义, 第二卷** 作为入门电磁学 / 电动力学的教材。
+>
+> 数理方程方面可以参考科学出版社出版的 **数学物理方程** (季孝达, 薛兴恒, 陆英 编)。
 
 ## 记号
 
@@ -174,6 +176,52 @@ $$
 
 那么，现在问题变成了，给定 $ \mathbf{j}(\mathbf{x}, t) $ 和 $ \rho(\mathbf{x}, t) $，只要能解决 (11) 和 (12) 两个波动方程，就可以知道 $ \phi(\mathbf{x}, t) $ 和 $ \mathbf{A}(\mathbf{x}, t) $，问题就解决了。
 
+### 向波动方程进发
+
+波动方程在可以用基本解方法来进行求解。
+
+考虑
+
+$$
+\left\{
+\begin{aligned}
+&\frac{\partial^2 u}{\partial t^2} = Lu + f(t, M) \\
+&u |_{t=0} = \phi(M), \left.\frac{\partial u}{\partial t} \right|_{t=0} = \psi(M)
+\end{aligned}
+\right.
+$$
+
+如果带入 $ L = a^2 \nabla^2 $，即为波动方程。
+
+考虑基本解
+
+$$
+\left\{
+\begin{aligned}
+&\frac{\partial^2 u}{\partial t^2} = LU \\
+&U |_{t=0} = 0, \left.\frac{\partial U}{\partial t} \right|_{t=0} = \delta(M)
+\end{aligned}
+\right.
+$$
+
+则考虑下面三个方程的解 $ u_1 $, $ u_2 $, $ u_3 $，其
+
+$$
+
+$$
+
+$$
+
+$$
+
+$$
+
+$$
+
+### 单色波解
+
+我们可以把
+
 ### Kirchhoff 积分和 Eikonal 方程
 
 <!--
@@ -181,3 +229,8 @@ https://wiki.seg.org/wiki/Diffraction_and_ray_theory_for_wave_propagation
 https://www.cambridge.org/core/books/ray-tracing-and-beyond/706CC068AEF2FA5C84C48278FC449761
 https://www.cambridge.org/core/books/abs/ray-tracing-and-beyond/eikonal-approximation/B09582EE0BAEA706A59238649960C761
 -->
+
+<!-- Principles of Optics, chapter 8
+https://physics.stackexchange.com/a/91651
+-->
+
