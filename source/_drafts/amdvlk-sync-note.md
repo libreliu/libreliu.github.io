@@ -97,5 +97,21 @@ struct drm_syncobj {
 
 - drm_syncobj_wait_ioctl (drivers/gpu/drm/drm_syncobj.c)
   - drm_syncobj_array_find
+	- 根据 user 传过来的 syncobj handle ids 查找到相应的 syncobj 对象
   - drm_syncobj_array_wait
+    - drm_timeout_abs_to_jiffies: 将 nsec 转换为 scheduler jiffies
+	  > Jiffy 是 system tick, 用 CONFIG_HZ 来调节
+	- drm_syncobj_array_wait_timeout
+	  - 中心思想是用 syncobj 里面的 dma_fence 的 callback 来叫醒这个进程，然后返回
+	  - 但是 dma_fence 如果已经 signal 的话，注册的 callback 就都会失效了 (i.e. 不能再注册新的 callback)
+	    - 所以要处理这个边界情况；这个 dma_fence 的特性是 by design 的，参考 `struct dma_fence` (include/linux/dma-fence.h) 里面的 union 的相关注释 (cb_list -> timestamp -> rcu)
+	  - 用 schedule_timeout 调度出去，回调里面用 wake_up_process 叫醒自己
   - drm_syncobj_array_free
+    - 给各个 syncobj 对象做 put 操作 (syncobj 是 kref 做引用计数的)
+
+### Submit
+
+vk::entry::vkQueueSubmit (xgl/icd/api/vk_queue.cpp)
+- vk::Queue::Submit (xgl/icd/api/vk_queue.cpp)
+  - 如果提交多个 SubmitInfo (note: 每一个 submit 可以提交多个 command buffer, submit 可以指定 signal/wait semaphore), 则要进行拼接
+    - TODO
