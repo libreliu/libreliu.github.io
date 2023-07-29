@@ -10,6 +10,20 @@ date: 2023-07-26
 >
 > NOTE on amdvlk: ArchLinux 用户可以下载 amdvlk 包的 PKGBUILD，然后 `makepkg --nobuild --skippgpcheck` 来比较方便的把 `xgl`, `gpurt`, `llpc`, `pal` 和两个 third-party 仓库的内容拉下来。
 
+## 驱动切换
+
+> https://wiki.archlinux.org/title/Vulkan
+
+```bash
+# This assumes the amdgpu number be 0
+
+# amdvlk
+VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/amd_icd32.json:/usr/share/vulkan/icd.d/amd_icd64.json" vkcube --gpu_number 0
+
+# radv
+VK_ICD_FILENAMES="/usr/share/vulkan/icd.d/radeon_icd.i686.json:/usr/share/vulkan/icd.d/radeon_icd.x86_64.json" vkcube --gpu_number 0
+```
+
 ## Fence
 
 ### 创建
@@ -114,4 +128,21 @@ struct drm_syncobj {
 vk::entry::vkQueueSubmit (xgl/icd/api/vk_queue.cpp)
 - vk::Queue::Submit (xgl/icd/api/vk_queue.cpp)
   - 如果提交多个 SubmitInfo (note: 每一个 submit 可以提交多个 command buffer, submit 可以指定 signal/wait semaphore), 则要进行拼接
-    - TODO
+    - 对于 TMZ (Trusted Memory Zone) 和非 TMZ 提交，需要独立的 queue，以及在 queue 之间进行等待
+  - 提交单个 SubmitInfo 的流程
+	- vk::Fence::SetActiveDevice
+	- vk::Fence::PalFence 来获得 Pal::IFence
+	- (Interface) Pal::IQueue::Submit
+	- Pal::Queue::Submit (pal/src/core/queue.h)
+	  - Pal::Queue::SubmitInternal (pal/src/core/queue.cpp)
+	    - Pal::Queue::SubmitConfig
+		- (Interface) Pal::ICmdBuffer::PreSubmit
+		  - Pal::CmdBuffer::Submit (does nothing)
+	- Pal::Queue::ValidateSubmit
+	- Pal::QueueSubmit::PreProcessSubmit
+	- 如果启动 Command Dump：Pal::Queue::OpenCommandDumpFile && Pal::Queue::DumpCmdBuffers
+	- 进行提交
+	  - 
+
+IQueue 机制
+- pal/src/core/layers/decorators.cpp
