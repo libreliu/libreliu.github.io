@@ -174,6 +174,25 @@ Kernel 中
 - `DRM_IOCTL_DEF_DRV(AMDGPU_CS, amdgpu_cs_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),`
   - amdgpu_cs_ioctl
 
+中断注册
+1. amdgpu_irq_init: 总中断请求派发函数注册
+  ```c
+  /* PCI devices require shared interrupts. */
+  r = request_irq(irq, amdgpu_irq_handler, IRQF_SHARED, adev_to_drm(adev)->driver->name,
+  		adev_to_drm(adev));
+  ```
+2. per domain 注册
+  - e.g. `gfx_v10_0_set_irq_funcs` 给 `adev->gfx.eop_irq` 里面添上了 `` 这个处理函数
+  - 然后 amdgpu_irq_add_id 来注册到 `adev->irq.client[client_id].sources`
+
+中断来临时 signal fence
+- amdgpu_irq_handler
+  - amdgpu_ih_process: walk the IH ring
+    - amdgpu_irq_dispatch
+      - 根据来源 ID 派发到 process 函数
+        e.g. gfx_v10_0_eop_irq for cp eop
+        - amdgpu_fence_process
+          - dma_fence_signal
 
 IQueue 机制
 - pal/src/core/layers/decorators.cpp
