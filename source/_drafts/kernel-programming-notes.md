@@ -24,5 +24,7 @@ date: 2023-08-04
       > Ref: [Driver porting: the preemptible kernel - LWN.net](https://lwn.net/Articles/22912/) 
       - 内核代码可以主动关闭 / 恢复抢占，来保证临界代码的有序
         > 懒人做法 `spin_lock_irqsave`
-  - 寄存器保存 / 恢复区域：？
+  - 寄存器保存 / 恢复区域：TODO
 - 中断上下文
+  - TODO
+
