@@ -261,13 +261,12 @@ $$
 
 <!-- https://math.meta.stackexchange.com/questions/9973/how-do-you-render-a-closed-surface-double-integral -->
 $$
-\newcommand{\oiint}{{\subset\!\supset} \llap{\iint}}
 \begin{aligned}
 u_1(t,x,y,z) &= \frac{1}{4 \pi a} \iiint_{-\infty}^{+\infty} \frac{\delta(r-at)}{r} \psi(\xi, \eta, \zeta) d \xi d \eta d \zeta \\
-&= t \frac{1}{4 \pi (at)^2} \oiint_{S_{at}} \psi(\xi, \eta, \zeta) dS \\
+&= t \frac{1}{4 \pi (at)^2} \oint_{S_{at}} \psi(\xi, \eta, \zeta) dS \\
 &= t M_{at} (\psi) \\
 u_2(t,x,y,z) &= \frac{\partial}{\partial t} [t M_{at} (\psi)]\\
-u_3(t,x,y,z) &= \frac{1}{4 \pi a^2} \int_{0}^{at} \oiint_{S_r} \frac{1}{r} f(t- \frac{r}{a}, \xi, \eta, \zeta) dSdr \\
+u_3(t,x,y,z) &= \frac{1}{4 \pi a^2} \int_{0}^{at} \oint_{S_r} \frac{1}{r} f(t- \frac{r}{a}, \xi, \eta, \zeta) dSdr \\
 \end{aligned} 
 $$
 
