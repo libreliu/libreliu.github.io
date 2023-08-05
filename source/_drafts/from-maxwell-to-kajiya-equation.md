@@ -178,6 +178,8 @@ $$
 
 ### 向波动方程进发
 
+形如 $ u_{tt} = a^2 \nabla^2 u $ 的方程被称为波动方程。
+
 波动方程在可以用基本解方法来进行求解。
 
 考虑
@@ -191,6 +193,8 @@ $$
 \right.
 $$
 
+> 公式中的 $M$ 为空间坐标
+
 如果带入 $ L = a^2 \nabla^2 $，即为波动方程。
 
 考虑基本解
@@ -198,29 +202,99 @@ $$
 $$
 \left\{
 \begin{aligned}
-&\frac{\partial^2 u}{\partial t^2} = LU \\
+&\frac{\partial^2 U}{\partial t^2} = LU \\
 &U |_{t=0} = 0, \left.\frac{\partial U}{\partial t} \right|_{t=0} = \delta(M)
 \end{aligned}
 \right.
 $$
 
-则考虑下面三个方程的解 $ u_1 $, $ u_2 $, $ u_3 $，其
+则利用基本解，我们有
 
+$$
+u(t, M) = u_1 + u_2 + u_3 = U(t, M) \ast \psi(M) + \frac{\partial}{\partial t}[U(t,M) \ast \phi(M)] + \int_0^t {U(t-\tau, M) \ast f(\tau, M) d\tau}
+$$
+
+> 这个的来源是将原问题拆成三个初值问题的叠加。某些子问题中会用冲量原理来进行求解。
+
+<!-- TODO: write step by step -->
+
+其中的卷积是关于 $ M $ 的，以 $ M = (x, y, z) $ 为例：
+
+$$
+U(t, M) \ast \psi(M) = \iiint_{\Omega} U(t, x-\tau_1, y-\tau_2, z-\tau_3) \phi(\tau_1, \tau_2, \tau_3) d \tau_1 \tau_2 \tau_3
+$$
+
+#### 基本解的求解
+
+那么下面就要求解波动方程的基本解 $ U $ 了。
+
+我们先把问题抄一遍：
+
+$$
+\left\{
+\begin{aligned}
+&\frac{\partial^2 U}{\partial t^2} = a^2 \nabla^2 U \\
+&U |_{t=0} = 0, \left.\frac{\partial U}{\partial t} \right|_{t=0} = \delta(x,y,z)
+\end{aligned}
+\right.
+$$
+
+<!-- TODO: recap on fourier transform method -->
+
+用 Fourier 变换法，解得
+
+$$
+U(t, x, y, z) = \frac{\delta(r-at)}{4 \pi a r}
+$$
+
+其中
+
+$$
+r = \sqrt{x^2+y^2+z^2}
+$$
+
+#### 三维波动方程的初值问题
+
+我们将前面的波动方程的解带入
+
+<!-- todo: step by step -->
+
+<!-- https://math.meta.stackexchange.com/questions/9973/how-do-you-render-a-closed-surface-double-integral -->
+$$
+\newcommand{\oiint}{{\subset\!\supset} \llap{\iint}}
+\begin{aligned}
+u_1(t,x,y,z) &= \frac{1}{4 \pi a} \iiint_{-\infty}^{+\infty} \frac{\delta(r-at)}{r} \psi(\xi, \eta, \zeta) d \xi d \eta d \zeta \\
+&= t \frac{1}{4 \pi (at)^2} \oiint_{S_{at}} \psi(\xi, \eta, \zeta) dS \\
+&= t M_{at} (\psi) \\
+u_2(t,x,y,z) &= \frac{\partial}{\partial t} [t M_{at} (\psi)]\\
+u_3(t,x,y,z) &= \frac{1}{4 \pi a^2} \int_{0}^{at} \oiint_{S_r} \frac{1}{r} f(t- \frac{r}{a}, \xi, \eta, \zeta) dSdr \\
+\end{aligned} 
+$$
+
+> 其中
+> - $ r = \sqrt{(x-\xi)^2 + (y-\eta)^2 + (z-\zeta)^2}) $
+> - $ M_{at} $ 表示函数 $ \psi $ 在 (x,y,z) 为中心，at 为半径的球面 $ S_{at} $ 上的平均值
+
+#### 带入原问题
+
+我们从 (11) 和 (12) 开始继续向前：
+
+$$
+\nabla^2 \mathbf{A} - \frac{1}{c^2} \frac{\partial^2 \mathbf{A}} {\partial t^2}  = -\frac{\mathbf{j}}{\varepsilon_0 c^2} \tag{11}
 $$
 
 $$
-
+\nabla^2 \phi - \frac{1}{c^2} \frac{\partial^2 \phi}{\partial t^2} = -\frac{\rho}{\varepsilon_0} \tag{12}
 $$
 
-$$
-
-$$
-
-$$
+首先将其整理为
 
 ### 单色波解
 
-我们可以把
+令
+$$
+u(t, M) = u_0 e^{ikt}
+$$
 
 ### Kirchhoff 积分和 Eikonal 方程
 

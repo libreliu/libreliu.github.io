@@ -1,5 +1,5 @@
 ---
-title: 微积分备忘
+title: 微积分和数理方程备忘
 date: 2023-07-22
 ---
 
@@ -32,3 +32,8 @@ $$
 &= \int_{a(x)}^{b(x)} \frac{df(t, x)}{dx} dt + f(b(x), x) b'(x) - f(a(x), x) a'(x)
 \end{aligned}
 $$
+
+## Fourier 级数、变换、复数形式
+
+Fourier 级数的目标是使用 $ \{ 1, \cos x, \sin x, \cos 2x, \sin 2x, ... \} $ 的正交三角函数系来表示周期为 $ l $ 的周期函数。
+
