@@ -15,3 +15,4 @@ Below are my CV, feel free to read~
 |-------------|----------------------------------------|
 | catoverflow | [Catoverflow's Blog](https://c-j.dev/) |
 | petergu     | [regymm](https://www.ustcpetergu.com/) |
+| chizhw ❤   | [chizhw](https://www.chizhw.me/)       |
