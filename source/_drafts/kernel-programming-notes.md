@@ -50,6 +50,14 @@ date: 2023-08-04
 
 ### rcu
 
+### 断言
+
+- `might_sleep()`：断言当前上下文允许 sleep
+  - 通常意义上，不能在比如拿着自旋锁的时候 sleep
+  > Ref: [Why can't you sleep while holding spinlock? - Stack Overflow](https://stackoverflow.com/questions/4752031/why-cant-you-sleep-while-holding-spinlock)
+- `lockdep`: Runtime locking correctness validator
+  - lockdep_assert_none_held_once()
+
 ## 内存管理
 
 ### 内存分配
