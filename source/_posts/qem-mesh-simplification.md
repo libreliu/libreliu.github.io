@@ -194,6 +194,6 @@ $$
 
 ## 效果展示
 
-![image-20230420220930080](./qem-mesh-simplification.assets/image-20230420220930080.png)
+![image-20230420220930080](./qem-mesh-simplification/image-20230420220930080.png)
 
 0.5 ratio
