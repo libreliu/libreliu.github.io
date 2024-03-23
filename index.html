@@ -511,6 +511,224 @@
 
 
     
+      <article id="post-qem-mesh-simplification" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <myh11 itemprop="name">
+      <a class="article-title-index" href="/qem-mesh-simplification/"><strong>可能是史上最详尽的 QEM 网格简化算法解释</strong></a>
+      <small class=article-date-index>&nbsp; 2023-04-11</small>
+      <!--<a>
+      <div = post.date  </div>
+      </a>-->
+      <br>
+      <br> <!-- blair add -->
+    </myh11>
+  
+
+
+      </header>
+    
+    <div class="article-meta">
+      <!--<a href="/qem-mesh-simplification/" class="article-date">
+  <time datetime="2023-04-10T16:00:00.000Z" itemprop="datePublished">2023-04-11</time>
+</a>-->
+      <!--
+-->
+      <!--
+      
+      -->
+    </div>
+	
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>注：请根据上下文猜测哪些是矢量，哪些是标量，因为作者懒得打了。</p>
+</blockquote>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>QEM 算法（<a target="_blank" rel="noopener" href="http://dl.acm.org/citation.cfm?id=288280">Garland and Heckbert [1998]</a>）是网格简化领域的经典算法。</p>
+<h3 id="相关实现"><a href="#相关实现" class="headerlink" title="相关实现"></a>相关实现</h3><p><a target="_blank" rel="noopener" href="https://github.com/byreave/MeshSimplification-QEM">GitHub - byreave&#x2F;MeshSimplification-QEM: A C++implementation of QEM algorithm.</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/WZFish/QEM-MeshSimplification">GitHub - WZFish&#x2F;QEM-MeshSimplification</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/songrun/SeamAwareDecimater">GitHub - songrun&#x2F;SeamAwareDecimater: Mesh simplification with UV’s boundary preserved</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/MeshFrame/MeshFrame/blob/master/Examples/MeshSimplifyQEM/mesh.cpp">GitHub - MeshFrame&#x2F;MeshFrame: A light-weighted, efficient and header-only mesh processing frame work</a></p>
+<h2 id="QEM-Original"><a href="#QEM-Original" class="headerlink" title="QEM Original"></a>QEM Original</h2><blockquote>
+<p>出现于文章 <a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/~./garland/Papers/quadrics.pdf">Surface Simplification Using Quadric Error Metrics</a> 中</p>
+</blockquote>
+<h3 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h3><p>设现在有网格 $ M &#x3D; (V, F) $，规定<strong>可收缩顶点对</strong>为</p>
+<ol>
+<li>原网格中的边</li>
+<li>$ \| v_1 - v_2\| < \epsilon $ 的顶点对 $ (v_1, v_2) $</li>
+</ol>
+<p>对每个三角形 $ F_i $，设构成该三角形的三个顶点为 $ v_0, v_1, v_2 $，则 $ F_i $ 上的点 $ v_f $ 满足方程</p>
+$$
+(\vec v_f- \vec v_0) \cdot \vec n = 0 \Rightarrow \vec v_f \cdot \vec n - \vec {v_0} \cdot \vec n = 0
+$$
+
+<p>其中面法线 $ \vec n $ 满足</p>
+$$
+\vec {n} =  \frac{(\vec v_1 -\vec  v_0) \times (\vec v_2 - \vec v_0)}{\| (\vec v_1 -\vec  v_0) \times (\vec v_2 - \vec v_0) \|}
+$$
+
+
+<p>空间中任意一点 $ v $ 到平面 $ F_i $ 的距离的平方为</p>
+$$
+\begin{aligned}
+d^2(v, F_i) &= \| (\vec v-\vec v_0) \cdot \vec n \|^2 \\
+&= (n^\mathbf{T} v - n^\mathbf{T} v_0 )^2 \\
+&= v^\mathbf{T} (nn^\mathbf{T}) v - 2 n^\mathbf{T} v_0 n^\mathbf{T}v + (n^\mathbf{T} v_0)^2
+\end{aligned}
+$$
+<p>定义</p>
+$$
+\begin{aligned}
+{\bf A}_{3\times 3} &= n n^\mathbf{T}\\ 
+d &= -n^\mathbf{T} v_0 \\
+\vec b_{3 \times 1} &= d n \\
+c &= d^2
+\end{aligned}
+$$
+<p>则</p>
+$$
+d^2(v, F_i) = v^\mathbf{T} {\bf A} v + 2b^\mathbf{T} v + c
+$$
+<p>这个距离平方也可以写成齐次形式</p>
+$$
+d^2(v, F_i) = h^\mathbf{T} {\bf Q} h \\
+\text{where} \ {\bf Q}_{4\times4} = \begin{pmatrix} {\bf A}_{3 \times 3} & b_{3 \times 1} \\ b^\mathbf{T} _{1 \times 3}& c_{1 \times 1} \end{pmatrix} \ \text{and} \ h= \begin{pmatrix} \vec v \\ 1 \end{pmatrix}
+$$
+<p>所以，对于每一个平面 $ F_i $，都可以定义一个二次型 $ Q_{F_i}(v) &#x3D; h^\mathbf{T} \mathbf{Q} h $，其为任意一点 $ v$ 到该平面距离的平方。</p>
+<p>对于顶点 $ v $，该顶点到相邻的所有表面的距离平方和可以表示为 $ \sum_{i \in \operatorname{neigh}(v_i)} Q_{F_i}(v) &#x3D; (\sum_{i \in \operatorname{neigh}(v_i)} Q_{F_i})(v) $ 。</p>
+<h3 id="Framework"><a href="#Framework" class="headerlink" title="Framework"></a>Framework</h3><p>QEM 算法的框架如下：</p>
+<ul>
+<li><p>每个顶点 $ v_i $ 按上面的方法赋予一个 Q 矩阵，$ Q_{v_i} &#x3D; \sum_{i \in \operatorname{neigh}(v_i)} Q_{F_i} $</p>
+</li>
+<li><p>收缩 $(v_i, v_j)$ 边到 $ v’ $ 时，定义这次收缩的代价为 $ Q(v’) &#x3D; (Q_{v_i} + Q_{v_j})(v’)$；每次全局的选择最小代价的边进行收缩</p>
+<ul>
+<li>如何选择 $ v’ $？有 Optimal Placement 和 Subset Placement 两种形式：<ol>
+<li><p>(<strong>Optimal Placement</strong>) $ {\bf A} $ 可逆时</p>
+<p>令 $ \frac{\partial}{\partial v}(v^\mathbf{T} {\bf A} v + 2b^\mathbf{T} v + c) &#x3D; 0 $，解得 $ v_\text{optimal} &#x3D; -{\bf A}^{-1} b $ </p>
+</li>
+<li><p>(<strong>Subset Placement</strong>) $ {\bf A} $ 不可逆时，选择两个端点或中点；看哪个 edge loss 小</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>收缩后的顶点 $ v’ $ 更新</p>
+<blockquote>
+<p>这里对算法有两种理解，第一种是按初始计算的方法重新按邻面赋予 Q 矩阵（这样就是一个完全 local 的方法），第二种理解是合并两个顶点，则将对应的 Q 矩阵也进行合并。</p>
+<p>文章中的做法是<strong>第二种理解</strong>，从文章提到 implicit track sets of planes 可以知道。不过在 Discussion 处也讨论了这种做法的问题：</p>
+</blockquote>
+</li>
+</ul>
+<blockquote>
+<p><em>Second, the information accumulated in the quadrics is essentially implicit, which can at times be problematic. Suppose we join together two cubes and would like to remove the planes associated with the now defunct interior faces. Not only is it, in general, difficult to determine what faces are defunct, there is no clear way to reliably remove the appropriate planes from the quadrics. As a result, our algorithm does not do as good a job at simplification with aggregation as we would like.</em></p>
+</blockquote>
+<ul>
+<li>$ Q_{v'} = Q_{v_1} + Q_{v_2} $</li>
+</ul>
+<p>值得注意的是， $ Q(v’) &#x3D; (Q_{v_i} + Q_{v_j})(v’)$ 会导致一些 double counting 的现象发生，即有些公共面构造的 Q 分量被重复求和了。但作者提到，这样的重复对效果的影响有限。</p>
+<blockquote>
+<p>这里引用了 Donald E. Knuth. The Art of Computer Programming, volume 1. Addison Wesley, Reading, MA, Third edition, 1997.</p>
+<p>不是很懂高德纳老爷子和 inclusion-exclusion rule 对效果的改善的关系…</p>
+</blockquote>
+<h3 id="Preserving-Boundaries"><a href="#Preserving-Boundaries" class="headerlink" title="Preserving Boundaries"></a>Preserving Boundaries</h3><p>对于不希望边界移动的情况，可以首先标记将边标记为<strong>正常边</strong>和<strong>边界边</strong>两种（这个边界边不一定需要是真的网格边界，只是比较不希望移动的边）。</p>
+<p>对于标记为<strong>边界边</strong>的边 $(v_1, v_2)$，令和其相邻的所有面的 Q 矩阵中增加一项反映到垂直于该平面、且过该<strong>边界边</strong>的一个平面的距离平方的项。</p>
+<p>设边界边 $(v_1, v_2)$，不妨设某个相邻的三角形 $ F_i $ 的三个顶点为 $v_1, v_2, v_3$，则与之相对的边界平面 $ F_{B_i} $ 可以计算如下</p>
+$$
+n_{F_i} = \operatorname{normalize}{ \left((v_2 - v_1) \times (v_3 - v_1) \right)} \\
+n_{F_{B_i}} = \operatorname{normalize}{\left( n_{F_i} \times (v_2 - v_1) \right)} \\
+\forall v \in F_{B_i},\ \vec {n_{F_{B_i}}} \cdot (\vec v - \vec {v_1}) = 0 \Rightarrow \vec {n_{F_{B_i}}} \cdot \vec v +(- \vec {n_{F_{B_i}}} \cdot \vec {v_1}) = 0
+$$
+<p>则到边界平面 $ F_{B_i} $ 的距离平方计算如下：</p>
+$$
+d^2(v, F_{B_i}) = h^\mathbf{T} \mathbf{Q} h \\
+\text{where} \ {\bf Q}_{4\times4} = 
+\begin{pmatrix}
+{\bf A}_{3 \times 3} & b_{3 \times 1} \\
+b^\mathbf{T} _{1 \times 3}& c_{1 \times 1}
+\end{pmatrix} = 
+\begin{pmatrix}
+n_{F_{B_i}}n_{F_{B_i}}^{\bf T} & (- n_{F_{B_i}} \cdot {v_1}) {n_{F_{B_i}}} \\
+(- n_{F_{B_i}} \cdot {v_1}) n_{F_{B_i}}^{\bf T} & (- n_{F_{B_i}} \cdot {v_1}) ^2
+\end{pmatrix}
+\ \text{and} \ h= \begin{pmatrix} \vec v \\ 1 \end{pmatrix}
+$$
+<p>把他加入到相邻面的 Q 矩阵中，最后就会进入各个边的 Q 矩阵。</p>
+<h2 id="Appearance-Preserving-QEM"><a href="#Appearance-Preserving-QEM" class="headerlink" title="Appearance Preserving QEM"></a>Appearance Preserving QEM</h2><blockquote>
+<p>出现于文章 <a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/~garland/Papers/quadric2.pdf">Simplifying Surfaces with Color and Texture using Quadric Error Metrics</a> 中</p>
+</blockquote>
+<p>对于<strong>连续</strong>的顶点属性来说，可以通过把他们加入向量中一起优化的方法来解决。这种方法本质上是原来 QEM 的推广，将原来的到平面的距离推广为了到平面上三点的位置和其它顶点属性共同确定的<strong>超平面</strong>的距离。</p>
+<p>同时，本文中调整了<strong>可收缩顶点对</strong>的定义，将其限制在了原三角网格中的边的范围内，因为可靠性不够好。</p>
+<blockquote>
+<p>Our experience has shown that, while greedy edge contraction produces consistently good results on many kinds of models, greedy contraction of arbitrary pairs is not as robust and does not perform as consistently.</p>
+</blockquote>
+<h3 id="Formulation-1"><a href="#Formulation-1" class="headerlink" title="Formulation"></a>Formulation</h3><p>将上面的三角形 $ F_i $ 的各个顶点 $ v_i $ 从 $ \mathbb{R}^3 $ 推广到 $ \mathbb{R}^n $，我们知道 3 个 $ \mathbb{R}^n $ 中的点（非线性相关）仍然确定一个 $ \mathbb{R}^2 $ 平面，这个平面的两个<strong>标准正交</strong>基向量 $ e_1 $，$ e_2 $ 可以用 Schmidt 正交化的办法得到：</p>
+$$
+\begin{aligned}
+e_1 &= \operatorname{normalize}{(v_2-v_1)} \\
+e_2 &= \operatorname{normalize}{((v_3 - v_1) - (e_1 \cdot (v_3 - v_1)) e_1)}
+\end{aligned}
+$$
+<p>这样，对于 $ v \in \mathbb{R}^n $，有</p>
+$$
+\begin{aligned}
+d^2(v, F_i) &= \| v - v_1 \|^2 - ((v-v_1)\cdot e_1)^2 - ((v-v_1)\cdot e_2)^2 \\
+&= (v-v_1)^{\bf T}(v-v_1) - ((v-v_1)^{\bf T}e_1)(e_1^{\bf T}(v-v_1)) - ((v-v_1)^{\bf T}e_2)(e_2^{\bf T}(v-v_1)) \\
+&= (v^{\bf T} v - v_1^{\bf T}v-v^{\bf T} v_1 + v^{\bf T}_1 v_1) - \\
+& \ \quad (v^{\bf T}e_1 e_1^{\bf T}v -v^{\bf T}_1 e_1 e_1^{\bf T}v - v^{\bf T}e_1 e_1^{\bf T} v_1 + v_1^{\bf T} e_1 e_1^{\bf T} v_1) - \\
+& \ \quad (v^{\bf T}e_2 e_2^{\bf T}v -v^{\bf T}_1 e_2 e_2^{\bf T}v - v^{\bf T}e_2 e_2^{\bf T} v_1 + v_1^{\bf T} e_2 e_2^{\bf T} v_1) \\
+&= (v^{\bf T} v - 2v_1^{\bf T}v + v^{\bf T}_1 v_1) - \\
+& \ \quad (v^{\bf T}e_1 e_1^{\bf T}v -v^{\bf T}_1 e_1 e_1^{\bf T}v - (v_1^{\bf T} e_1 e_1^{\bf T} v)^{\bf T} + v_1^{\bf T} e_1 e_1^{\bf T} v_1) - \\
+& \ \quad (v^{\bf T}e_2 e_2^{\bf T}v -v^{\bf T}_1 e_2 e_2^{\bf T}v - (v_1^{\bf T} e_2 e_2^{\bf T} v)^{\bf T}  + v_1^{\bf T} e_2 e_2^{\bf T} v_1) \\
+&= (v^{\bf T} v - 2v_1^{\bf T}v + v^{\bf T}_1 v_1) - \\
+& \ \quad (v^{\bf T}e_1 e_1^{\bf T}v -v^{\bf T}_1 e_1 e_1^{\bf T}v - (v_1^{\bf T} e_1 e_1^{\bf T} v) + v_1^{\bf T} e_1 e_1^{\bf T} v_1) - \\
+& \ \quad (v^{\bf T}e_2 e_2^{\bf T}v -v^{\bf T}_1 e_2 e_2^{\bf T}v - (v_1^{\bf T} e_2 e_2^{\bf T} v)  + v_1^{\bf T} e_2 e_2^{\bf T} v_1) \\
+&= v^{\bf T} ({\bf I} - e_1 e_1^{\bf T} - e_2 e_2^{\bf T}) v + 2(v^{\bf T}_1 e_1 e_1^{\bf T} + v^{\bf T}_1 e_2 e_2^{\bf T}-v_1^{\bf T}) v + (v^{\bf T}_1 v_1 -v_1^{\bf T} e_1 e_1^{\bf T} v_1 - v_1^{\bf T} e_2 e_2^{\bf T} v_1) \\
+&= v^{\bf T} ({\bf I} - e_1 e_1^{\bf T} - e_2 e_2^{\bf T}) v + 2(e_1 e_1^{\bf T}v_1 +e_2 e_2^{\bf T} v_1 - v_1)^{\bf T} v + (v^{\bf T}_1 v_1 -v_1^{\bf T} e_1 e_1^{\bf T} v_1 - v_1^{\bf T} e_2 e_2^{\bf T} v_1) \\
+&= v^{\bf T} ({\bf I} - e_1 e_1^{\bf T} - e_2 e_2^{\bf T}) v + 2((e_1 \cdot v_1)e_1  +(e_2 \cdot v_1)e_2 - v_1)^{\bf T} v + (v_1 \cdot v_1 - (v_1\cdot e_1)^2 - (v_1 \cdot e_2)^2)
+
+\end{aligned}
+$$
+<p>仿照前面，整理成 Q 矩阵的形式</p>
+$$
+d^2(v, F_i) = v^\mathbf{T} {\bf A} v + 2b^\mathbf{T} v + c \\
+\text{where}\ \left\{
+\begin{aligned}
+{\bf A}_{n\times n} &= {\bf I} - e_1 e_1^{\bf T} - e_2 e_2^{\bf T} \\
+{\bf b}_{n\times 1} &= (e_1 \cdot v_1)e_1  +(e_2 \cdot v_1)e_2 - v_1 \\
+c_{1\times 1} &= v_1 \cdot v_1 - (v_1\cdot e_1)^2 - (v_1 \cdot e_2)^2
+\end{aligned}
+\right.
+$$
+
+
+<h3 id="Preserving-Boundaries-1"><a href="#Preserving-Boundaries-1" class="headerlink" title="Preserving Boundaries"></a>Preserving Boundaries</h3><p>将原始的 QEM 边界处理方法直接搬到 $ \mathbb{R}^n $ 会比较困难，因为 $ \mathbb{R}^n $ 下过两个 $ \mathbb{R}^n $ 的点并且垂直于一个平面的平面有很多个。</p>
+<blockquote>
+<p>平面在 $ \mathbb{R}^n $ 中即为一个 $ \mathbb{R}^2 $ 子空间，垂直于该平面的向量现在构成一个“法空间”（其为 $ \mathbb{R} ^n &#x2F; \mathbb{R} ^2 $ 的商空间），其维数为 $ n - 2 $，那 $ \mathbb{R}^n $ 下过两个 $ \mathbb{R}^n $ 的点并且垂直于一个平面的平面 $ \iff $  $ \mathbb{R}^n $ 下过两个 $ \mathbb{R}^n $ 的点和一个法空间中的点  $ \Rightarrow $ 这样的平面至少有 $ n - 2 $ 个</p>
+</blockquote>
+<p>所以，这里考虑直接锁边界。</p>
+<h2 id="效果展示"><a href="#效果展示" class="headerlink" title="效果展示"></a>效果展示</h2><p><img src="/./qem-mesh-simplification.assets/image-20230420220930080.png" alt="image-20230420220930080"></p>
+<p>0.5 ratio</p>
+
+      
+    </div>
+	
+    <!--
+	
+    -->
+    <!--
+    
+    -->
+  </div>
+  
+</article>
+
+
+
+    
       <article id="post-play-with-spirv" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -2601,240 +2819,6 @@ $$
 <p>TODO: implement me</p>
 </blockquote>
 <h3 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h3><h4 id="Path-Reuse"><a href="#Path-Reuse" class="headerlink" title="Path Reuse"></a>Path Reuse</h4><h4 id="Spectral-Rendering"><a href="#Spectral-Rendering" class="headerlink" title="Spectral Rendering"></a>Spectral Rendering</h4><h4 id="Volume-Single-Scattering"><a href="#Volume-Single-Scattering" class="headerlink" title="Volume Single Scattering"></a>Volume Single Scattering</h4>
-      
-    </div>
-	
-    <!--
-	
-    -->
-    <!--
-    
-    -->
-  </div>
-  
-</article>
-
-
-
-    
-      <article id="post-example-d3d11-app-flow" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <myh11 itemprop="name">
-      <a class="article-title-index" href="/example-d3d11-app-flow/"><strong>一个示例 D3D11 程序的全流程记录</strong></a>
-      <small class=article-date-index>&nbsp; 2022-10-19</small>
-      <!--<a>
-      <div = post.date  </div>
-      </a>-->
-      <br>
-      <br> <!-- blair add -->
-    </myh11>
-  
-
-
-      </header>
-    
-    <div class="article-meta">
-      <!--<a href="/example-d3d11-app-flow/" class="article-date">
-  <time datetime="2022-10-18T16:00:00.000Z" itemprop="datePublished">2022-10-19</time>
-</a>-->
-      <!--
--->
-      <!--
-      
-      -->
-    </div>
-	
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本篇是笔者进行 RenderDoc drivers 层分析时一并记录下来的，是一个渲染 Cube 的简单 D3D11 程序与 API 交互的全流程的记录。</p>
-<p>以 <a target="_blank" rel="noopener" href="https://github.com/libreliu/DirectX11-With-Windows-SDK/tree/master/Project%2001-09/03%20Rendering%20a%20Cube">DirectX11-With-Windows-SDK - Rendering A Cube</a> 为例进行说明。</p>
-<blockquote>
-<p>DXGI (<strong>D</strong>irect<strong>X</strong> <strong>G</strong>raphics <strong>I</strong>nfrastructure) 负责抽象和交换链、DAL 相关的公共部分。关于 DXGI 的资料可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/d3d10-graphics-programming-guide-dxgi">MSDN</a>。</p>
-<p>DXGI 封装了多种对象：</p>
-<ul>
-<li>显示适配器 (IDXGIAdapter): 一般对应一块显卡，也可以对应 Reference Rasterizer，或者支持虚拟化的显卡的一个 VF 等</li>
-<li>显示输出 (IDXGIOutput): 显示适配器的输出，一般对应一个显示器</li>
-<li>交换链 (IDXGISwapChain): 用来暂存要显示到输出窗口&#x2F;全屏幕的 1 到多个 Surface 的对象<ul>
-<li><code>g_pSwapChain-&gt;GetBuffer</code> 可以拿到表示 Back Buffer 的 <code>ID3D11Texture</code></li>
-<li>从 <code>g_pd3dDevice-&gt;CreateRenderTargetView</code> 来创建一个封装该 Texture 的 <code>ID3D11RenderTargetView</code></li>
-<li><code>g_pd3dDeviceContext-&gt;OMSetRenderTargets</code> 来设置管线的 RenderTarget</li>
-<li><code>g_pd3dDeviceContext-&gt;RSSetViewports</code> 来设置管线的 Viewport</li>
-</ul>
-</li>
-</ul>
-</blockquote>
-<!--
-
-> 和 DRM (master) 的相应概念的对比：
-> - NOTE: 我只看过 DRM Master (?) 的相关 API
-> 
-> DRM 里面有
-> - KMS:
->   - CRT Controller, Encoder, Connector, Plane
->   - 感觉 IDXGIAdapter 约等于 /dev/dri/card0 ... 等加速设备
->   - 但也不是，因为 DRM 的 master 节点的访问限制 (?)
->   - TODO: 理一理 DRM
-> - Buffer Object Management
-
--->
-
-<h2 id="GameApp-Init"><a href="#GameApp-Init" class="headerlink" title="GameApp::Init()"></a><code>GameApp::Init()</code></h2><ul>
-<li><code>D3DApp::Init()</code><ul>
-<li><code>InitMainWindow()</code><ul>
-<li><code>RegisterClass(WNDCLASS *)</code>: 注册</li>
-<li><code>AdjustWindowRect()</code></li>
-<li><code>CreateWindow()</code></li>
-<li><code>ShowWindow()</code></li>
-<li><code>UpdateWindow()</code></li>
-</ul>
-</li>
-<li><code>InitDirect3D()</code><ul>
-<li><p><code>D3D11CreateDevice()</code>: 采用 11.1 的 Feature Level，不行则降级</p>
-<p>该函数会返回 Immediate Context (<code>ID3D11DeviceContext</code>), 设备 (<code>ID3D11Device</code>) 和特性等级</p>
-</li>
-<li><p><code>ID3D11Device::CheckMultisampleQualityLevels</code>: 查询给定 DXGI_FORMAT 是否支持给定倍数的 MSAA</p>
-</li>
-<li><p>将前面的 <code>ID3D11Device</code> Cast 到 <code>IDXGIDevice</code></p>
-<blockquote>
-<p>An <code>IDXGIDevice</code> interface implements a derived class for DXGI objects that produce image data.</p>
-</blockquote>
-</li>
-<li><p><code>IDXGIDevice::GetAdapter</code> 拿到 <code>IDXGIAdapter</code></p>
-<blockquote>
-<p>The <code>IDXGIAdapter</code> interface represents a display subsystem (including one or more GPUs, DACs and video memory).</p>
-</blockquote>
-</li>
-<li><p><code>IDXGIAdapter::GetParent</code> 拿到 <code>IDXGIFactory1</code></p>
-<blockquote>
-<p>这里的 <code>GetParent</code> 是 <code>IDXGIAdapter</code> 作为 <code>IDXGIObject</code> 的方法，可以获得构造它的工厂类。</p>
-<p>The <code>IDXGIFactory1</code> interface implements methods for generating DXGI objects.</p>
-</blockquote>
-</li>
-<li><p>尝试将 <code>IDXGIFactory1</code> Cast 到 <code>IDXGIFactory2</code> (DXGI 1.2 新增)</p>
-<ul>
-<li>如果支持 DXGI 1.2，则用 <code>CreateSwapChainForHwnd</code> 来创建交换链</li>
-<li>否则，用 <code>CreateSwapChain</code> 来创建交换链<blockquote>
-<p>这两个函数都可以创建窗口 &#x2F; 全屏幕交换链；DXGI 1.2 增加了新的、到其它输出目标的交换链创建功能，所以这里进行了重构。</p>
-<p>也要注意，不同 DirectX 可以支持的<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect">交换链的交换行为类型</a>是不同的。大体上，交换链的交换行为可以分为</p>
-<ul>
-<li>DISCARD vs SEQUENTIAL: 可以参考 <a target="_blank" rel="noopener" href="https://gamedev.stackexchange.com/questions/58654/what-is-the-difference-between-dxgi-swap-effect-discard-and-dxgi-swap-effect-seq">StackExchange</a>，区别就是一个驱动可以放心扔掉，另一个必须保留回读可能</li>
-<li>FILP vs BLIT (Bit Block Transfer): 决定是用交换指针还是数据拷贝的方法来从交换链被 Present 的 Surface 中拿取数据</li>
-</ul>
-</blockquote>
-</li>
-</ul>
-</li>
-<li><p><code>IDXGIFactory1::MakeWindowAssociation</code> 来取消让 DXGI 接收 Alt-Enter 的键盘消息并且切换窗口和全屏模式</p>
-</li>
-<li><p><code>D3D11SetDebugObjectName()</code></p>
-<ul>
-<li><code>ID3D11DeviceChild::SetPrivateData(WKPDID_D3DDebugObjectName, ...)</code> 来设置资源的内部数据，这里是调试名称</li>
-</ul>
-</li>
-<li><p><code>DXGISetDebugObjectName()</code></p>
-<ul>
-<li><code>IDXGIObject::SetPrivateData(WKPDID_D3DDebugObjectName, ...)</code> 来设置资源的内部数据，这里是调试名称</li>
-</ul>
-</li>
-<li><p><code>OnResize()</code></p>
-<ul>
-<li><code>IDXGISwapChain::ResizeBuffers()</code></li>
-<li><code>IDXGISwapChain::GetBuffer()</code> 拿到 <code>ID3D11Texture2D</code> 形式的 Back Buffer</li>
-<li><code>IDXGISwapChain::CreateRenderTargetView()</code> 创建绑定到上面 Back Buffer 的 Texture 的渲染目标视图</li>
-<li><code>D3D11SetDebugObjectName</code> 来设置 Back Buffer 的调试名称 </li>
-<li><code>ID3D11Device::CreateTexture2D()</code> 来创建深度模板缓冲 (Depth Stencil Buffer)，类型 <code>ID3D11Texture2D</code>，包含大小，MipLevel，采样描述等</li>
-<li><code>ID3D11Device::CreateDepthStencilView()</code> 来创建前面缓冲对应的深度模板视图</li>
-<li><code>ID3D11DeviceContext::OMSetRenderTargets()</code> 来将渲染目标视图和深度木板视图绑定到管线</li>
-<li><code>ID3D11DeviceConetxt::RSSetViewports()</code> 绑定 Viewport 信息到光栅器状态</li>
-<li><code>D3D11SetDebugObjectName()</code> 设置调试前面各种视图对象的对象名</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><code>InitEffect()</code><ul>
-<li><code>CreateShaderFromFile()</code>: 传入 CSO (Compiled Shader Object) 和 Shader 文件，输出 <code>ID3DBlob *</code><ul>
-<li>如果有缓存，则用 <code>D3DReadFileToBlob</code> 装入，并返回</li>
-<li><code>D3DCompileFromFile()</code>: 编译并生成 <code>ID3DBlob</code> 对象</li>
-<li>如果指定了缓存路径，则 <code>D3DWriteBlobToFile()</code> 进行输出<blockquote>
-<p>分别创建了 <code>vs_5_0</code> 和 <code>ps_5_0</code> Shader Model 的 Shader Blob</p>
-</blockquote>
-</li>
-</ul>
-</li>
-<li><code>ID3D11Device::CreateVertexShader()</code>，根据 Shader Bytecode 创建 <code>ID3D11VertexShader</code> 对象<blockquote>
-<p>注意这个函数支持传入 Class Linkage，这是一种在 Shader 间共享类型和变量的机制，在 Shader Model 5 被引入。更详细的用法可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/overviews-direct3d-11-hlsl-dynamic-linking-class">Dynamic Linking Class | MSDN</a></p>
-<p>TODO: 研究一下</p>
-</blockquote>
-</li>
-<li><code>ID3D11Device::CreateInputLayout()</code> 传入输入元素描述符和 Shader，传出 <code>ID3D11InputLayout</code> 对象</li>
-<li><code>ID3D11Device::CreatePixelShader()</code> ，根据 Shader Bytecode 创建 <code>ID3D11PixelShader</code> 对象</li>
-</ul>
-</li>
-<li><code>InitResource()</code><ul>
-<li><code>ID3D11Device::CreateBuffer()</code> 创建顶点缓冲区 (<code>ID3D11Buffer</code>) ，并传入初始化数据</li>
-<li><code>ID3D11Device::CreateBuffer()</code> 创建索引缓冲区 (<code>ID3D11Buffer</code>) ，并传入初始化数据</li>
-<li><code>ID3D11DeviceContext::IASetIndexBuffer()</code> 设置 Immediate Context 绑定索引缓冲区</li>
-<li><code>ID3D11Device::CreateBuffer()</code> 创建常量缓冲区 (<code>ID3D11Buffer</code>) ，不是用初始化数据<ul>
-<li>此处设置 <code>D3D11_BUFFER_DESC</code> 的 <code>CPUAccessFlags</code> 为 <code>D3D11_CPU_ACCESS_WRITE</code>，让 CPU 可以改变其值</li>
-</ul>
-</li>
-<li><code>ID3D11DeviceContext::IASetVertexBuffers()</code> 设置顶点缓冲区，stride 和 offset</li>
-<li><code>ID3D11DeviceContext::IASetPrimitiveTopology()</code> 设置图元类型</li>
-<li><code>ID3D11DeviceContext::IASetInputLayout()</code> 设置输入布局</li>
-<li><code>ID3D11DeviceContext::VSSetShader()</code> 绑定顶点着色器到管线</li>
-<li><code>ID3D11DeviceContext::VSSetConstantBuffers()</code> 设置常量缓冲区<blockquote>
-<p>这里当然是拿着 ID3D11Buffer 去设置</p>
-</blockquote>
-</li>
-<li><code>ID3D11DeviceContext::PSSetShader()</code> 设置像素着色器</li>
-<li><code>D3D11SetDebugObjectName()</code> 将 Input Layout, Shader 和 Buffer 设置好调试用名字</li>
-</ul>
-</li>
-</ul>
-<h2 id="GameApp-Run"><a href="#GameApp-Run" class="headerlink" title="GameApp::Run()"></a><code>GameApp::Run()</code></h2><blockquote>
-<p>关于 Windows 消息机制的相关介绍可以参考 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/winmsg/about-messages-and-message-queues">About messages and message queues | MSDN</a>。</p>
-</blockquote>
-<p>运行首先依赖 Windows 窗口程序本身的主事件循环（<code>PeekMessage()</code> &#x3D;&gt; <code>TranslateMessage()</code> &#x3D;&gt; <code>DispatchMessage()</code>)。</p>
-<p>主窗口的消息处理函数中，主要会处理：</p>
-<ul>
-<li><code>WM_SIZE</code>: 如果在 <code>WM_ENTERSIZEMOVE</code> 和 <code>WM_EXITSIZEMOVE</code> 中间，则忽略，否则调用 <code>OnResize()</code> 重新配置交换链并绑定到管线</li>
-<li><code>WM_ACTIVATE</code>: 窗口不活跃时暂停渲染</li>
-<li><code>WM_DESTROY</code>: 窗口退出消息</li>
-</ul>
-<p>如果没有待处理的窗口消息，则会进入：</p>
-<ul>
-<li><code>CalculateFrameStats()</code>: 根据定时器计算时长并更新窗口标题</li>
-<li><code>UpdateScene()</code>: 更新场景 (主要是更新常量缓冲)<ul>
-<li>计算更新后的常量缓冲区值</li>
-<li><code>ID3D11DeviceContext::Map</code> 传入 Constant Buffer 对象<blockquote>
-<p><a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-map">MSDN</a>: Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.</p>
-<p>这里要指定映射类型 (CPU 可读，CPU 可写，CPU 可写且原内容可放弃)；不过，这里还有一种类型，叫做 <code>D3D11_MAP_WRITE_NO_OVERWRITE</code>，这块 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_map">MSDN 的文档</a>有比较详细的解释。</p>
-<p>也可以看看<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/341476240">这篇</a>知乎专栏作为参考。</p>
-</blockquote>
-<!-- TODO: 调查一下这个问题 --></li>
-<li><code>memcpy(mappedData.pData, &amp;cpuCBuffer, sizeof(cpuConstBuffer))</code> 将数据拷贝到 <code>D3D11_MAPPED_SUBRESOURCE::pData</code> 成员处</li>
-<li><code>ID3D11DeviceContext::Unmap</code> 解除内存映射</li>
-</ul>
-</li>
-<li><code>DrawScene()</code>: 绘制场景<ul>
-<li><code>ID3D11DeviceContext::ClearRenderTargetView()</code>: 用给定颜色清空渲染目标视图</li>
-<li><code>ID3D11DeviceContext::ClearDepthStencilView()</code>: 用给定深度和模板值清空深度模板视图</li>
-<li><code>ID3D11DeviceContext::DrawIndexed()</code>: 绘制给定的立方体</li>
-<li><code>IDXGISwapChain::Present(SyncInterval=0, flags=0)</code>: 告知交换链已经完成绘制，可以呈现，并且要求立即呈现<blockquote>
-<p><a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present">IDXGISwapChain::Present</a>: Presents a rendered image to the user.</p>
-</blockquote>
-</li>
-</ul>
-</li>
-</ul>
-
       
     </div>
 	
