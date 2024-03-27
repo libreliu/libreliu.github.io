@@ -55,6 +55,13 @@ $$
 >
 > 这些只差常数的问题下面就不再提了。
 
+### 连续性方程
+
+对 (4) 求散度，然后对两边求散度，利用恒等式 $ \nabla \cdot (\nabla \times \vec A)  = 0$ 可以得到连续性方程
+$$
+\nabla \cdot \left(\mu_0 \left(\mathbf{j} + {\varepsilon_0}\frac{\partial \mathbf{E}} {\partial t} \right)\right) = 0 \Rightarrow \nabla \cdot \mathbf{j} = -\varepsilon_0  \frac{\partial (\nabla \cdot\mathbf{E})} {\partial t} = -\frac{\partial\rho(t)} {\partial t}
+$$
+
 ### Maxwell 方程组的波动方程形式
 
 首先做些数学工作，将 Maxwell 方程写为比较简单的形式。
@@ -193,11 +200,15 @@ $$
 \right.
 $$
 
-> 公式中的 $M$ 为空间坐标
+> 公式中的 $M$ 为空间坐标，$L$ 为一个线性微分算子
 
 如果带入 $ L = a^2 \nabla^2 $，即为波动方程。
 
-考虑基本解
+假设我们可以解出基本解 $ U $
+
+> Q: 什么是基本解？
+>
+> A: 比如说 $ Lu = f(M) $ 不会算，但是我想办法用 $ LU = \delta(M) $ 的解去凑；比如，点电荷的场 $ \Delta u = f(M) $ 不会，那就考虑离散的激励 (a.k.a. 点电荷) $ \delta(M) $ 产生的场，然后用叠加原理 + 势函数平移等等技术来做；这里面的 $ U $ 就是基本解
 
 $$
 \left\{
@@ -208,13 +219,33 @@ $$
 \right.
 $$
 
-则利用基本解，我们有
-
+则利用基本解，我们可以首先构造三个问题
+$$
+\left\{
+\begin{aligned}
+&\frac{\partial^2 u_1}{\partial t^2} = Lu_1 \\
+&u_1 |_{t=0} = 0, \left.\frac{\partial u_1}{\partial t} \right|_{t=0} = \phi(M)
+\end{aligned}
+\right.
+\\
+\left\{
+\begin{aligned}
+&\frac{\partial^2 u_2}{\partial t^2} = Lu_2 \\
+&u_2 |_{t=0} = \psi(M), \left.\frac{\partial u_2}{\partial t} \right|_{t=0} = 0
+\end{aligned}
+\right.
+\\
+\left\{
+\begin{aligned}
+&\frac{\partial^2 u_3}{\partial t^2} = Lu_3 + f(t, M) \\
+&u_3 |_{t=0} = 0, \left.\frac{\partial u_3}{\partial t} \right|_{t=0} = 0
+\end{aligned}
+\right.
+$$
+前两个容易验证，同时可以用齐次化原理 (a.k.a.  冲量原理) 得到 $u_3$
 $$
 u(t, M) = u_1 + u_2 + u_3 = U(t, M) \ast \psi(M) + \frac{\partial}{\partial t}[U(t,M) \ast \phi(M)] + \int_0^t {U(t-\tau, M) \ast f(\tau, M) d\tau}
 $$
-
-> 这个的来源是将原问题拆成三个初值问题的叠加。某些子问题中会用冲量原理来进行求解。
 
 <!-- TODO: write step by step -->
 
@@ -288,14 +319,30 @@ $$
 
 首先将其整理为
 
-### 单色波解
+## 单色波解
 
-令
+如果只考虑单色波的话，Maxwell 方程组可以化简到相当简单的形式：因为对时间求导的项变得很容易处理，剩下的主要是类似泊松方程一样，只和空间导数相关的微分方程。
+
+设
 $$
-u(t, M) = u_0 e^{ikt}
+\mathbf{E}(t, M) = \mathbf{E_0} \cos(\omega t + \alpha(M)) \\
+\mathbf{B}(t, M) = \mathbf{B_0} \cos(\omega t + \beta(M))
 $$
 
-### Kirchhoff 积分和 Eikonal 方程
+如果定义复数量 $ \mathcal{E} $ 和 $ \mathcal{B} $ ，且仅为空间的函数，同时满足 $ \operatorname{Re}[\mathcal{E}(M)] = \mathbf{E}(t, M) $ 和 $ \operatorname{Re}[\mathcal{B}(M)] = \mathbf{B}(t, M) $  的话
+$$
+\mathcal{E}(M) = \mathcal{E_0} e^{j (\alpha(M))} \\
+\mathcal{B}(M) = \mathcal{B_0} e^{j (\beta(M))} \\
+\mathbf{E}(t, M) = \mathbf{E_0} \cos(\omega t + \alpha(M)) = \operatorname{Re}[\mathcal{E}(M) e^{j\omega t}]\\
+\mathbf{B}(t, M) = \mathbf{B_0} \cos(\omega t + \beta(M)) = \operatorname{Re}[\mathcal{B}(M) e^{j\omega t}]
+$$
+带入，可以得到单色波满足的 Maxwell 方程组
+$$
+\operatorname{Re}[\mathcal{E}(M) e^{j\omega t}] = 
+$$
+
+
+### Eikonal 方程
 
 <!--
 https://wiki.seg.org/wiki/Diffraction_and_ray_theory_for_wave_propagation 
@@ -306,4 +353,10 @@ https://www.cambridge.org/core/books/abs/ray-tracing-and-beyond/eikonal-approxim
 <!-- Principles of Optics, chapter 8
 https://physics.stackexchange.com/a/91651
 -->
+
+
+
+### Kirchhoff 积分
+
+## Recap: 我们到底干了什么？
 
