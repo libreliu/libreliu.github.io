@@ -395,26 +395,6 @@
   </entry>
   
   <entry>
-    <title>论文阅读 | Generalized RIS</title>
-    <link href="https://blog.libreliu.info/paper-reading/gris/"/>
-    <id>https://blog.libreliu.info/paper-reading/gris/</id>
-    <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-02T16:00:00.000Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中</summary>
-      
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>论文阅读 | EARS</title>
     <link href="https://blog.libreliu.info/paper-reading/ears/"/>
     <id>https://blog.libreliu.info/paper-reading/ears/</id>
@@ -427,6 +407,26 @@
       
       
     <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。&lt;/</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>论文阅读 | Generalized RIS</title>
+    <link href="https://blog.libreliu.info/paper-reading/gris/"/>
+    <id>https://blog.libreliu.info/paper-reading/gris/</id>
+    <published>2022-07-02T16:00:00.000Z</published>
+    <updated>2022-07-02T16:00:00.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中的理论基础。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中</summary>
       
     
     
