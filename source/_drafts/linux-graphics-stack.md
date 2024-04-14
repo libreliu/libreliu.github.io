@@ -25,8 +25,27 @@ Intended topics:
     - "Video ROM"
     - Advanced topic: UEFI GOP
   - 内核接口
-    - 帧缓冲设备 /dev/fbX
-- 绘制到屏幕 (独占)：近代
+
+- 独占屏幕绘制
+  - 帧缓冲设备 /dev/fbX (`drivers/video/fbdev`)
+    - vesafb
+    - uvesafb
+      > uvesafb is an enhanced version of vesafb.  It uses a userspace helper (v86d)
+        to execute calls to the x86 Video BIOS functions.  The driver is not limited
+        to any specific arch and whether it works on a given arch or not depends on
+        that arch being supported by the userspace daemon.  It has been tested on
+        x86_32 and x86_64.
+      > 
+      > A single BIOS call is represented by an instance of the uvesafb_ktask
+        structure.  This structure contains a buffer, a completion struct and a
+        uvesafb_task substructure, containing the values of the x86 registers, a flags
+        field and a field indicating the length of the buffer.  Whenever a BIOS call
+        is made in the driver, uvesafb_exec() builds a message using the uvesafb_task
+        substructure and the contents of the buffer.  This message is then assigned a
+        random ack number and sent to the userspace daemon using the connector
+        interface.
+      
+    - efifb
   - kms & drm
   - glXX, Vulkan
 - 窗口混成
@@ -35,3 +54,67 @@ Intended topics:
 - 窗口系统
   - kde, gnome
   - dbus
+
+## 开始之前
+
+本文的形成使用了以下的材料：
+- [HiGFXback](https://higfxback.github.io/) 一个展示 Linux 图形显示系统后端的历史的 LFS 发行版
+
+## 独占屏幕绘制
+
+### Framebuffer 设备
+
+Framebuffer，即“帧缓冲”，提供了一种简单的抽象 - 映射显存，开始读写！
+
+Framebuffer 设备以文件形式提供，如 `/dev/fb0`。
+
+- 打开
+
+  `int fd = open("/dev/fb0", O_RDWR);`
+- 获取信息
+
+  ```c
+  struct fb_fix_screeninfo finfo;
+  struct fb_var_screeninfo vinfo;
+  ioctl(fd, FBIOGET_FSCREENINFO, &finfo); 
+  ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
+  ```
+
+- 更改信息
+  
+  `ioctl(fd, FBIOPUT_VSCREENINFO, &vinfo);`
+
+- 映射 framebuffer 到进程内存空间并开始读写
+  
+  ```c
+  char *fbp = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  fbp[location] = some_color; // begin writing
+  ```
+
+下面我们来看看主要的实现：
+- vesafb: VESA framebuffer
+- efifb: EFI framebuffer
+
+在看到有设备文件的情况下，应该如何查询是哪个设备驱动提供的呢？可以用 udevadm 查看：
+
+```bash
+udevadm info --query=all --name=/dev/fb0
+```
+
+#### vesafb
+
+```
+
+```
+
+#### efifb
+
+```
+fb0: EFI VGA frame buffer device
+```
+
+### drmfb
+
+```
+[    3.168314] i915 0000:00:02.0: [drm] fb0: i915drmfb frame buffer device
+```
