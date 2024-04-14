@@ -233,6 +233,13 @@ slab 相关的分配函数：
 
 ### 引用计数
 
+## 设备发现
+
+### Platform Device
+
+- https://www.cnblogs.com/xiaojiang1025/p/6367061.html
+- https://doc.embedfire.com/linux/imx6/base/zh/latest/linux_driver/platform_driver.html
+
 ## 常见数据结构
 
 > Ref:

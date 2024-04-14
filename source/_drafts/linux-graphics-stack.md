@@ -55,6 +55,8 @@ Intended topics:
   - kde, gnome
   - dbus
 
+> 本次小聚将简要介绍 GUI 程序在 Linux 图形用户界面程序显示的基本技术，涵盖 Framebuffer，DRM / KMS，窗口混成器等内容。同时，小聚还将介绍阅读 Linux 内核代码的相关经验。
+
 ## 开始之前
 
 本文的形成使用了以下的材料：
@@ -103,9 +105,18 @@ udevadm info --query=all --name=/dev/fb0
 
 #### vesafb
 
+首先，vesafb 的成功启用需要启动时设置的 `screen_info` 结构中的 `orig_video_isVGA` 为 VESA linear framebuffer
+
+```c
+// drivers/video/fbdev/vesafb.c
+// static int vesafb_probe(struct platform_device *dev) {
+// ...
+  if (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
+  	return -ENODEV;
+// }
 ```
 
-```
+`screen_info` (/usr/include/linux/screen_info.h) 是 Linux 各个架构公用的一个表示启动时屏幕状态的结构体。在 x86 平台上，
 
 #### efifb
 
@@ -113,7 +124,11 @@ udevadm info --query=all --name=/dev/fb0
 fb0: EFI VGA frame buffer device
 ```
 
-### drmfb
+### DRM
+
+#### drm backed framebuffer
+
+> simpledrmdrmfb
 
 ```
 [    3.168314] i915 0000:00:02.0: [drm] fb0: i915drmfb frame buffer device
