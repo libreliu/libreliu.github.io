@@ -133,3 +133,15 @@ fb0: EFI VGA frame buffer device
 ```
 [    3.168314] i915 0000:00:02.0: [drm] fb0: i915drmfb frame buffer device
 ```
+
+
+### Linux common
+
+container_of, etc
+
+- request_mem_region
+  - request_mem_region tells the kernel that your driver is going to use this range of I/O addresses, which will prevent other drivers to make any overlapping call to the same region through request_mem_region. This mechanism does not do any kind of mapping, it's a pure reservation mechanism, which relies on the fact that all kernel device drivers must be nice, and they must call request_mem_region, check the return value, and behave properly in case of error.
+  - So it is completely logical that your code works without request_mem_region, it's just that it doesn't comply with the kernel coding rules.
+- ioremap
+  
+new API: devm https://subscription.packtpub.com/book/cloud-and-networking/9781801079518/4/ch04lvl1sec86/the-newer-breed-the-devm-managed-apis
