@@ -1,5 +1,5 @@
 ---
-title: Linux 图形堆栈之旅
+title: Linux 图形栈之旅
 date: 2024-04-10
 ---
 
@@ -63,10 +63,14 @@ date: 2024-04-10
 
 本文的形成使用了以下的材料：
 - [HiGFXback](https://higfxback.github.io/) 一个展示 Linux 图形显示系统后端的历史的 LFS 发行版
-- [Linux驱动：输入子系统 分析 - schips - 博客园](https://www.cnblogs.com/schips/p/linux_input_subsystem.html)
-- [Linux Input Subsystem userspace API](https://kernel.org/doc/html/latest/input/input_uapi.html)
-- [Linux Input Subsystem kernel API](https://kernel.org/doc/html/latest/input/input_kapi.html)
-
+- 输入子系统
+  - [Linux驱动：输入子系统 分析 - schips - 博客园](https://www.cnblogs.com/schips/p/linux_input_subsystem.html)
+  - [Linux Input Subsystem userspace API](https://kernel.org/doc/html/latest/input/input_uapi.html)
+  - [Linux Input Subsystem kernel API](https://kernel.org/doc/html/latest/input/input_kapi.html)
+- 图形栈介绍
+  - [An introduction to the Linux graphics stack](https://flusp.ime.usp.br/blogs,/kernel-graphics/an_introduction_to_the_linux_graphics_stack/)
+  - [A brief introduction to the Linux graphics stack - Igalia Blogs](https://blogs.igalia.com/itoral/2014/07/29/a-brief-introduction-to-the-linux-graphics-stack/)
+  - The Linux graphics stack in a nutshell - [Part 1](https://lwn.net/Articles/955376/), [Part 2](https://lwn.net/Articles/955708/)
 
 在此向他们表示感谢。
 
