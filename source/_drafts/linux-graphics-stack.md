@@ -221,3 +221,5 @@ container_of, etc
 - ioremap
   
 new API: devm https://subscription.packtpub.com/book/cloud-and-networking/9781801079518/4/ch04lvl1sec86/the-newer-breed-the-devm-managed-apis
+
+> https://wiki.gentoo.org/wiki/Waypipe
