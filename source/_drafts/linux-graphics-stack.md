@@ -67,10 +67,14 @@ date: 2024-04-10
   - [Linux驱动：输入子系统 分析 - schips - 博客园](https://www.cnblogs.com/schips/p/linux_input_subsystem.html)
   - [Linux Input Subsystem userspace API](https://kernel.org/doc/html/latest/input/input_uapi.html)
   - [Linux Input Subsystem kernel API](https://kernel.org/doc/html/latest/input/input_kapi.html)
+- Console 子系统
+  - https://www.kernel.org/doc/Documentation/console/console.txt
 - 图形栈介绍
   - [An introduction to the Linux graphics stack](https://flusp.ime.usp.br/blogs,/kernel-graphics/an_introduction_to_the_linux_graphics_stack/)
   - [A brief introduction to the Linux graphics stack - Igalia Blogs](https://blogs.igalia.com/itoral/2014/07/29/a-brief-introduction-to-the-linux-graphics-stack/)
   - The Linux graphics stack in a nutshell - [Part 1](https://lwn.net/Articles/955376/), [Part 2](https://lwn.net/Articles/955708/)
+- X11
+  - How X Window Managers Work, And How To Write One [(Part I)](https://jichu4n.com/posts/how-x-window-managers-work-and-how-to-write-one-part-i/), [(Part II)](https://jichu4n.com/posts/how-x-window-managers-work-and-how-to-write-one-part-ii/), [(Part III)](https://jichu4n.com/posts/how-x-window-managers-work-and-how-to-write-one-part-iii/)
 
 在此向他们表示感谢。
 
@@ -157,32 +161,21 @@ Linux 的输入子系统会创建一系列的输入设备节点，这些节点�
 
 ### Framebuffer 设备
 
-Framebuffer，即“帧缓冲”，提供了一种简单的抽象 - 映射显存，开始读写！
+Framebuffer 设备 (fbdev) 是提供到图形设备访问的一种 Linux **字符设备**。
 
-Framebuffer 设备以文件形式提供，如 `/dev/fb0`。
+> Recall: 字符设备 VS 块设备
+> - 字符设备：不支持 seek，read / write 只能顺序
+> - 块设备：支持 seek
 
-- 打开
+简单的操作如下：
+```c
+// 打开设备
+int fd = open("/dev/fb0", O_RDWR);
 
-  `int fd = open("/dev/fb0", O_RDWR);`
-- 获取信息
-
-  ```c
-  struct fb_fix_screeninfo finfo;
-  struct fb_var_screeninfo vinfo;
-  ioctl(fd, FBIOGET_FSCREENINFO, &finfo); 
-  ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
-  ```
-
-- 更改信息
-  
-  `ioctl(fd, FBIOPUT_VSCREENINFO, &vinfo);`
-
-- 映射 framebuffer 到进程内存空间并开始读写
-  
-  ```c
-  char *fbp = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  fbp[location] = some_color; // begin writing
-  ```
+// 映射 framebuffer 到进程内存空间并开始读写
+char *fbp = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+fbp[location] = some_color; // begin writing
+```
 
 在看到有设备文件的情况下，应该如何查询是哪个设备驱动提供的呢？可以用 `udevadm`、`/proc/fb` 或者 `/sys/class/graphics/fb*` 查看：
 
@@ -192,15 +185,49 @@ udevadm info --query=all --name=/dev/fb0
 cat /proc/fb
 ```
 
-同时，Framebuffer 接口提供了基本的显示模式设置支持。所谓显示模式设置，即设置输出的分辨率、色深等信息。该过程又被称为 `modeset` 或者 `modesetting`。
+同时，Framebuffer 接口提供了基本的显示模式设置支持。所谓显示模式设置，即设置输出的分辨率、色深等信息。该过程又被称为 `modeset` 或者 `modesetting`。`fb_var_screeninfo` 中包含了相关信息。
 
+> NOTE：一些信息在直接 scanout 的驱动中有效，但是在 drm_fb_helper 维护的 DRM 到 Framebuffer 驱动中为无效的值。
 
-通用实现如下：
+```c
+// 获取信息
+struct fb_fix_screeninfo finfo;
+struct fb_var_screeninfo vinfo;
+ioctl(fd, FBIOGET_FSCREENINFO, &finfo); 
+ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
+
+// 更改信息 - 进行 modeset 操作
+ioctl(fd, FBIOPUT_VSCREENINFO, &vinfo);
+```
+
+可以在 `/sys/class/graphics/fb0/modes` 中查看支持的模式。
+
+Framebuffer 设备的通用实现如下：
 - vesafb: VESA framebuffer
-- efifb: EFI framebuffer
+- efifb: EFI framebuffer；采用 UEFI GOP 来获得显存的基地址。
+
+> 启动时获得的 screen_info 是重要的参考来源。
+
+除此之外，许多 DRM 显示驱动也会通过 drm_fb_helper 中定义的函数来实现 Framebuffer 驱动，以实现兼容。
+
+Linux 绘制到屏幕上的控制台是由一系列 console driver 实现的，console driver 会通过 `struct consw` 来暴露相应的能力，其中包括 fbcon 和 vgacon。fbcon 会采用 Framebuffer 设备来显示到屏幕上。通过 sysfs 可以查看相应的 console driver 的类型。
+
+```bash
+$ cat /sys/class/vtconsole/vtcon1/name
+(M) frame buffer device
+```
+
+### 窗口系统
+
+窗口系统旨在解决的基本问题是，不同应用程序均需要在同一显示器显示，那应该如何组织他们之间的相互关系？
+
 
 
 ### DRM
+
+Framebuffer 设备很好的抽象了 90 年代的“显示适配器”所需的功能。当时的显示适配器基本遵循 1 适配器 - VGA 接口 - 1 显示器的模式，且没有除了显示画面之外的其它功能。
+
+然而，随着技术进步，显示适配器逐渐增加了 2D 和 3D 显示加速功能，成为了图形处理器 GPU。
 
 #### drm backed framebuffer
 
@@ -223,3 +250,7 @@ container_of, etc
 new API: devm https://subscription.packtpub.com/book/cloud-and-networking/9781801079518/4/ch04lvl1sec86/the-newer-breed-the-devm-managed-apis
 
 > https://wiki.gentoo.org/wiki/Waypipe
+>
+> https://blog.csdn.net/qq_36310253/article/details/103530442
+>
+> https://softwareengineering.stackexchange.com/a/88055
