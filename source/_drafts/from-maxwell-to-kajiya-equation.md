@@ -321,24 +321,27 @@ $$
 
 ## 单色波解
 
-如果只考虑单色波的话，Maxwell 方程组可以化简到相当简单的形式：因为对时间求导的项变得很容易处理，剩下的主要是类似泊松方程一样，只和空间导数相关的微分方程。
+如果只考虑单色波 (i.e. 以单一频率振荡的波) 的话，Maxwell 方程组可以化简到相当简单的形式：因为对时间求导的项变得很容易处理，剩下的主要是类似泊松方程一样，只和空间导数相关的微分方程。
 
 设
 $$
-\mathbf{E}(t, M) = \mathbf{E_0} \cos(\omega t + \alpha(M)) \\
-\mathbf{B}(t, M) = \mathbf{B_0} \cos(\omega t + \beta(M))
+\mathbf{E}(t, {\bf r}) = \mathbf{E_0}({\bf r}) \cos(\omega t + \alpha({\bf r})) \\
+\mathbf{B}(t, {\bf r}) = \mathbf{B_0}({\bf r}) \cos(\omega t + \beta({\bf r}))
 $$
 
-如果定义复数量 $ \mathcal{E} $ 和 $ \mathcal{B} $ ，且仅为空间的函数，同时满足 $ \operatorname{Re}[\mathcal{E}(M)] = \mathbf{E}(t, M) $ 和 $ \operatorname{Re}[\mathcal{B}(M)] = \mathbf{B}(t, M) $  的话
+如果定义复数量 $ \mathcal{E} $ 和 $ \mathcal{B} $ ，同时满足 $ \operatorname{Re}[\mathcal{E}({\bf r})] = \mathbf{E_0}(t, {\bf r}) $ 和 $ \operatorname{Re}[\mathcal{B}({\bf r})] = \mathbf{B_0}(t, {\bf r}) $  的话
+
+> 相当于 $ \mathcal{E} $ 和 $ \mathcal{B} $ 给出了幅度和初相位信息。
+
 $$
-\mathcal{E}(M) = \mathcal{E_0} e^{j (\alpha(M))} \\
-\mathcal{B}(M) = \mathcal{B_0} e^{j (\beta(M))} \\
-\mathbf{E}(t, M) = \mathbf{E_0} \cos(\omega t + \alpha(M)) = \operatorname{Re}[\mathcal{E}(M) e^{j\omega t}]\\
-\mathbf{B}(t, M) = \mathbf{B_0} \cos(\omega t + \beta(M)) = \operatorname{Re}[\mathcal{B}(M) e^{j\omega t}]
+\mathcal{E}({\bf r}) = \mathbf{E_0}({\bf r}) e^{j \alpha({\bf r})} \\
+\mathcal{B}({\bf r}) = \mathbf{B_0}({\bf r}) e^{j \beta({\bf r})} \\
+\mathbf{E}(t, {\bf r}) = \mathbf{E_0}({\bf r}) \cos(\omega t + \alpha({\bf r})) = \operatorname{Re}[\mathcal{E}({\bf r}) e^{j\omega t}]\\
+\mathbf{B}(t, {\bf r}) = \mathbf{B_0}({\bf r}) \cos(\omega t + \beta({\bf r})) = \operatorname{Re}[\mathcal{B}({\bf r}) e^{j\omega t}]
 $$
 带入，可以得到单色波满足的 Maxwell 方程组
 $$
-\operatorname{Re}[\mathcal{E}(M) e^{j\omega t}] = 
+\operatorname{Re}[\mathcal{E}(M) e^{j\omega t}] =
 $$
 
 
