@@ -329,7 +329,7 @@ $$
 \mathbf{B}(t, {\bf r}) = \mathbf{B_0}({\bf r}) \cos(\omega t + \beta({\bf r}))
 $$
 
-如果定义复数量 $ \mathcal{E} $ 和 $ \mathcal{B} $ ，同时满足 $ \operatorname{Re}[\mathcal{E}({\bf r})] = \mathbf{E_0}(t, {\bf r}) $ 和 $ \operatorname{Re}[\mathcal{B}({\bf r})] = \mathbf{B_0}(t, {\bf r}) $  的话
+如果按下面的方法定义复数量 $ \mathcal{E} $ 和 $ \mathcal{B} $ 的话
 
 > 相当于 $ \mathcal{E} $ 和 $ \mathcal{B} $ 给出了幅度和初相位信息。
 
@@ -339,10 +339,40 @@ $$
 \mathbf{E}(t, {\bf r}) = \mathbf{E_0}({\bf r}) \cos(\omega t + \alpha({\bf r})) = \operatorname{Re}[\mathcal{E}({\bf r}) e^{j\omega t}]\\
 \mathbf{B}(t, {\bf r}) = \mathbf{B_0}({\bf r}) \cos(\omega t + \beta({\bf r})) = \operatorname{Re}[\mathcal{B}({\bf r}) e^{j\omega t}]
 $$
-带入，可以得到单色波满足的 Maxwell 方程组
+这样的 $\mathcal{E}$ 和 $\mathcal{B} $ 又被称为相量 （phasor）。
+
+故而，原来的 Maxwell 方程可以进行带入操作，如 E 的旋度和 B、M 的关系可以重写成下面的形式
 $$
-\operatorname{Re}[\mathcal{E}(M) e^{j\omega t}] =
+\begin{aligned}
+\nabla \times e^{j\omega t} \mathcal{E} &= \nabla \times \left( \mathbf{E}_0(r)e^{j\alpha(r) + j\omega t} \right) \\
+&= -\frac{\partial}{\partial t} \left( \mathbf{B}_0(r)e^{j\alpha(r) + j\omega t} \right) + e^{j\omega t}\mathcal{M} \\
+&= -(j\omega) \mathbf{B}_0(r) e^{j \alpha(r) + j \omega t} + e^{j\omega t}\mathcal{M} \\
+&=  -j\omega e^{j\omega} \mathcal{B} + e^{j\omega t}\mathcal{M}\\
+
+\Rightarrow \nabla \times \mathcal{E} &= -j \omega \mathcal{B} + \mathcal{M}
+\end{aligned}
 $$
+
+类似的，可以得到
+$$
+\begin{aligned}
+\nabla \times \mathcal{E} &= -j \omega \mathcal{B} + \mathcal{M} \\
+\nabla \times \mathcal{H} &= j \omega \mathcal{D} + \mathcal{J}  \\
+\nabla \cdot \mathcal{D} &= \sigma_e  \\
+\nabla \cdot \mathcal{B} &= \sigma_m  \\
+\end{aligned}
+$$
+在均匀媒质下有
+$$
+\begin{aligned}
+\nabla \times \mathcal{E} &= -j \omega \mu \mathcal{H} + \mathcal{M} \\
+\nabla \times \mathcal{H} &= j \omega \epsilon \mathcal{E} + \mathcal{J}  \\
+\nabla \cdot (\epsilon \mathcal{E}) &= \sigma_e  \\
+\nabla \cdot (\mu \mathcal{H}) &= \sigma_m  \\
+\end{aligned}
+$$
+先分离成 $ \mathcal{E}_e $ 和 $ \mathcal{E}_m $ ，然后 P59 说的很清楚
+
 
 
 ### Eikonal 方程
