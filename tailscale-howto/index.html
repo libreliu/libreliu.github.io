@@ -5,12 +5,12 @@
   
   <title>Tailscale 服务部署快速参考 - libreliu&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Tailscale 介绍 来源于 Kimi.ai，K1.5 Long thinking  Tailscale 是一种网状 VPN 服务，它简化了不同网络中设备和服务之间的安全连接。以下是关于它的一些关键点：  基本概念和工作原理 网状网络架构：与传统的使用中央网关的 VPN 不同，Tailscale 创建了一个点对点的网状网络（称为 tailnet）。网络中的每个设备都可以直接与其他设备通信，从而">
+  <meta name="description" content="2025&#x2F;02&#x2F;28: 修复了笔误，感谢 @taoky。  Tailscale 介绍 来源于 Kimi.ai，K1.5 Long thinking  Tailscale 是一种网状 VPN 服务，它简化了不同网络中设备和服务之间的安全连接。以下是关于它的一些关键点：  基本概念和工作原理 网状网络架构：与传统的使用中央网关的 VPN 不同，Tailscale 创建了一个点对点">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Tailscale 服务部署快速参考">
 <meta property="og:url" content="https://blog.libreliu.info/tailscale-howto/">
 <meta property="og:site_name" content="libreliu&#39;s blog">
-<meta property="og:description" content="Tailscale 介绍 来源于 Kimi.ai，K1.5 Long thinking  Tailscale 是一种网状 VPN 服务，它简化了不同网络中设备和服务之间的安全连接。以下是关于它的一些关键点：  基本概念和工作原理 网状网络架构：与传统的使用中央网关的 VPN 不同，Tailscale 创建了一个点对点的网状网络（称为 tailnet）。网络中的每个设备都可以直接与其他设备通信，从而">
+<meta property="og:description" content="2025&#x2F;02&#x2F;28: 修复了笔误，感谢 @taoky。  Tailscale 介绍 来源于 Kimi.ai，K1.5 Long thinking  Tailscale 是一种网状 VPN 服务，它简化了不同网络中设备和服务之间的安全连接。以下是关于它的一些关键点：  基本概念和工作原理 网状网络架构：与传统的使用中央网关的 VPN 不同，Tailscale 创建了一个点对点">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://blog.libreliu.info/tailscale-howto/tailscale_login.png">
 <meta property="og:image" content="https://blog.libreliu.info/tailscale-howto/tailscale_jump_page.png">
@@ -93,7 +93,10 @@
       
       
       
-        <h2 id="Tailscale-介绍"><a href="#Tailscale-介绍" class="headerlink" title="Tailscale 介绍"></a>Tailscale 介绍</h2><blockquote>
+        <blockquote>
+<p>2025&#x2F;02&#x2F;28: 修复了笔误，感谢 @taoky。</p>
+</blockquote>
+<h2 id="Tailscale-介绍"><a href="#Tailscale-介绍" class="headerlink" title="Tailscale 介绍"></a>Tailscale 介绍</h2><blockquote>
 <p>来源于 Kimi.ai，K1.5 Long thinking</p>
 </blockquote>
 <p>Tailscale 是一种网状 VPN 服务，它简化了不同网络中设备和服务之间的安全连接。以下是关于它的一些关键点：</p>
@@ -127,7 +130,7 @@
 </ul>
 <p>在按全量服务端配置配置后，需要生成 api key 用于 Headscale UI 的 Web 访问。</p>
 <p>可以考虑用下面的命令生成 Key：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3650d 代表该 apikey 将在 3650 年后过期</span></span><br><span class="line">docker <span class="built_in">exec</span> -it headscale headscale apikeys create -e 3650d</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3650d 代表该 apikey 将在 3650 天后过期</span></span><br><span class="line">docker <span class="built_in">exec</span> -it headscale headscale apikeys create -e 3650d</span><br></pre></td></tr></table></figure>
 
 <p>记录该 Key，并填入 Headscale UI，就可以通过浏览器管理客户端设备和用户的访问权限等。</p>
 <h2 id="客户端连接"><a href="#客户端连接" class="headerlink" title="客户端连接"></a>客户端连接</h2><h3 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h3><p>在 Tailscale 官方网站下载客户端，安装后，打开 cmd，输入</p>
