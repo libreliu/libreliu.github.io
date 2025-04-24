@@ -418,26 +418,6 @@
   </entry>
   
   <entry>
-    <title>论文阅读 | EARS</title>
-    <link href="https://blog.libreliu.info/paper-reading/ears/"/>
-    <id>https://blog.libreliu.info/paper-reading/ears/</id>
-    <published>2022-07-02T16:00:00.000Z</published>
-    <updated>2022-07-02T16:00:00.000Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p><p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p><p>作为例子，考虑如下的场景（图源论文）：</p><img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene"><p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p><p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p><ul><li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li><li>(Splitting) 是否需要将这条光线分裂成多份？如果需要的话，分裂成多少份？</li></ul><p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p><h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。&lt;/</summary>
-      
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>论文阅读 | Generalized RIS</title>
     <link href="https://blog.libreliu.info/paper-reading/gris/"/>
     <id>https://blog.libreliu.info/paper-reading/gris/</id>
@@ -450,6 +430,26 @@
       
       
     <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要是扩展了 ReSTIR 和 ReSTIR GI 中用到的 Resampled Importance Sampling 在图形学中</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>论文阅读 | EARS</title>
+    <link href="https://blog.libreliu.info/paper-reading/ears/"/>
+    <id>https://blog.libreliu.info/paper-reading/ears/</id>
+    <published>2022-07-02T16:00:00.000Z</published>
+    <updated>2022-07-02T16:00:00.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。</p><p>首先，Splitting 即在 Path Tracing 的过程中，到某个 bounce 后，分叉出多条光线进行 trace，最后计算该点光照贡献时按权重进行平均的一种技术。</p><p>作为例子，考虑如下的场景（图源论文）：</p><img src="/paper-reading/ears/pool-scene.png" class="" title="pool-scene"><p>该场景中，池底的表面为漫反射材质，但是路径中其它的部分的 BSDF &#x2F; BRDF 都比较趋向于 Delta 分布。这时，如果可以在绿色点进行 Splitting，对不需要 Splitting 的路径实现复用，就可以帮助以更小的开销实现较低方差的渲染。</p><p>在每次 bounce 时，PathTracer 都需要进行一个决策：</p><ul><li>(Russian Roulette) 是否需要截止这条光线？以多少概率截止？</li><li>(Splitting) 是否需要将这条光线分裂成多份？如果需要的话，分裂成多少份？</li></ul><p>这些因子显然是和场景相关的，而选择好这些因子可以加速 Path Tracing 的收敛过程。</p><h2 id="Formulation"><a href="#Formulation" class="headerlink" title="Formulation"></a>Formulation</h2><p>TODO</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;本篇文章主要介绍了一种在离线渲染中优化 Path Tracing 中 Russian Roulette 和 Splitting 的方法。&lt;/</summary>
       
     
     
