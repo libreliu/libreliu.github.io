@@ -65,6 +65,12 @@ tailscale login --login-server http://your.example.com/
 
 然后打开 Headscale UI 的 Device 页面 （例如，`https://your.example.com/web/devices.html`）增加 User 后增加相应 Device 即可。
 
+### Linux
+
+可以参考 Tailscale 官方网站的说明，例如 [Ubuntu 22.04](https://tailscale.com/kb/1187/install-ubuntu-2204) 的相关配置。
+
+只需要注意，在 tailscale login 时，同时指定 `--login-server` 参数即可。
+
 ## 附录：全量服务端配置
 
 - `your.example.com` 是用来 host Tailscale 的你的域名，其应该有正确配置的 A 和 AAAA 记录。
