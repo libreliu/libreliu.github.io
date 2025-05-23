@@ -145,6 +145,8 @@
 <p><img src="/./tailscale-howto/tailscale_login.png"></p>
 <p><img src="/./tailscale-howto/tailscale_jump_page.png"></p>
 <p>然后打开 Headscale UI 的 Device 页面 （例如，<code>https://your.example.com/web/devices.html</code>）增加 User 后增加相应 Device 即可。</p>
+<h3 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h3><p>可以参考 Tailscale 官方网站的说明，例如 <a target="_blank" rel="noopener" href="https://tailscale.com/kb/1187/install-ubuntu-2204">Ubuntu 22.04</a> 的相关配置。</p>
+<p>只需要注意，在 tailscale login 时，同时指定 <code>--login-server</code> 参数即可。</p>
 <h2 id="附录：全量服务端配置"><a href="#附录：全量服务端配置" class="headerlink" title="附录：全量服务端配置"></a>附录：全量服务端配置</h2><ul>
 <li><code>your.example.com</code> 是用来 host Tailscale 的你的域名，其应该有正确配置的 A 和 AAAA 记录。</li>
 <li><code>your_email@example.com</code> 是你的邮箱。</li>
@@ -201,7 +203,7 @@
     
       <div class="article-toc">
         <h3>Contents</h3>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Tailscale-%E4%BB%8B%E7%BB%8D"><span class="toc-text">Tailscale 介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%83%A8%E7%BD%B2"><span class="toc-text">服务端部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%9E%E6%8E%A5"><span class="toc-text">客户端连接</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Windows"><span class="toc-text">Windows</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%85%A8%E9%87%8F%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="toc-text">附录：全量服务端配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#docker-compose-yaml"><span class="toc-text">.&#x2F;docker-compose.yaml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Caddyfile"><span class="toc-text">.&#x2F;Caddyfile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#config-config-yaml"><span class="toc-text">.&#x2F;config&#x2F;config.yaml</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Tailscale-%E4%BB%8B%E7%BB%8D"><span class="toc-text">Tailscale 介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%83%A8%E7%BD%B2"><span class="toc-text">服务端部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%9E%E6%8E%A5"><span class="toc-text">客户端连接</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Windows"><span class="toc-text">Windows</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux"><span class="toc-text">Linux</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%84%E5%BD%95%EF%BC%9A%E5%85%A8%E9%87%8F%E6%9C%8D%E5%8A%A1%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="toc-text">附录：全量服务端配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#docker-compose-yaml"><span class="toc-text">.&#x2F;docker-compose.yaml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Caddyfile"><span class="toc-text">.&#x2F;Caddyfile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#config-config-yaml"><span class="toc-text">.&#x2F;config&#x2F;config.yaml</span></a></li></ol></li></ol>
       </div>
     
     

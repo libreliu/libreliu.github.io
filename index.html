@@ -141,6 +141,8 @@
 <p><img src="/./tailscale-howto/tailscale_login.png"></p>
 <p><img src="/./tailscale-howto/tailscale_jump_page.png"></p>
 <p>然后打开 Headscale UI 的 Device 页面 （例如，<code>https://your.example.com/web/devices.html</code>）增加 User 后增加相应 Device 即可。</p>
+<h3 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h3><p>可以参考 Tailscale 官方网站的说明，例如 <a target="_blank" rel="noopener" href="https://tailscale.com/kb/1187/install-ubuntu-2204">Ubuntu 22.04</a> 的相关配置。</p>
+<p>只需要注意，在 tailscale login 时，同时指定 <code>--login-server</code> 参数即可。</p>
 <h2 id="附录：全量服务端配置"><a href="#附录：全量服务端配置" class="headerlink" title="附录：全量服务端配置"></a>附录：全量服务端配置</h2><ul>
 <li><code>your.example.com</code> 是用来 host Tailscale 的你的域名，其应该有正确配置的 A 和 AAAA 记录。</li>
 <li><code>your_email@example.com</code> 是你的邮箱。</li>
