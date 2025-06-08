@@ -28,3 +28,4 @@ Below are my Curriculum Vitae, if you're interested.
 | catoverflow | [Catoverflow's Blog](https://c-j.dev/) |
 | petergu     | [regymm](https://www.ustcpetergu.com/) |
 | chizhw ❤   | [chizhw](https://www.chizhw.me/)       |
+| rtxux       | [rtxux](https://blog.rtxux.xyz/)       |
