@@ -154,6 +154,103 @@ $$
 
 ### LDPC
 
+> 参考资料：
+> 
+> 1. [LDPC码介绍：原理&编码&译码 - 渺小的颗星的文章 - 知乎](https://zhuanlan.zhihu.com/p/1910039440455337476)
+> 2. [LDPC Encoding](https://glizen.com/radfordneal/ftp/LDPC-2012-02-11/encoding.html)
 
+对于一个 $K$ 位的数据串 $ V = [v_1, \dots, v_K] $，添加 $M$ 位校验串 $ C = [c_1, \dots, c_M] $，构成新的结果串 $ R = [v_1, \dots ,v_K, c_1, \dots ,c_M] $，其中 $N = K + M$ 是码字的总长度。
+
+总串应该可以从数据串做 GF(2) 上的线性变换生成。定义生成矩阵 (generator matrix) $ \mathbf{G}_{K \times N} $，则 $ R = V \mathbf{G} $。
+
+同时，定义校验矩阵 (check matrix) $ \mathbf{H}_{M \times N} $，则通过校验的结果串应该满足 $ \mathbf{H} R^T = 0 $。
+
+那么，**对于任意的 V**，都有 $ \mathbf{H} R^T = \mathbf{H} G^T V^T = 0 $。
+
+故而生成矩阵和校验矩阵需要满足 $ HG^T = 0 $。
+
+举个例子，考虑 K = 3, M = 2 的情况，
+
+$$
+v_1 + v_2 + c_1 = 0 \\
+v_1 + v_3 + c_2 = 0
+$$
+
+在这个例子中，校验矩阵 $ H $ 为：
+
+$$
+H = \begin{bmatrix}
+1 & 1 & 0 & 1 & 0 \\
+1 & 0 & 1 & 0 & 1
+\end{bmatrix}
+$$
+
+但是，给定校验矩阵和 $ V $，应该如何得到生成矩阵和相应的校验码 $ C $ 呢？
+
+#### 编码
+
+对于线性码，系统编码 (systematic encoding) 是一种常见的编码方式，其中源消息的 K 位被直接复制到码字的某些位置（消息位），其余的 M=N-K 位（校验位）被设置为使结果成为码字。
+
+从校验矩阵 $ H $ 得到生成矩阵 $ G $ 的过程并不像简单的求逆那样直接。实际上，对于系统编码，我们通常将校验矩阵 $ H $ 划分为两部分：
+
+$$
+H_{M \times N} = [A_{M \times M} | B_{M \times K}]
+$$
+
+那么，
+
+$$
+H R^T = A C^T + B V^T = 0
+$$
+
+$ A $ 可能是奇异或非奇异的。如果 $ A $ 是非奇异的，则
+
+$$
+C^T = -A^{-1} B V^T
+$$
+
+则
+
+$$
+R^T = \begin{bmatrix}
+V^T \\
+C^T
+\end{bmatrix} 
+= \begin{bmatrix}
+V^T \\
+-A^{-1} B V^T
+\end{bmatrix} = \begin{bmatrix}
+I_K \\
+A^{-1}B
+\end{bmatrix} V^T = G^T V^T
+$$
+
+容易看出，生成矩阵可以表示为：
+
+$$
+G = \begin{bmatrix}
+I_K \\
+A^{-1}B
+\end{bmatrix}^T
+$$
+
+其中 $ I_K $ 是 K×K 的单位矩阵。
+
+<!-- to think -->
+
+生成矩阵的表示方法有三种：
+
+1. **密集表示（dense representation）**：计算并存储 M×K 的矩阵 $ A^{-1}B $，使用密集格式。编码时，将源比特向量 $ s $ 与该矩阵相乘得到校验位。
+
+2. **混合表示（mixed representation）**：存储 M×M 的矩阵 $ A^{-1} $（密集格式）和 M×K 的矩阵 $ B $（稀疏格式）。编码时，先将 $ s $ 与 $ B $ 相乘，再将结果与 $ A^{-1} $ 相乘。对于 LDPC 码，$ B $ 通常是稀疏的，这种方法可以提高速度。
+
+3. **稀疏表示（sparse representation）**：避免显式计算 $ A^{-1} $，而是对 $ A $ 进行 LU 分解，得到下三角矩阵 $ L $ 和上三角矩阵 $ U $，使得 $ LU = A $。编码时，先计算 $ z = Bs $，然后通过前向替换求解 $ Ly = z $，再通过后向替换求解 $ Uc = y $ 得到校验位 $ c $。通过启发式方法重排 $ H $ 的行和列，可以保持 $ L $ 和 $ U $ 的稀疏性，从而提高计算速度。
+
+#### 解码
+
+解码的核心问题是，给定接收到的码字 $ R $，判断最有可能的源消息 $ V $。
+
+这块主要有硬判决和软判决算法。TODO。
 
 ### GMSK 调制
+
